@@ -10,6 +10,8 @@ import (
 )
 
 type BannerEditorConfig struct {
+	Width    int64
+	Height   int64
 	Elements []*Element
 }
 
@@ -27,9 +29,10 @@ func (bannerEditorConfig *BannerEditorConfig) ConfigureQorMeta(metaor resource.M
 	if meta, ok := metaor.(*admin.Meta); ok {
 		meta.Type = "banner_editor"
 		Admin := meta.GetBaseResource().(*admin.Resource).GetAdmin()
-		Admin.RegisterFuncMap("convert_visual_editor_setting", func() string {
+		Admin.RegisterFuncMap("banner_editor_configure", func() string {
 			config := meta.Config.(*BannerEditorConfig)
-			settingJson := map[string]interface{}{}
+			configJSON := map[string]interface{}{}
+			elementsJSON := map[string]interface{}{}
 			for _, element := range config.Elements {
 				elementSetting := map[string]interface{}{}
 				elementSetting["title"] = element.Name
@@ -42,10 +45,13 @@ func (bannerEditorConfig *BannerEditorConfig) ConfigureQorMeta(metaor resource.M
 					}
 				}
 				elementSetting["keys"] = metasSetting
-				settingJson[strings.Replace(element.Name, " ", "_", -1)] = elementSetting
+				elementsJSON[strings.Replace(element.Name, " ", "_", -1)] = elementSetting
 			}
 
-			jsonString, _ := json.Marshal(settingJson)
+			configJSON["width"] = config.Width
+			configJSON["height"] = config.Height
+			configJSON["elements"] = elementsJSON
+			jsonString, _ := json.Marshal(configJSON)
 			return string(jsonString)
 		})
 	}

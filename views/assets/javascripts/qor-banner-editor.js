@@ -3,11 +3,11 @@ $(document).ready(function(){
     $(this).parents(".qor-field__block").css("overflow-x", "scroll");
   });
   $(".js-banner-editor").each(function(i, e) {
-    var datas = $(e).data("configure");
+    var configure = $(e).data("configure");
     $(e).vee({
-      width: "1060",
-      height: "400",
-      datas : datas
+      width: configure.width,
+      height: configure.height,
+      datas : configure.elements
     })
   });
 });

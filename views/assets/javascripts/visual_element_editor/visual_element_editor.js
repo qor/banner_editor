@@ -35,13 +35,25 @@
     },
 
     initStatus : function (){
-      if($('.veeContent', vee.defaults.contentSelect).size() == 0){
-        var veeContentTemplate = $('<div class="veeContent"></div>');
-        $(vee.defaults.contentSelect).html(veeContentTemplate);
+      if($('.veeContentWrap', vee.defaults.contentSelect).size() == 0){
+        var veeContentWrapTemplate = $('<div class="veeContentWrap"><div class="veeContent"></div></div>');
+        $(vee.defaults.contentSelect).html(veeContentWrapTemplate);
       }
       var position = vee.defaults.flex ? 'absolute' : 'relative';
       var height = $(vee.defaults.contentSelect).width() * (vee.defaults.height / vee.defaults.width)
-      $('.veeContent', vee.defaults.contentSelect).css({ 'position': position, 'width': "100%", 'height': height, border: '#ccc solid 1px' });
+      $('.veeContentWrap', vee.defaults.contentSelect).css({
+        'width': '100%',
+        'border': '#ccc solid 1px',
+        'background-size': 'cover',
+        'background': 'url(http://demo.getqor.com/system/qor_widget_settings/TopBanner/image/slide1.20161008002116894610052.jpg) no-repeat center center'
+      });
+      $('.veeContent', vee.defaults.contentSelect).css({
+        'position': 'relative',
+        'width': vee.defaults.width,
+        'height': vee.defaults.height,
+        'background': 'rgba(0, 0, 0, 0)',
+        'margin': '0 auto'
+      });
 
       var buttonHtml = [];
       $.each(vee.defaults.datas, function(k, v){
@@ -105,7 +117,7 @@
           },
           stop: function() {
             $("#veeRuler").hide();
-            var $container = $(this).parents(".veeEditorContent");
+            var $container = $(this).parents(".veeContent");
             $(this).css("left",parseInt($(this).css("left")) / ($container.width() / 100)+"%");
             $(this).css("top",parseInt($(this).css("top")) / ($container.height() / 100)+"%");
           },
@@ -143,7 +155,7 @@
         if (vee.defaults.flex) {
           vee.restoreElementRealPosition();
         };
-        $(".veeContent", vee.defaults.contentSelect).css({ "height" : "auto", "border": "" });
+        $(".veeContentWrap", vee.defaults.contentSelect).css({ "height" : "auto", "border": "" });
         $this.val($(vee.defaults.contentSelect).html());
       });
     },
@@ -173,7 +185,7 @@
                    </div> \
                   </div>';
 
-      $(".veeContent", vee.defaults.contentSelect).append(editHtml);
+      $(".veeContentWrap", vee.defaults.contentSelect).append(editHtml);
       $(".veeEditForm").draggable({
         containment: "parent"
       });
@@ -200,8 +212,8 @@
     },
 
     setEditFormStyle : function (veeElement){
-      var form_height = $(".veeContent").height();
-      var form_width = $(".veeContent").width();
+      var form_height = $(".veeContentWrap").height();
+      var form_width = $(".veeContentWrap").width();
       var width_of_right_form_to_contain_dialog = form_width - veeElement.position().left - veeElement.width();
       var height_of_bottom_form_to_contain_dialog = form_height - veeElement.position().top - veeElement.height() - 40;
 
