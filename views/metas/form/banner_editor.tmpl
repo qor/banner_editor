@@ -1,12 +1,11 @@
-<link type="text/css" rel="stylesheet" href="/admin/assets/javascripts/vendors/visual_element_editor/visual_element_editor.css">
-<link rel="stylesheet" href="/admin/assets/javascripts/vendors/visual_element_editor/colorpicker/css/colorpicker.css" type="text/css" />
-<link rel="stylesheet" href="/admin/assets/javascripts/vendors/visual_element_editor/colorpicker/css/layout.css" type="text/css" media="screen" />
+<link rel="stylesheet" href="/admin/assets/javascripts/vendors/visual_element_editor/colorpicker/css/colorpicker.css?theme=banner_editor" type="text/css" />
+<link rel="stylesheet" href="/admin/assets/javascripts/vendors/visual_element_editor/colorpicker/css/layout.css?theme=banner_editor" type="text/css" media="screen" />
+<link rel="stylesheet" href="/admin/assets/javascripts/vendors/visual_element_editor/visual_element_editor.css?theme=banner_editor" type="text/css" media="screen" />
 
-<script type="text/javascript" src="/admin/assets/javascripts/vendors/visual_element_editor/colorpicker/js/colorpicker.js"></script>
+<script type="text/javascript" src="/admin/assets/javascripts/vendors/visual_element_editor/colorpicker/js/colorpicker.js?theme=banner_editor"></script>
 
 <script type="text/javascript" src="/admin/assets/javascripts/vendors/jquery-ui.min.js"></script>
-<script type="text/javascript" src="/admin/assets/javascripts/vendors/visual_element_editor/visual_element_editor.js"></script>
-<script type="text/javascript" src="/admin/assets/javascripts/qor-banner-editor.js?theme=banner_editor"></script>
+<script type="text/javascript" src="/admin/assets/javascripts/vendors/visual_element_editor/visual_element_editor.js?theme=banner_editor"></script>
 <script type="text/javascript" src="/admin/assets/javascripts/banner_editor.js?theme=banner_editor"></script>
 
 <div class="qor-field">
@@ -21,7 +20,7 @@
 
     <div class="qor-field__edit" data-toggle="qor.bannereditor">
       <a href="#" class="qor-bannereditor__upload"><i class="material-icons">photo_library</i></a>
-      <textarea class="banner-editor js-banner-editor" name="{{.InputName}}" data-configure="{{banner_editor_configure}}">
+      <textarea class="banner-editor qor-bannereditor__content" name="{{.InputName}}" data-configure="{{banner_editor_configure}}">
         {{.Value}}
       </textarea>
     </div>

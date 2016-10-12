@@ -30,10 +30,22 @@
 
     init: function () {
       this.bind();
+      this.initStatus();
     },
 
     bind: function () {
       this.$element.on(EVENT_CLICK, UPLOAD_BACKGROUND_BUTTON, this.openBottomSheet.bind(this));
+    },
+
+    initStatus: function() {
+      $(".qor-bannereditor__content").each(function(i, e) {
+        var configure = $(e).data("configure");
+        $(e).vee({
+          width: configure.width,
+          height: configure.height,
+          datas : configure.elements
+        });
+      });
     },
 
     openBottomSheet: function () {
