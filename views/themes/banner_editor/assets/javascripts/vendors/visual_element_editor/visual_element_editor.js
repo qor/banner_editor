@@ -85,6 +85,7 @@
           vee.hideForm();
         }
       });
+
       $("#veeTrash").unbind('click').bind('click', function() {
         var $this = $(this),
             $veeElement = $(".veeElement.hasVeeTrash");
