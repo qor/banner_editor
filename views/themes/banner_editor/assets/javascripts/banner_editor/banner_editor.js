@@ -48,16 +48,23 @@
       });
     },
 
-    openBottomSheet: function () {
+    openBottomSheet: function (e) {
+      var $this = this;
       var BottomSheets = $('body').data('qor.bottomsheets');
       BottomSheets.open({ url: "/admin/product_images" }, function() {
         var $bottomsheets = $('.qor-bottomsheets'),
         options = {
-          formatOnSelect: function() {},  // render selected item after click item lists
+          formatOnSelect: $this.formatSelectResults.bind(e.target),  // render selected item after click item lists
           formatOnSubmit: function() {}   // render new items after new item form submitted
         };
         $bottomsheets.qorSelectCore(options).addClass('qor-bottomsheets__mediabox').find('.qor-button--new').data('ingore-submit', true);
       });
+    },
+
+    formatSelectResults: function (e, data) {
+      var BottomSheets = $('body').data('qor.bottomsheets');
+      $(this).parents(".qor-bannereditor__wrap").find(".veeContentWrap").css("background-image", "url(" + $(data.Image).attr("src") + ")");
+      BottomSheets.hide();
     }
   };
 

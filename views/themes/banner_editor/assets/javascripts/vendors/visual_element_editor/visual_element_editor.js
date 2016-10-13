@@ -45,7 +45,8 @@
         'width': '100%',
         'border': '#ccc solid 1px',
         'background-size': 'cover',
-        'background': 'url(http://demo.getqor.com/system/qor_widget_settings/TopBanner/image/slide1.20161008002116894610052.jpg) no-repeat center center'
+        'background-position': 'center center',
+        'background-repeat': 'no-repeat'
       });
       $('.veeContent', vee.defaults.contentSelect).css({
         'position': 'relative',
