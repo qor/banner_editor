@@ -6,7 +6,6 @@
       contentSelect: ".veeEditorContent",
       width: "100%",
       height: "100%",
-      flex: false,
       datas : {},
       editingElement: null
     },
@@ -39,7 +38,6 @@
         var veeContentWrapTemplate = $('<div class="veeContentWrap"><div class="veeContent"></div></div>');
         $(vee.defaults.contentSelect).html(veeContentWrapTemplate);
       }
-      var position = vee.defaults.flex ? 'absolute' : 'relative';
       var height = $(vee.defaults.contentSelect).width() * (vee.defaults.height / vee.defaults.width)
       $('.veeContentWrap', vee.defaults.contentSelect).css({
         'width': '100%',
@@ -65,8 +63,6 @@
 
       $("body").on('click', ".veeNewButton", function(){
         var $veeElement = $('<div title="Click to edit" class="veeElement" style="position: absolute;" data-button="'+$(this).data("type")+'"></div>');
-        /* Add action bar height to element due in Flex mode */
-        if (vee.defaults.flex) { $veeElement.css({ top: vee.getActionBarHeight() + 'px' }); };
         $.each(vee.defaults.datas[$(this).data("type")]['keys'], function(key, value){
           $veeElement.attr("data-" + key, encodeURIComponent(value['default']))
         });
@@ -75,8 +71,6 @@
       });
 
       $(".veeContent", vee.defaults.contentSelect).append('<div id="veeRuler" style="display: none"><div id="veeRulerhw"><input class="veeHeight" value=""><input class="veeWidth" value=""></div></div>')
-
-      vee.initElementRealPositionInFlexMode();
     },
 
     bindEvent : function (){
@@ -317,16 +311,6 @@
         var realTop = Number($this.css("top").replace("px", "")) - vee.getActionBarHeight();
         $this.css({ top : realTop });
       });
-    },
-
-    initElementRealPositionInFlexMode: function() {
-      if (vee.defaults.flex) {
-        $(".veeElement").each(function(i, e) {
-          var $this = $(e);
-          var realTop = Number($this.css("top").replace("px", "")) + vee.getActionBarHeight();
-          $this.css({ top : realTop });
-        });
-      };
     }
   };
 
