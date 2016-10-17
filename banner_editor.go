@@ -13,6 +13,7 @@ type BannerEditorConfig struct {
 	Width    int64
 	Height   int64
 	Elements []*Element
+	Fixed    bool
 }
 
 type Element struct {
@@ -51,6 +52,7 @@ func (bannerEditorConfig *BannerEditorConfig) ConfigureQorMeta(metaor resource.M
 			configJSON["width"] = config.Width
 			configJSON["height"] = config.Height
 			configJSON["elements"] = elementsJSON
+			configJSON["fixed"] = config.Fixed
 			jsonString, _ := json.Marshal(configJSON)
 			return string(jsonString)
 		})

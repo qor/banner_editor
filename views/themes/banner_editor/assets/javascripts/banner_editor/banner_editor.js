@@ -43,6 +43,7 @@
         $(e).vee({
           width: configure.width,
           height: configure.height,
+          fixed: configure.fixed,
           datas : configure.elements
         });
       });

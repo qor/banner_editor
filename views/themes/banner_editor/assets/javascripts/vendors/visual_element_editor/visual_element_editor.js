@@ -6,6 +6,7 @@
       contentSelect: ".veeEditorContent",
       width: "100%",
       height: "100%",
+      fixed: false,
       datas : {},
       editingElement: null
     },
@@ -38,14 +39,22 @@
         var veeContentWrapTemplate = $('<div class="veeContentWrap"><div class="veeContent"></div></div>');
         $(vee.defaults.contentSelect).html(veeContentWrapTemplate);
       }
-      var height = $(vee.defaults.contentSelect).width() * (vee.defaults.height / vee.defaults.width)
-      $('.veeContentWrap', vee.defaults.contentSelect).css({
-        'width': '100%',
-        'border': '#ccc solid 1px',
-        'background-size': 'cover',
-        'background-position': 'center center',
-        'background-repeat': 'no-repeat'
-      });
+      if (vee.defaults.fixed) {
+        $('.veeContentWrap', vee.defaults.contentSelect).css({
+          'width': vee.defaults.width,
+          'height': vee.defaults.height,
+          'border': '#ccc solid 1px'
+        });
+        $(".veeEditorActionBar").width(vee.defaults.width);
+      } else {
+        $('.veeContentWrap', vee.defaults.contentSelect).css({
+          'width': '100%',
+          'border': '#ccc solid 1px',
+          'background-size': 'cover',
+          'background-position': 'center center',
+          'background-repeat': 'no-repeat'
+        });
+      }
       $('.veeContent', vee.defaults.contentSelect).css({
         'position': 'relative',
         'width': vee.defaults.width,
