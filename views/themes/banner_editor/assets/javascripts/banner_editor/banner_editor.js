@@ -47,6 +47,7 @@
           datas : configure.elements
         });
       });
+      $(".qor-bannereditor__upload").appendTo(".veeEditorActionBar");
     },
 
     openBottomSheet: function (e) {
