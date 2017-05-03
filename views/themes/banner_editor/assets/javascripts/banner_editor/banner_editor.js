@@ -49,14 +49,7 @@
 
             console.log(bannerType);
 
-            switch (bannerType) {
-                case 'title':
-                    this.$canvas.append(QorBannerEditor.template.TITLE);
-
-                    break;
-                default:
-
-            }
+            this.$canvas.append(QorBannerEditor.template[bannerType.toLocaleUpperCase()]);
         }
     };
 
