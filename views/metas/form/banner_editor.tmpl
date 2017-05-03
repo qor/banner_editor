@@ -1,16 +1,6 @@
-<link rel="stylesheet" href="/admin/assets/stylesheets/banner_editor.css?theme=banner_editor" type="text/css" media="screen" />
-<link rel="stylesheet" href="/admin/assets/javascripts/vendors/visual_element_editor/colorpicker/css/colorpicker.css?theme=banner_editor" type="text/css" />
-<link rel="stylesheet" href="/admin/assets/javascripts/vendors/visual_element_editor/colorpicker/css/layout.css?theme=banner_editor" type="text/css" media="screen" />
-<link rel="stylesheet" href="/admin/assets/javascripts/vendors/visual_element_editor/visual_element_editor.css?theme=banner_editor" type="text/css" media="screen" />
-
-<script type="text/javascript" src="/admin/assets/javascripts/vendors/visual_element_editor/colorpicker/js/colorpicker.js?theme=banner_editor"></script>
-
-<script type="text/javascript" src="/admin/assets/javascripts/vendors/jquery-ui.min.js"></script>
-<script type="text/javascript" src="/admin/assets/javascripts/vendors/visual_element_editor/visual_element_editor.js?theme=banner_editor"></script>
-<script type="text/javascript" src="/admin/assets/javascripts/banner_editor.js?theme=banner_editor"></script>
+<link rel="stylesheet" href="/admin/assets/stylesheets/banner_editor.css?theme=banner_editor" />
 
 <div class="qor-field">
-  <div class="mdl-textfield mdl-textfield--full-width mdl-js-textfield">
     <label class="qor-field__label mdl-textfield__label" for="{{.InputId}}">
       {{meta_label .Meta}}
     </label>
@@ -19,11 +9,22 @@
       {{.Value}}
     </div>
 
-    <div class="qor-field__edit qor-bannereditor__wrap" data-toggle="qor.bannereditor">
-      <a href="#" class="qor-bannereditor__upload"><i class="material-icons">photo_library</i></a>
-      <textarea class="banner-editor qor-bannereditor__content" name="{{.InputName}}" data-configure="{{banner_editor_configure}}">
+    <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor">
+
+      <ul class="qor-bannereditor__toolbar">
+        <li><button class="qor-bannereditor__title" data-banner-type="title" type="button">{{t "qor_admin.bannereditor.add_title" "add title"}}</button></li>
+        <li><button class="qor-bannereditor__paragraph" data-banner-type="paragraph" type="button">{{t "qor_admin.bannereditor.add_paragraph" "add paragraph"}}</button></li>
+        <li><button class="qor-bannereditor__link" data-banner-type="link" type="button">{{t "qor_admin.bannereditor.add_link" "add link"}}</button></li>
+        <li><button class="qor-bannereditor__button" data-banner-type="button" type="button">{{t "qor_admin.bannereditor.add_button" "add button"}}</button></li>
+        <li><button class="qor-bannereditor__image" data-mediabox-url="/admin/product_images" data-select-modal="mediabox" type="button">{{t "qor_admin.bannereditor.add_image" "add image"}}</button></li>
+      </ul>
+
+      <div class="qor-bannereditor__canvas">{{.Value}}</div>
+
+      <textarea class="banner-editor qor-bannereditor__content" name="{{.InputName}}" data-configure="{{banner_editor_configure}}" style="display: none;">
         {{.Value}}
       </textarea>
-    </div>
+
   </div>
 </div>
+<script type="text/javascript" src="/admin/assets/javascripts/banner_editor.js?theme=banner_editor"></script>

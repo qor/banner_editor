@@ -1,106 +1,104 @@
-(function (factory) {
-  if (typeof define === 'function' && define.amd) {
-    // AMD. Register as anonymous module.
-    define(['jquery'], factory);
-  } else if (typeof exports === 'object') {
-    // Node / CommonJS
-    factory(require('jquery'));
-  } else {
-    // Browser globals.
-    factory(jQuery);
-  }
-})(function ($) {
-
-  'use strict';
-
-  var NAMESPACE = 'qor.bannereditor';
-  var EVENT_ENABLE = 'enable.' + NAMESPACE;
-  var EVENT_DISABLE = 'disable.' + NAMESPACE;
-  var EVENT_CLICK = 'click.' + NAMESPACE;
-  var UPLOAD_BACKGROUND_BUTTON = '.qor-bannereditor__upload';
-
-  function QorBannerEditor(element, options) {
-    this.$element = $(element);
-    this.options = $.extend({}, QorBannerEditor.DEFAULTS, $.isPlainObject(options) && options);
-    this.init();
-  }
-
-  QorBannerEditor.prototype = {
-    constructor: QorBannerEditor,
-
-    init: function () {
-      this.bind();
-      this.initStatus();
-    },
-
-    bind: function () {
-      this.$element.on(EVENT_CLICK, UPLOAD_BACKGROUND_BUTTON, this.openBottomSheet.bind(this));
-    },
-
-    initStatus: function() {
-      $(".qor-bannereditor__content").each(function(i, e) {
-        var configure = $(e).data("configure");
-        $(e).vee({
-          width: configure.width,
-          height: configure.height,
-          fixed: configure.fixed,
-          datas : configure.elements
-        });
-      });
-      $(".qor-bannereditor__upload").appendTo(".veeEditorActionBar");
-    },
-
-    openBottomSheet: function (e) {
-      var $this = this;
-      var BottomSheets = $('body').data('qor.bottomsheets');
-      BottomSheets.open({ url: "/admin/product_images" }, function() {
-        var $bottomsheets = $('.qor-bottomsheets'),
-        options = {
-          formatOnSelect: $this.formatSelectResults.bind(e.target),  // render selected item after click item lists
-          formatOnSubmit: function() {}   // render new items after new item form submitted
-        };
-        $bottomsheets.qorSelectCore(options).addClass('qor-bottomsheets__mediabox').find('.qor-button--new').data('ingore-submit', true);
-      });
-    },
-
-    formatSelectResults: function (e, data) {
-      var BottomSheets = $('body').data('qor.bottomsheets');
-      $(this).parents(".qor-bannereditor__wrap").find(".veeContentWrap").css("background-image", "url(" + $(data.Image).attr("src") + ")");
-      BottomSheets.hide();
+(function(factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as anonymous module.
+        define(['jquery'], factory);
+    } else if (typeof exports === 'object') {
+        // Node / CommonJS
+        factory(require('jquery'));
+    } else {
+        // Browser globals.
+        factory(jQuery);
     }
-  };
+})(function($) {
 
-  QorBannerEditor.plugin = function (options) {
-    return this.each(function () {
-      var $this = $(this);
-      var data = $this.data(NAMESPACE);
-      var fn;
+    'use strict';
 
-      if (!data) {
-        if (/destroy/.test(options)) {
-          return;
+    let NAMESPACE = 'qor.bannereditor',
+        EVENT_ENABLE = 'enable.' + NAMESPACE,
+        EVENT_DISABLE = 'disable.' + NAMESPACE,
+        EVENT_CLICK = 'click.' + NAMESPACE,
+        CLASS_TOOLBAR_BUTTON = '.qor-bannereditor__toolbar button[data-banner-type]',
+        CLASS_IMAGE = '.qor-bannereditor__image',
+        CLASS_LINK = '.qor-bannereditor__link',
+        CLASS_BUTTON = '.qor-bannereditor__button',
+        CLASS_TITLE = '.qor-bannereditor__title',
+        CLASS_PARAGRAPH = '.qor-bannereditor__paragraph',
+        CLASS_CANVAS = '.qor-bannereditor__canvas';
+
+    function QorBannerEditor(element, options) {
+        this.$element = $(element);
+        this.options = $.extend({}, QorBannerEditor.DEFAULTS, $.isPlainObject(options) && options);
+        this.init();
+    }
+
+    QorBannerEditor.prototype = {
+        constructor: QorBannerEditor,
+
+        init: function() {
+            this.bind();
+            this.$canvas = this.$element.find(CLASS_CANVAS);
+        },
+
+        bind: function() {
+            this.$element.on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addResource.bind(this));
+        },
+
+        addResource: function(e) {
+            let $target = $(e.target),
+                bannerType = $target.data('banner-type');
+
+            console.log(bannerType);
+
+            switch (bannerType) {
+                case 'title':
+                    this.$canvas.append(QorBannerEditor.template.TITLE);
+
+                    break;
+                default:
+
+            }
         }
-        $this.data(NAMESPACE, (data = new QorBannerEditor(this, options)));
-      }
+    };
 
-      if (typeof options === 'string' && $.isFunction(fn = data[options])) {
-        fn.apply(data);
-      }
+    QorBannerEditor.template = {
+        TITLE: '<h1>This is title</h1>',
+        PARAGRAPH: '<p>This is paragraph</p>',
+        LINK: '<a href="#">This is link</a>',
+        BUTTON: '<button type="button">This is button</button>'
+    };
+
+    QorBannerEditor.plugin = function(options) {
+        return this.each(function() {
+            let $this = $(this),
+                data = $this.data(NAMESPACE),
+                fn;
+
+            if (!data) {
+                if (/destroy/.test(options)) {
+                    return;
+                }
+                $this.data(NAMESPACE, (data = new QorBannerEditor(this, options)));
+            }
+
+            if (typeof options === 'string' && $.isFunction(fn = data[options])) {
+                fn.apply(data);
+            }
+        });
+    };
+
+
+    $(function() {
+        let selector = '[data-toggle="qor.bannereditor"]';
+
+        $(document).
+        on(EVENT_DISABLE, function(e) {
+            QorBannerEditor.plugin.call($(selector, e.target), 'destroy');
+        }).
+        on(EVENT_ENABLE, function(e) {
+            QorBannerEditor.plugin.call($(selector, e.target));
+        }).
+        triggerHandler(EVENT_ENABLE);
     });
-  };
 
-
-  $(function () {
-    var selector = '[data-toggle="qor.bannereditor"]';
-    $(document).
-      on(EVENT_DISABLE, function (e) {
-        QorBannerEditor.plugin.call($(selector, e.target), 'destroy');
-      }).
-      on(EVENT_ENABLE, function (e) {
-        QorBannerEditor.plugin.call($(selector, e.target));
-      }).
-      triggerHandler(EVENT_ENABLE);
-  });
-
-  return QorBannerEditor;
+    return QorBannerEditor;
 });
