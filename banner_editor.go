@@ -26,6 +26,10 @@ type BannerEditorConfig struct {
 	SettingResource *admin.Resource
 }
 
+type QorBannerEditorSettingInterface interface {
+	serializable_meta.SerializableMetaInterface
+}
+
 type QorBannerEditorSetting struct {
 	gorm.Model
 	serializable_meta.SerializableMeta
@@ -52,11 +56,14 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 		Admin := meta.GetBaseResource().(*admin.Resource).GetAdmin()
 
 		if config.SettingResource == nil {
-			config.SettingResource = Admin.AddResource(&QorBannerEditorSetting{})
+			config.SettingResource = Admin.NewResource(&QorBannerEditorSetting{})
 		}
 
 		router := Admin.GetRouter()
-		router.Get(fmt.Sprintf("%v/new", config.SettingResource.ToParam()), New)
+		controller := bannerEditorController{
+			Resource: config.SettingResource,
+		}
+		router.Get(fmt.Sprintf("%v/new", config.SettingResource.ToParam()), controller.New, &admin.RouteConfig{Resource: config.SettingResource})
 	}
 }
 
