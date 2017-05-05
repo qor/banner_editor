@@ -70,6 +70,12 @@ func init() {
 	Admin.MountTo("/admin", mux)
 }
 
+func TestGetConfig(t *testing.T) {
+	resp, _ := http.Get(Server.URL + "/admin/banner_editor_arguments/new")
+	body, _ := ioutil.ReadAll(resp.Body)
+	assetPageHaveText(t, string(body), `data-configure="[{&#34;Name&#34;:&#34;Sub Header&#34;,&#34;CreateUrl&#34;:&#34;/admin/qor_banner_editor_settings/new?kind=Sub&#43;Header&#34;},{&#34;Name&#34;:&#34;Button&#34;,&#34;CreateUrl&#34;:&#34;/admin/qor_banner_editor_settings/new?kind=Button&#34;}]`)
+}
+
 func TestControllerCRUD(t *testing.T) {
 	resp, _ := http.Get(Server.URL + "/admin/qor_banner_editor_settings/new?kind=Sub%20Header")
 	assetPageHaveAttributes(t, resp, "Text", "Color")

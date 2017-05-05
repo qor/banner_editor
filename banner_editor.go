@@ -1,6 +1,7 @@
 package banner_editor
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -64,6 +65,23 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 		Admin.RegisterResourceRouters(res, "read")
 		router.Get(fmt.Sprintf("%v/new", res.ToParam()), New, &admin.RouteConfig{Resource: res})
 		router.Post(fmt.Sprintf("%v", res.ToParam()), Create, &admin.RouteConfig{Resource: res})
+
+		Admin.RegisterFuncMap("banner_editor_configure", func() string {
+			type element struct {
+				Name      string
+				CreateUrl string
+			}
+			elements := []element{}
+			newElementURL := router.Prefix + fmt.Sprintf("/%v/new", res.ToParam())
+			for _, e := range registeredElements {
+				elements = append(elements, element{Name: e.Name, CreateUrl: fmt.Sprintf("%v?kind=%v", newElementURL, template.URLQueryEscaper(e.Name))})
+			}
+			results, err := json.Marshal(elements)
+			if err != nil {
+				return err.Error()
+			}
+			return string(results)
+		})
 	}
 }
 
