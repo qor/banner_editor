@@ -5,8 +5,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/qor/admin"
@@ -75,6 +77,22 @@ func TestControllerCRUD(t *testing.T) {
 
 	resp, _ = http.Get(Server.URL + "/admin/qor_banner_editor_settings/new?kind=Button")
 	assetPageHaveAttributes(t, resp, "Text", "Link")
+
+	resp, _ = http.PostForm(Server.URL+"/admin/qor_banner_editor_settings?kind=Button", url.Values{
+		"QorResource.Kind":                  {"Button"},
+		"QorResource.SerializableMeta.Text": {"Search by Google"},
+		"QorResource.SerializableMeta.Link": {"http://www.google.com"},
+	})
+	time.Sleep(time.Second * 1)
+	body, _ := ioutil.ReadAll(resp.Body)
+	assetPageHaveText(t, string(body), "Search by Google")
+	assetPageHaveText(t, string(body), "http://www.google.com")
+}
+
+func assetPageHaveText(t *testing.T, body string, text string) {
+	if !strings.Contains(body, text) {
+		t.Error(color.RedString("PageHaveText: expect page have text %v, but got %v", text, body))
+	}
 }
 
 func assetPageHaveAttributes(t *testing.T, resp *http.Response, attributes ...string) {

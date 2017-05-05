@@ -60,10 +60,10 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 		}
 
 		router := Admin.GetRouter()
-		controller := bannerEditorController{
-			Resource: config.SettingResource,
-		}
-		router.Get(fmt.Sprintf("%v/new", config.SettingResource.ToParam()), controller.New, &admin.RouteConfig{Resource: config.SettingResource})
+		res := config.SettingResource
+		Admin.RegisterResourceRouters(res, "read")
+		router.Get(fmt.Sprintf("%v/new", res.ToParam()), New, &admin.RouteConfig{Resource: res})
+		router.Post(fmt.Sprintf("%v", res.ToParam()), Create, &admin.RouteConfig{Resource: res})
 	}
 }
 
