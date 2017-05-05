@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/fatih/color"
 	"github.com/qor/admin"
@@ -47,7 +46,7 @@ func init() {
 
 	RegisterElement(&Element{
 		Name:     "Sub Header",
-		Template: "<em style=\"color: {{Color}};\">{{Text}}</em>",
+		Template: "<em style=\"color: {{.Color}};\">{{.Text}}</em>",
 		Resource: subHeaderRes,
 		Context: func(c *Context, r interface{}) *Context {
 			return c
@@ -55,7 +54,7 @@ func init() {
 	})
 	RegisterElement(&Element{
 		Name:     "Button",
-		Template: "<a href='{{Link}}'>{{Text}}</a>",
+		Template: "<a href='{{.Link}}'>{{.Text}}</a>",
 		Resource: buttonRes,
 		Context: func(c *Context, r interface{}) *Context {
 			return c
@@ -83,10 +82,17 @@ func TestControllerCRUD(t *testing.T) {
 		"QorResource.SerializableMeta.Text": {"Search by Google"},
 		"QorResource.SerializableMeta.Link": {"http://www.google.com"},
 	})
-	time.Sleep(time.Second * 1)
 	body, _ := ioutil.ReadAll(resp.Body)
 	assetPageHaveText(t, string(body), "Search by Google")
 	assetPageHaveText(t, string(body), "http://www.google.com")
+
+	resp, _ = http.PostForm(Server.URL+"/admin/qor_banner_editor_settings.json?kind=Button", url.Values{
+		"QorResource.Kind":                  {"Button"},
+		"QorResource.SerializableMeta.Text": {"Search by Yahoo"},
+		"QorResource.SerializableMeta.Link": {"http://www.yahoo.com"},
+	})
+	body, _ = ioutil.ReadAll(resp.Body)
+	assetPageHaveText(t, string(body), `{"Template":"<a href=''></a>"`)
 }
 
 func assetPageHaveText(t *testing.T, body string, text string) {
