@@ -11,17 +11,11 @@
 
     <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor">
 
-      <ul class="qor-bannereditor__toolbar">
-        <li><button class="qor-bannereditor__title" data-banner-type="title" type="button">{{t "qor_admin.bannereditor.add_title" "add title"}}</button></li>
-        <li><button class="qor-bannereditor__paragraph" data-banner-type="paragraph" type="button">{{t "qor_admin.bannereditor.add_paragraph" "add paragraph"}}</button></li>
-        <li><button class="qor-bannereditor__link" data-banner-type="link" type="button">{{t "qor_admin.bannereditor.add_link" "add link"}}</button></li>
-        <li><button class="qor-bannereditor__button" data-banner-type="button" type="button">{{t "qor_admin.bannereditor.add_button" "add button"}}</button></li>
-        <li><button class="qor-bannereditor__image" data-mediabox-url="/admin/product_images" data-select-modal="mediabox" type="button">{{t "qor_admin.bannereditor.add_image" "add image"}}</button></li>
-      </ul>
+      <ul class="qor-bannereditor__toolbar"></ul>
 
       <div class="qor-bannereditor__canvas">{{.Value}}</div>
 
-      <textarea class="banner-editor qor-bannereditor__content" name="{{.InputName}}" data-configure="{{banner_editor_configure}}" style="display: none;">
+      <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure}}" style="display: none;">
         {{.Value}}
       </textarea>
 

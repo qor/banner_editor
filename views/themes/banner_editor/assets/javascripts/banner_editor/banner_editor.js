@@ -17,12 +17,8 @@
         EVENT_ENABLE = 'enable.' + NAMESPACE,
         EVENT_DISABLE = 'disable.' + NAMESPACE,
         EVENT_CLICK = 'click.' + NAMESPACE,
-        CLASS_TOOLBAR_BUTTON = '.qor-bannereditor__toolbar button[data-banner-type]',
-        CLASS_IMAGE = '.qor-bannereditor__image',
-        CLASS_LINK = '.qor-bannereditor__link',
-        CLASS_BUTTON = '.qor-bannereditor__button',
-        CLASS_TITLE = '.qor-bannereditor__title',
-        CLASS_PARAGRAPH = '.qor-bannereditor__paragraph',
+        CLASS_TOOLBAR_BUTTON = '.qor-bannereditor__button',
+        CLASS_BANNEREDITOR_VALUE = '.qor-bannereditor__value',
         CLASS_CANVAS = '.qor-bannereditor__canvas';
 
     function QorBannerEditor(element, options) {
@@ -36,29 +32,88 @@
 
         init: function() {
             this.bind();
+            this.config = {};
+            this.config.toolbar = this.$element.find(CLASS_BANNEREDITOR_VALUE).data('configure');
             this.$canvas = this.$element.find(CLASS_CANVAS);
+            this.initToolbar();
         },
 
         bind: function() {
-            this.$element.on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addResource.bind(this));
+            this.$element.on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this));
+            $(document).on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this));
         },
 
-        addResource: function(e) {
+        initToolbar: function() {
+            let $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config));
+
+            $toolbar.appendTo($('.qor-bannereditor__toolbar'));
+            this.$popover = $(QorBannerEditor.popover).appendTo('body');
+        },
+
+        renderElement: function(e) {
+            let $form = $(e.target).closest('form'),
+                url = $form.prop('action'),
+                method = $form.prop('method'),
+                formData = new FormData($form[0]),
+                $canvas = this.$canvas,
+                $popover = this.$popover;
+
+            if (!$form.length) {
+                return;
+            }
+
+            $.ajax(url, {
+                method: method,
+                dataType: 'json',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(data) {
+                    // console.log(data);
+
+                    $canvas.append(data.Template);
+                    $popover.qorModal('hide');
+                }
+            });
+
+            return false;
+        },
+
+        addElements: function(e) {
             let $target = $(e.target),
-                bannerType = $target.data('banner-type');
+                url = $target.data('banner-url'),
+                title = $target.data('title'),
+                $popover = this.$popover;
 
-            console.log(bannerType);
 
-            this.$canvas.append(QorBannerEditor.template[bannerType.toLocaleUpperCase()]);
+            $.ajax(url, {
+                method: 'GET',
+                dataType: 'html',
+                success: function(html) {
+                    let $content = $(html).find('.qor-form-container');
+
+                    $content.find('.qor-button--cancel').attr('data-dismiss', 'modal').removeAttr('href');
+                    $popover.find('.qor-bannereditor__title').html(title);
+                    $popover.find('.qor-bannereditor__content').html($content.html());
+
+                    $popover.trigger('enable').qorModal('show');
+                }
+            });
+
         }
     };
 
-    QorBannerEditor.template = {
-        TITLE: '<h1>This is title</h1>',
-        PARAGRAPH: '<p>This is paragraph</p>',
-        LINK: '<a href="#">This is link</a>',
-        BUTTON: '<button type="button">This is button</button>'
-    };
+    QorBannerEditor.toolbar = `[[#toolbar]]<li><button class="qor-bannereditor__button" data-banner-url="[[CreateUrl]]" data-title="[[Name]]" type="button">[[Name]]</button></li>[[/toolbar]]`;
+
+    QorBannerEditor.popover = `<div class="qor-modal fade qor-bannereditor__form" tabindex="-1" role="dialog" aria-hidden="true">
+                                  <div class="mdl-card mdl-shadow--2dp" role="document">
+                                    <div class="mdl-card__title">
+                                        <h2 class="mdl-card__title-text qor-bannereditor__title"></h2>
+                                    </div>
+                                    <div class="mdl-card__supporting-text qor-bannereditor__content"></div>
+                                  </div>
+                                </div>`;
+
 
     QorBannerEditor.plugin = function(options) {
         return this.each(function() {
