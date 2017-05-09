@@ -1,9 +1,6 @@
 <link rel="stylesheet" href="/admin/assets/stylesheets/banner_editor.css?theme=banner_editor" />
 
 <div class="qor-field">
-    <label class="qor-field__label mdl-textfield__label" for="{{.InputId}}">
-      {{meta_label .Meta}}
-    </label>
 
     <div class="qor-field__show">
       {{.Value}}
@@ -11,7 +8,12 @@
 
     <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor">
 
-      <ul class="qor-bannereditor__toolbar"></ul>
+      <ul class="qor-bannereditor__toolbar clearfix">
+        <li class="qor-bannereditor__toolbar-btns"></li>
+        <li>
+          <button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__toolbar-image" type="button">{{t "qor_admin.banner_editor.add_image" "Add Image"}}</button>
+        </li>
+      </ul>
 
       <div class="qor-bannereditor__canvas">{{.Value}}</div>
 
