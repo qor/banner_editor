@@ -3,7 +3,7 @@
 <div class="qor-field">
 
     <div class="qor-field__show">
-      {{.Value}}
+      {{unsafe_raw .Value}}
     </div>
 
     <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor">
@@ -15,10 +15,10 @@
         </li>
       </ul>
 
-      <div class="qor-bannereditor__canvas">{{raw .Value}}</div>
+      <div class="qor-bannereditor__canvas">{{unsafe_raw .Value}}</div>
 
       <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure}}" style="display: none;">
-        {{.Value}}
+        {{unsafe_raw .Value}}
       </textarea>
 
   </div>
