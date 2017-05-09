@@ -15,7 +15,7 @@
         </li>
       </ul>
 
-      <div class="qor-bannereditor__canvas">{{.Value}}</div>
+      <div class="qor-bannereditor__canvas">{{raw .Value}}</div>
 
       <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure}}" style="display: none;">
         {{.Value}}
