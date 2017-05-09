@@ -33,8 +33,9 @@ func init() {
 		Color string
 	}
 	type buttonSetting struct {
-		Text string
-		Link string
+		Text  string
+		Link  string
+		Color string
 	}
 	subHeaderRes := Admin.NewResource(&subHeaderSetting{})
 	subHeaderRes.Meta(&admin.Meta{Name: "Text"})
@@ -48,16 +49,18 @@ func init() {
 		Name:     "Sub Header",
 		Template: "<em style=\"color: {{.Color}};\">{{.Text}}</em>",
 		Resource: subHeaderRes,
-		Context: func(c *Context, r interface{}) *Context {
-			return c
+		Context: func(c *admin.Context, r interface{}) interface{} {
+			return r.(QorBannerEditorSettingInterface).GetSerializableArgument(r.(QorBannerEditorSettingInterface))
 		},
 	})
 	RegisterElement(&Element{
 		Name:     "Button",
-		Template: "<a href='{{.Link}}'>{{.Text}}</a>",
+		Template: "<a style='color:{{.Color}}' href='{{.Link}}'>{{.Text}}</a>",
 		Resource: buttonRes,
-		Context: func(c *Context, r interface{}) *Context {
-			return c
+		Context: func(c *admin.Context, r interface{}) interface{} {
+			setting := r.(QorBannerEditorSettingInterface).GetSerializableArgument(r.(QorBannerEditorSettingInterface)).(*buttonSetting)
+			setting.Color = "Red"
+			return setting
 		},
 	})
 	bannerEditorResource := Admin.AddResource(&bannerEditorArgument{})
@@ -98,7 +101,7 @@ func TestControllerCRUD(t *testing.T) {
 		"QorResource.SerializableMeta.Link": {"http://www.yahoo.com"},
 	})
 	body, _ = ioutil.ReadAll(resp.Body)
-	assetPageHaveText(t, string(body), `{"Template":"<a href=''></a>"`)
+	assetPageHaveText(t, string(body), `{"Template":"<a style='color:Red' href='http://www.yahoo.com'>Search by Yahoo</a>"`)
 }
 
 func assetPageHaveText(t *testing.T, body string, text string) {

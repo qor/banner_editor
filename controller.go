@@ -36,7 +36,8 @@ func Create(context *admin.Context) {
 		context.AddError(res.CallSave(result, context.Context))
 	}
 
-	if err := t.Execute(&html, nil); err != nil {
+	c := element.Context(context, result)
+	if err := t.Execute(&html, c); err != nil {
 		context.AddError(errors.New(fmt.Sprintf("BannerEditor: can't parse %v's template, got %v", kind, err)))
 	}
 	if context.HasError() {

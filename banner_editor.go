@@ -2,7 +2,6 @@ package banner_editor
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
 
@@ -15,12 +14,6 @@ import (
 var (
 	registeredElements []*Element
 )
-
-type Context struct {
-	DB       *gorm.DB
-	Options  map[string]interface{}
-	FuncMaps template.FuncMap
-}
 
 type BannerEditorConfig struct {
 	Elements        []string
@@ -40,7 +33,7 @@ type Element struct {
 	Name     string
 	Template string
 	Resource *admin.Resource
-	Context  func(context *Context, setting interface{}) *Context
+	Context  func(context *admin.Context, setting interface{}) interface{}
 }
 
 func init() {
@@ -83,10 +76,6 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 			return string(results)
 		})
 	}
-}
-
-func (bannerEditorConfig *BannerEditorConfig) GetTemplate(context *admin.Context, metaType string) ([]byte, error) {
-	return nil, errors.New("not implemented")
 }
 
 func GetElement(name string) *Element {
