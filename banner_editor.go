@@ -55,9 +55,9 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 
 		router := Admin.GetRouter()
 		res := config.SettingResource
-		Admin.RegisterResourceRouters(res, "read")
 		router.Get(fmt.Sprintf("%v/new", res.ToParam()), New, &admin.RouteConfig{Resource: res})
 		router.Post(fmt.Sprintf("%v", res.ToParam()), Create, &admin.RouteConfig{Resource: res})
+		Admin.RegisterResourceRouters(res, "read", "update")
 
 		Admin.RegisterFuncMap("banner_editor_configure", func() string {
 			type element struct {

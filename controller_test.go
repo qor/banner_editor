@@ -95,6 +95,11 @@ func TestControllerCRUD(t *testing.T) {
 	assetPageHaveText(t, string(body), "Search by Google")
 	assetPageHaveText(t, string(body), "http://www.google.com")
 
+	resp, _ = http.Get(Server.URL + "/admin/qor_banner_editor_settings/1/edit")
+	body, _ = ioutil.ReadAll(resp.Body)
+	assetPageHaveText(t, string(body), "Search by Google")
+	assetPageHaveText(t, string(body), "http://www.google.com")
+
 	resp, _ = http.PostForm(Server.URL+"/admin/qor_banner_editor_settings.json?kind=Button", url.Values{
 		"QorResource.Kind":                  {"Button"},
 		"QorResource.SerializableMeta.Text": {"Search by Yahoo"},
