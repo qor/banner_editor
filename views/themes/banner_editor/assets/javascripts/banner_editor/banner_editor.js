@@ -19,13 +19,16 @@
         EVENT_CLICK = 'click.' + NAMESPACE,
         EVENT_DRAGSTART = 'dragstart.' + NAMESPACE,
         EVENT_DRAGEND = 'dragend.' + NAMESPACE,
+        EVENT_DRAGENTER = 'dragenter.' + NAMESPACE,
         EVENT_DROP = 'drop.' + NAMESPACE,
 
-
-
         CLASS_DRAGGABLE = '[draggable]',
+        CLASS_BOTTOMSHEETS = '.qor-bottomsheets',
+        CLASS_MEDIABOX = 'qor-bottomsheets__mediabox',
         CLASS_TOOLBAR_BUTTON = '.qor-bannereditor__button',
         CLASS_BANNEREDITOR_VALUE = '.qor-bannereditor__value',
+        CLASS_BANNEREDITOR_BG = '.qor-bannereditor__bg',
+        CLASS_BANNEREDITOR_IMAGE = '.qor-bannereditor__toolbar-image',
         CLASS_CANVAS = '.qor-bannereditor__canvas';
 
     function QorBannerEditor(element, options) {
@@ -40,7 +43,8 @@
         init: function() {
             this.bind();
             this.config = {};
-            this.config.toolbar = this.$element.find(CLASS_BANNEREDITOR_VALUE).data('configure');
+            this.$textarea = this.$element.find(CLASS_BANNEREDITOR_VALUE);
+            this.config.toolbar = this.$textarea.data('configure');
             this.$canvas = this.$element.find(CLASS_CANVAS);
             this.initToolbar();
         },
@@ -48,8 +52,10 @@
         bind: function() {
             this.$element
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
+                .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
                 .on(EVENT_DRAGSTART, CLASS_DRAGGABLE, this.handleDragStart.bind(this))
                 .on(EVENT_DRAGEND, CLASS_DRAGGABLE, this.handleDragEnd.bind(this))
+                .on(EVENT_DRAGENTER, CLASS_DRAGGABLE, this.handleDragEnter.bind(this))
                 .on(EVENT_DROP, CLASS_DRAGGABLE, this.handleDrop.bind(this));
 
             $(document).on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this));
@@ -62,18 +68,90 @@
             this.$popover = $(QorBannerEditor.popover).appendTo('body');
         },
 
+        initMedia: function() {
+            // TODO: add selected icon for banner image
+            let $trs = $(CLASS_BOTTOMSHEETS).find('tbody tr'),
+                $tr,
+                $img;
+
+            $trs.each(function() {
+                $tr = $(this);
+                $img = $tr.find('.qor-table--ml-slideout p img').first();
+                $tr.find('.qor-table__actions').remove();
+
+                if ($img.length) {
+                    $tr.find('.qor-table--medialibrary-item').css('background-image', 'url(' + $img.prop('src') + ')');
+                    $img.parent().remove();
+                }
+            });
+        },
+
+        openBottomSheets: function(e) {
+            var $ele = $(e.target).closest(CLASS_BANNEREDITOR_IMAGE),
+                url = $ele.data('banner-media-url');
+            this.BottomSheets = $('body').data('qor.bottomsheets');
+
+            this.BottomSheets.open({
+                url: url
+            }, this.handleBannerImage.bind(this));
+
+        },
+
+        handleBannerImage: function() {
+
+            var $bottomsheets = $(CLASS_BOTTOMSHEETS),
+                options = {
+                    onSelect: this.addBannerImage.bind(this), // render selected item after click item lists
+                    onSubmit: this.addBannerImage.bind(this) // render new items after new item form submitted
+                };
+
+            $bottomsheets.qorSelectCore(options).addClass(CLASS_MEDIABOX);
+            this.initMedia();
+        },
+
+        addBannerImage: function(data) {
+            console.log(data);
+
+            let MediaOption = data.MediaOption.OriginalURL ? data.MediaOption : JSON.parse(data.MediaOption),
+                imgUrl = MediaOption.OriginalURL,
+                bg = `<div class="${CLASS_BANNEREDITOR_BG.slice(1)}" />`,
+                $bg;
+
+            if (!this.$element.find(CLASS_BANNEREDITOR_BG).length) {
+                this.$canvas.wrapInner(bg);
+            }
+
+            $bg = this.$element.find(CLASS_BANNEREDITOR_BG);
+
+            $bg.css('background-image', `url(${imgUrl})`);
+
+            this.BottomSheets.hide();
+            return false;
+        },
+
+        // handle drag event
         handleDragStart: function(e) {
             // console.log(e)
             e.originalEvent.dataTransfer.setData('text/plain', null); // required otherwise doesn't work
+
+            $(e.target).addClass('draging');
+        },
+
+        handleDragEnter: function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            return false;
         },
 
         handleDragEnd: function(e) {
             console.log(e)
 
             $(e.target).css({
-                'left': e.originalEvent.offsetX,
-                'top': e.originalEvent.offsetY
-            })
+                'left': e.originalEvent.clientX,
+                'top': e.originalEvent.clientY
+            });
+
+            $(e.target).removeClass('draging');
         },
 
         handleDrop: function(e) {
@@ -91,6 +169,7 @@
                 method = $form.prop('method'),
                 formData = new FormData($form[0]),
                 $canvas = this.$canvas,
+                $textarea = this.$textarea,
                 $popover = this.$popover;
 
             if (!$form.length) {
@@ -107,6 +186,7 @@
                     // console.log(data);
 
                     $canvas.append($(data.Template).attr('draggable', true));
+                    $textarea.val($canvas.html());
                     $popover.qorModal('hide');
                 }
             });

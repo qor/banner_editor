@@ -2,24 +2,24 @@
 
 <div class="qor-field">
 
-    <div class="qor-field__show">
-      {{unsafe_raw .Value}}
-    </div>
+  <div class="qor-field__show">
+    {{unsafe_raw .Value}}
+  </div>
 
-    <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor">
+  <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor">
 
-      <ul class="qor-bannereditor__toolbar clearfix">
-        <li class="qor-bannereditor__toolbar-btns"></li>
-        <li>
-          <button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__toolbar-image" type="button">{{t "qor_admin.banner_editor.add_image" "Add Image"}}</button>
-        </li>
-      </ul>
+    <ul class="qor-bannereditor__toolbar clearfix">
+      <li class="qor-bannereditor__toolbar-btns"></li>
+      <li>
+        <button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__toolbar-image" data-banner-media-url="/admin/product_images" type="button">{{t "qor_admin.banner_editor.add_image" "Add Image"}}</button>
+      </li>
+    </ul>
 
-      <div class="qor-bannereditor__canvas">{{unsafe_raw .Value}}</div>
+    <div class="qor-bannereditor__canvas">{{unsafe_raw .Value}}</div>
 
-      <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure}}" style="display: none;">
+    <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure}}" style="display: none;">
         {{unsafe_raw .Value}}
-      </textarea>
+    </textarea>
 
   </div>
 </div>
