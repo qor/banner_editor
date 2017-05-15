@@ -18,11 +18,11 @@
         EVENT_DISABLE = 'disable.' + NAMESPACE,
         EVENT_CLICK = 'click.' + NAMESPACE,
         EVENT_DRAGSTART = 'dragstart.' + NAMESPACE,
-        EVENT_DRAGEND = 'dragend.' + NAMESPACE,
+        EVENT_DRAGSTOP = 'dragstop.' + NAMESPACE,
         EVENT_DRAGENTER = 'dragenter.' + NAMESPACE,
         EVENT_DROP = 'drop.' + NAMESPACE,
 
-        CLASS_DRAGGABLE = '[draggable]',
+        CLASS_DRAGGABLE = '.qor-bannereditor__draggable',
         CLASS_BOTTOMSHEETS = '.qor-bottomsheets',
         CLASS_MEDIABOX = 'qor-bottomsheets__mediabox',
         CLASS_TOOLBAR_BUTTON = '.qor-bannereditor__button',
@@ -30,6 +30,17 @@
         CLASS_BANNEREDITOR_BG = '.qor-bannereditor__bg',
         CLASS_BANNEREDITOR_IMAGE = '.qor-bannereditor__toolbar-image',
         CLASS_CANVAS = '.qor-bannereditor__canvas';
+
+    function getImgSize(url, callback) {
+        let img = new Image();
+
+        img.onload = function() {
+            if ($.isFunction(callback)) {
+                callback(this.naturalWidth || this.width, this.naturalHeight || this.height);
+            }
+        };
+        img.src = url;
+    }
 
     function QorBannerEditor(element, options) {
         this.$element = $(element);
@@ -53,10 +64,12 @@
             this.$element
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
                 .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
-                .on(EVENT_DRAGSTART, CLASS_DRAGGABLE, this.handleDragStart.bind(this))
-                .on(EVENT_DRAGEND, CLASS_DRAGGABLE, this.handleDragEnd.bind(this))
-                .on(EVENT_DRAGENTER, CLASS_DRAGGABLE, this.handleDragEnter.bind(this))
-                .on(EVENT_DROP, CLASS_DRAGGABLE, this.handleDrop.bind(this));
+                .on(EVENT_DRAGSTOP, CLASS_DRAGGABLE, this.handleDragStop.bind(this))
+            // .on(EVENT_DRAGEND, CLASS_DRAGGABLE, this.handleDragEnd.bind(this))
+            // .on(EVENT_DRAGENTER, CLASS_DRAGGABLE, this.handleDragEnter.bind(this))
+            // .on(EVENT_DROP, CLASS_DRAGGABLE, this.handleDrop.bind(this));
+
+            $(CLASS_DRAGGABLE).draggable();
 
             $(document).on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this));
         },
@@ -69,7 +82,6 @@
         },
 
         initMedia: function() {
-            // TODO: add selected icon for banner image
             let $trs = $(CLASS_BOTTOMSHEETS).find('tbody tr'),
                 $tr,
                 $img;
@@ -94,6 +106,8 @@
             this.BottomSheets.open({
                 url: url
             }, this.handleBannerImage.bind(this));
+
+            return false;
 
         },
 
@@ -123,44 +137,36 @@
 
             $bg = this.$element.find(CLASS_BANNEREDITOR_BG);
 
-            $bg.css('background-image', `url(${imgUrl})`);
+            this.resetBoxSize(imgUrl, $bg);
+
+            $bg.css({
+                'background-image': `url(${imgUrl})`,
+                'background-repeat': 'no-repeat',
+                'background-position': 'center center',
+                'width': '100%',
+                'height': '100%'
+            });
 
             this.BottomSheets.hide();
             return false;
         },
 
-        // handle drag event
-        handleDragStart: function(e) {
-            // console.log(e)
-            e.originalEvent.dataTransfer.setData('text/plain', null); // required otherwise doesn't work
+        resetBoxSize: function(url, $bg) {
+            let $canvas = this.$canvas,
+                cWidth = $canvas.width(),
+                iWidth, iHeight;
 
-            $(e.target).addClass('draging');
-        },
-
-        handleDragEnter: function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-            return false;
-        },
-
-        handleDragEnd: function(e) {
-            console.log(e)
-
-            $(e.target).css({
-                'left': e.originalEvent.clientX,
-                'top': e.originalEvent.clientY
+            getImgSize(url, function(width, height) {
+                if (width < cWidth) {
+                    $canvas.width(width);
+                    $canvas.height(height);
+                }
             });
-
-            $(e.target).removeClass('draging');
         },
 
-        handleDrop: function(e) {
-            // if (e.stopPropagation) {
-            //     e.stopPropagation(); // stops the browser from redirecting.
-            // }
-            // console.log(e)
-
-            return false;
+        handleDragStop: function(event, ui) {
+            console.log(ui);
+            console.log(this);
         },
 
         renderElement: function(e) {
@@ -170,7 +176,8 @@
                 formData = new FormData($form[0]),
                 $canvas = this.$canvas,
                 $textarea = this.$textarea,
-                $popover = this.$popover;
+                $popover = this.$popover,
+                draggableEvent = this.draggableEvent;
 
             if (!$form.length) {
                 return;
@@ -185,7 +192,7 @@
                 success: function(data) {
                     // console.log(data);
 
-                    $canvas.append($(data.Template).attr('draggable', true));
+                    $(data.Template).addClass('qor-bannereditor__draggable').appendTo($canvas).draggable();
                     $textarea.val($canvas.html());
                     $popover.qorModal('hide');
                 }

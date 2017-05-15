@@ -7,6 +7,8 @@
         -khtml-user-drag: element;
         cursor: move;
         position: absolute;
+        top: 0;
+        left: 0;
     }
 
     .qor-bannereditor__toolbar {
@@ -28,6 +30,7 @@
         border: 2px dotted rgba(0,0,0,.2);
         min-height: 300px;
         position: relative;
+        margin: 0 auto;
 
         * {
             display: inline-block;
