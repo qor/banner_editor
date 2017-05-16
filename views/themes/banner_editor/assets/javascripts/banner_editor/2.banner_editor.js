@@ -19,7 +19,7 @@
         EVENT_CLICK = 'click.' + NAMESPACE,
         EVENT_DRAGSTART = 'dragstart.' + NAMESPACE,
         EVENT_DRAGSTOP = 'dragstop.' + NAMESPACE,
-        EVENT_DRAGENTER = 'dragenter.' + NAMESPACE,
+        EVENT_DRAG = 'drag.' + NAMESPACE,
         EVENT_DROP = 'drop.' + NAMESPACE,
 
         CLASS_DRAGGABLE = '.qor-bannereditor__draggable',
@@ -29,6 +29,7 @@
         CLASS_BANNEREDITOR_VALUE = '.qor-bannereditor__value',
         CLASS_BANNEREDITOR_BG = '.qor-bannereditor__bg',
         CLASS_BANNEREDITOR_IMAGE = '.qor-bannereditor__toolbar-image',
+        CLASS_BANNEREDITOR_DRAGGING = 'qor-bannereditor__dragging',
         CLASS_CANVAS = '.qor-bannereditor__canvas';
 
     function getImgSize(url, callback) {
@@ -52,22 +53,23 @@
         constructor: QorBannerEditor,
 
         init: function() {
-            this.bind();
+            let $element = this.$element;
             this.config = {};
-            this.$textarea = this.$element.find(CLASS_BANNEREDITOR_VALUE);
+            this.$textarea = $element.find(CLASS_BANNEREDITOR_VALUE);
             this.config.toolbar = this.$textarea.data('configure');
-            this.$canvas = this.$element.find(CLASS_CANVAS);
+            this.$canvas = $element.find(CLASS_CANVAS);
+            this.$bg = $element.find(CLASS_BANNEREDITOR_BG);
             this.initToolbar();
+            this.bind();
         },
 
         bind: function() {
             this.$element
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
                 .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
+                .on(EVENT_CLICK, CLASS_DRAGGABLE, this.handleInlineEdit.bind(this))
                 .on(EVENT_DRAGSTOP, CLASS_DRAGGABLE, this.handleDragStop.bind(this))
-            // .on(EVENT_DRAGEND, CLASS_DRAGGABLE, this.handleDragEnd.bind(this))
-            // .on(EVENT_DRAGENTER, CLASS_DRAGGABLE, this.handleDragEnter.bind(this))
-            // .on(EVENT_DROP, CLASS_DRAGGABLE, this.handleDrop.bind(this));
+                .on(EVENT_DRAG, CLASS_DRAGGABLE, this.handleDrag.bind(this));
 
             $(CLASS_DRAGGABLE).draggable();
 
@@ -115,8 +117,8 @@
 
             var $bottomsheets = $(CLASS_BOTTOMSHEETS),
                 options = {
-                    onSelect: this.addBannerImage.bind(this), // render selected item after click item lists
-                    onSubmit: this.addBannerImage.bind(this) // render new items after new item form submitted
+                    onSelect: this.addBannerImage.bind(this),
+                    onSubmit: this.addBannerImage.bind(this)
                 };
 
             $bottomsheets.qorSelectCore(options).addClass(CLASS_MEDIABOX);
@@ -124,18 +126,15 @@
         },
 
         addBannerImage: function(data) {
-            console.log(data);
-
             let MediaOption = data.MediaOption.OriginalURL ? data.MediaOption : JSON.parse(data.MediaOption),
                 imgUrl = MediaOption.OriginalURL,
                 bg = `<div class="${CLASS_BANNEREDITOR_BG.slice(1)}" />`,
                 $bg;
 
-            if (!this.$element.find(CLASS_BANNEREDITOR_BG).length) {
+            if (!this.$bg.length) {
                 this.$canvas.wrapInner(bg);
+                this.$bg = $bg = this.$element.find(CLASS_BANNEREDITOR_BG);
             }
-
-            $bg = this.$element.find(CLASS_BANNEREDITOR_BG);
 
             this.resetBoxSize(imgUrl, $bg);
 
@@ -164,9 +163,30 @@
             });
         },
 
+        handleInlineEdit: function(e) {
+            let $target = $(e.target);
+
+            $target.addClass(CLASS_BANNEREDITOR_DRAGGING).append(QorBannerEditor.inlineEdit);
+        },
+
+        handleDrag: function(event, ui) {
+            ui.helper.addClass(CLASS_BANNEREDITOR_DRAGGING);
+        },
+
         handleDragStop: function(event, ui) {
-            console.log(ui);
-            console.log(this);
+            let cWidth = this.$canvas.width(),
+                cHeight = this.$canvas.height(),
+                helperLeft = ui.position.left / cWidth * 100 + '%',
+                helperTop = ui.position.top / cHeight * 100 + '%',
+                css = {
+                    'left': helperLeft,
+                    'top': helperTop
+                }
+
+            ui.helper.css(css).attr({
+                'data-position-left': helperLeft,
+                'data-position-top': helperTop
+            }).removeClass(CLASS_BANNEREDITOR_DRAGGING);
         },
 
         renderElement: function(e) {
@@ -175,9 +195,12 @@
                 method = $form.prop('method'),
                 formData = new FormData($form[0]),
                 $canvas = this.$canvas,
+                $bg = this.$bg,
+                $body = $bg.length ? $bg : $canvas,
                 $textarea = this.$textarea,
                 $popover = this.$popover,
-                draggableEvent = this.draggableEvent;
+                draggableEvent = this.draggableEvent,
+                elementType = this.elementType;
 
             if (!$form.length) {
                 return;
@@ -190,9 +213,20 @@
                 processData: false,
                 contentType: false,
                 success: function(data) {
-                    // console.log(data);
-
-                    $(data.Template).addClass('qor-bannereditor__draggable').appendTo($canvas).draggable();
+                    $(data.Template)
+                        .addClass('qor-bannereditor__draggable')
+                        .css({
+                            'position': 'absolute',
+                            'left': 0,
+                            'top': 0
+                        })
+                        .attr('data-title', elementType)
+                        .appendTo($body)
+                        .draggable({
+                            addClasses: false,
+                            distance: 10,
+                            snap: true
+                        });
                     $textarea.val($canvas.html());
                     $popover.qorModal('hide');
                 }
@@ -207,6 +241,7 @@
                 title = $target.data('title'),
                 $popover = this.$popover;
 
+            this.elementType = title;
 
             $.ajax(url, {
                 method: 'GET',
@@ -226,6 +261,11 @@
     };
 
     QorBannerEditor.toolbar = `[[#toolbar]]<button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__button" data-banner-url="[[CreateUrl]]" data-title="[[Name]]" type="button">[[Name]]</button>[[/toolbar]]`;
+
+    QorBannerEditor.inlineEdit = `<div class="qor-bannereditor__button-inline">
+                                    <button class="mdl-button mdl-button--icon qor-bannereditor__button-edit" type="button"><i class="material-icons">mode_edit</i></button>
+                                    <button class="mdl-button mdl-button--icon qor-bannereditor__button-delete" type="button"><i class="material-icons">delete_forever</i></button>
+                                  </div>`;
 
     QorBannerEditor.popover = `<div class="qor-modal fade qor-bannereditor__form" tabindex="-1" role="dialog" aria-hidden="true">
                                   <div class="mdl-card mdl-shadow--2dp" role="document">

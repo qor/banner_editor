@@ -11,6 +11,12 @@
         left: 0;
     }
 
+    .qor-bannereditor__dragging {
+        border: 1px dotted rgba(0,0,0,.2);
+        box-sizing: content-box;
+        background-color: rgba(0,0,0,.1);
+    }
+
     .qor-bannereditor__toolbar {
         margin: 0 0 24px;
         padding: 0;
@@ -31,6 +37,29 @@
         min-height: 300px;
         position: relative;
         margin: 0 auto;
+        overflow: hidden;
+
+        .qor-bannereditor__button-inline {
+            position: absolute;
+            top: -32px;
+            right: 0;
+            line-height: 1;
+            font-size: 0;
+            background-color: rgba(0,0,0,.6);
+
+            .qor-bannereditor__button-delete {
+                margin-left: 16px;
+
+                i {
+                    color: #f00;
+                }
+            }
+
+            i {
+                font-size: 20px;
+                color: #fff;
+            }
+        }
 
         * {
             display: inline-block;

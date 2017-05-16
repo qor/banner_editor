@@ -17,9 +17,7 @@
 
     <div class="qor-bannereditor__canvas">{{unsafe_raw .Value}}</div>
 
-    <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure}}" style="display: none;">
-        {{unsafe_raw .Value}}
-    </textarea>
+    <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure}}" style="display: none;">{{unsafe_raw .Value}}</textarea>
 
   </div>
 </div>
