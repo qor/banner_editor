@@ -53,10 +53,16 @@
         constructor: QorBannerEditor,
 
         init: function() {
-            let $element = this.$element;
-            this.config = {};
-            this.$textarea = $element.find(CLASS_BANNEREDITOR_VALUE);
-            this.config.toolbar = this.$textarea.data('configure');
+            let $element = this.$element,
+                $textarea = $element.find(CLASS_BANNEREDITOR_VALUE),
+                config = {},
+                configure = $textarea.data('configure');
+
+            config.toolbar = configure.Elements;
+            config.editURL = configure.EditUrl;
+
+            this.config = config;
+            this.$textarea = $textarea;
             this.$canvas = $element.find(CLASS_CANVAS);
             this.$bg = $element.find(CLASS_BANNEREDITOR_BG);
             this.initToolbar();
@@ -68,12 +74,15 @@
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
                 .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
                 .on(EVENT_CLICK, CLASS_DRAGGABLE, this.handleInlineEdit.bind(this))
+                .on(EVENT_CLICK, '.qor-bannereditor__button-inline button', this.showEdit.bind(this))
                 .on(EVENT_DRAGSTOP, CLASS_DRAGGABLE, this.handleDragStop.bind(this))
                 .on(EVENT_DRAG, CLASS_DRAGGABLE, this.handleDrag.bind(this));
 
             $(CLASS_DRAGGABLE).draggable();
 
-            $(document).on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this));
+            $(document)
+                .on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this))
+                .on(EVENT_CLICK, this.hideElement.bind(this));
         },
 
         initToolbar: function() {
@@ -100,13 +109,21 @@
             });
         },
 
+        hideElement: function(e) {
+            if (!$(e.target).closest('.qor-bannereditor__canvas').length) {
+                $('.qor-bannereditor__button-inline').remove();
+                $(CLASS_DRAGGABLE).removeClass('qor-bannereditor__dragging');
+            }
+        },
+
         openBottomSheets: function(e) {
             var $ele = $(e.target).closest(CLASS_BANNEREDITOR_IMAGE),
                 url = $ele.data('banner-media-url');
             this.BottomSheets = $('body').data('qor.bottomsheets');
 
             this.BottomSheets.open({
-                url: url
+                url: url,
+                ingoreSubmit: true
             }, this.handleBannerImage.bind(this));
 
             return false;
@@ -129,9 +146,9 @@
             let MediaOption = data.MediaOption.OriginalURL ? data.MediaOption : JSON.parse(data.MediaOption),
                 imgUrl = MediaOption.OriginalURL,
                 bg = `<div class="${CLASS_BANNEREDITOR_BG.slice(1)}" />`,
-                $bg;
+                $bg = this.$bg;
 
-            if (!this.$bg.length) {
+            if (!$bg.length) {
                 this.$canvas.wrapInner(bg);
                 this.$bg = $bg = this.$element.find(CLASS_BANNEREDITOR_BG);
             }
@@ -151,22 +168,66 @@
         },
 
         resetBoxSize: function(url, $bg) {
-            let $canvas = this.$canvas,
-                cWidth = $canvas.width(),
-                iWidth, iHeight;
+            let $canvas = this.$canvas;
 
             getImgSize(url, function(width, height) {
-                if (width < cWidth) {
-                    $canvas.width(width);
-                    $canvas.height(height);
-                }
+                $canvas.width(width);
+                $canvas.height(height);
             });
         },
 
         handleInlineEdit: function(e) {
             let $target = $(e.target);
 
+            $('.qor-bannereditor__button-inline').remove();
             $target.addClass(CLASS_BANNEREDITOR_DRAGGING).append(QorBannerEditor.inlineEdit);
+        },
+
+        ajaxForm: function(url, title) {
+            let $popover = this.$popover;
+
+            $.ajax(url, {
+                method: 'GET',
+                dataType: 'html',
+                success: function(html) {
+                    let $content = $(html).find('.qor-form-container'),
+                        popupTitle = title || $(html).find('.mdl-layout-title').html();
+
+                    $content.find('.qor-button--cancel').attr('data-dismiss', 'modal').removeAttr('href');
+                    $popover.find('.qor-bannereditor__title').html(popupTitle);
+                    $popover.find('.qor-bannereditor__content').html($content.html());
+                    $popover.trigger('enable').qorModal('show');
+                }
+            });
+        },
+
+        showEdit: function(e) {
+            let $target = $(e.target).closest('button'),
+                type = $target.data('edit-type'),
+                $element = $target.closest(CLASS_DRAGGABLE),
+                data = $element.data();
+
+            if (type == 'edit') {
+                this.showEditForm(data);
+            }
+
+            if (type == 'delete') {
+                this.deleteElement($element);
+            }
+
+            e.stopPropagation();
+            return false;
+        },
+
+        showEditForm: function(data) {
+            let url = this.config.editURL.replace(/:id/, data.editId);
+
+            this.ajaxForm(url);
+        },
+
+        deleteElement: function($element) {
+            $element.remove();
+            this.setValue();
         },
 
         handleDrag: function(event, ui) {
@@ -178,15 +239,20 @@
                 cHeight = this.$canvas.height(),
                 helperLeft = ui.position.left / cWidth * 100 + '%',
                 helperTop = ui.position.top / cHeight * 100 + '%',
+                helper = ui.helper,
                 css = {
                     'left': helperLeft,
                     'top': helperTop
                 }
 
-            ui.helper.css(css).attr({
+            helper.css(css).attr({
                 'data-position-left': helperLeft,
                 'data-position-top': helperTop
-            }).removeClass(CLASS_BANNEREDITOR_DRAGGING);
+            });
+
+            if (!helper.find('.qor-bannereditor__button-inline').length) {
+                helper.removeClass(CLASS_BANNEREDITOR_DRAGGING);
+            }
         },
 
         renderElement: function(e) {
@@ -217,10 +283,10 @@
                         .addClass('qor-bannereditor__draggable')
                         .css({
                             'position': 'absolute',
-                            'left': 0,
-                            'top': 0
+                            'left': '30px',
+                            'top': '80px'
                         })
-                        .attr('data-title', elementType)
+                        .attr('data-edit-id', data.ID)
                         .appendTo($body)
                         .draggable({
                             addClasses: false,
@@ -238,33 +304,29 @@
         addElements: function(e) {
             let $target = $(e.target),
                 url = $target.data('banner-url'),
-                title = $target.data('title'),
-                $popover = this.$popover;
+                title = $target.data('title');
 
             this.elementType = title;
+            this.ajaxForm(url, title);
 
-            $.ajax(url, {
-                method: 'GET',
-                dataType: 'html',
-                success: function(html) {
-                    let $content = $(html).find('.qor-form-container');
 
-                    $content.find('.qor-button--cancel').attr('data-dismiss', 'modal').removeAttr('href');
-                    $popover.find('.qor-bannereditor__title').html(title);
-                    $popover.find('.qor-bannereditor__content').html($content.html());
+        },
 
-                    $popover.trigger('enable').qorModal('show');
-                }
-            });
+        setValue: function() {
+            let $html = this.$canvas.clone();
 
+            $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle');
+            $html.find('.qor-bannereditor__button-inline').remove();
+
+            this.$textarea.val($html.html());
         }
     };
 
     QorBannerEditor.toolbar = `[[#toolbar]]<button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__button" data-banner-url="[[CreateUrl]]" data-title="[[Name]]" type="button">[[Name]]</button>[[/toolbar]]`;
 
     QorBannerEditor.inlineEdit = `<div class="qor-bannereditor__button-inline">
-                                    <button class="mdl-button mdl-button--icon qor-bannereditor__button-edit" type="button"><i class="material-icons">mode_edit</i></button>
-                                    <button class="mdl-button mdl-button--icon qor-bannereditor__button-delete" type="button"><i class="material-icons">delete_forever</i></button>
+                                    <button class="mdl-button mdl-button--icon qor-bannereditor__button-edit" data-edit-type="edit" type="button"><i class="material-icons">mode_edit</i></button>
+                                    <button class="mdl-button mdl-button--icon qor-bannereditor__button-delete" data-edit-type="delete" type="button"><i class="material-icons">delete_forever</i></button>
                                   </div>`;
 
     QorBannerEditor.popover = `<div class="qor-modal fade qor-bannereditor__form" tabindex="-1" role="dialog" aria-hidden="true">
