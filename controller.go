@@ -56,7 +56,13 @@ func Create(context *admin.Context) {
 			jsonValue := &bytes.Buffer{}
 			encoder := json.NewEncoder(jsonValue)
 			encoder.SetEscapeHTML(false)
-			_ = encoder.Encode(struct{ Template string }{Template: html.String()})
+			_ = encoder.Encode(struct {
+				ID       uint
+				Template string
+			}{
+				ID:       result.(QorBannerEditorSettingInterface).GetID(),
+				Template: html.String(),
+			})
 			context.Writer.Write(jsonValue.Bytes())
 		}).Respond(context.Request)
 	}

@@ -21,12 +21,17 @@ type BannerEditorConfig struct {
 }
 
 type QorBannerEditorSettingInterface interface {
+	GetID() uint
 	serializable_meta.SerializableMetaInterface
 }
 
 type QorBannerEditorSetting struct {
 	gorm.Model
 	serializable_meta.SerializableMeta
+}
+
+func (setting QorBannerEditorSetting) GetID() uint {
+	return setting.ID
 }
 
 type Element struct {

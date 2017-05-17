@@ -106,7 +106,7 @@ func TestControllerCRUD(t *testing.T) {
 		"QorResource.SerializableMeta.Link": {"http://www.yahoo.com"},
 	})
 	body, _ = ioutil.ReadAll(resp.Body)
-	assetPageHaveText(t, string(body), `{"Template":"<a style='color:Red' href='http://www.yahoo.com'>Search by Yahoo</a>"`)
+	assetPageHaveText(t, string(body), `{"ID":2,"Template":"<a style='color:Red' href='http://www.yahoo.com'>Search by Yahoo</a>"`)
 }
 
 func assetPageHaveText(t *testing.T, body string, text string) {
