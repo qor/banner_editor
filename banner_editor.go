@@ -74,7 +74,13 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 			for _, e := range registeredElements {
 				elements = append(elements, element{Name: e.Name, CreateUrl: fmt.Sprintf("%v?kind=%v", newElementURL, template.URLQueryEscaper(e.Name))})
 			}
-			results, err := json.Marshal(elements)
+			results, err := json.Marshal(struct {
+				Elements []element
+				EditUrl  string
+			}{
+				Elements: elements,
+				EditUrl:  fmt.Sprintf("%v/%v/:id/edit", router.Prefix, res.ToParam()),
+			})
 			if err != nil {
 				return err.Error()
 			}
