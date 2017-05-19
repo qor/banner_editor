@@ -37,17 +37,22 @@
             display: inline-block;
             margin: 0;
             padding: 0;
-            line-height: 1;
+        }
+
+         > *:not(.qor-bannereditor__bg),
+        .qor-bannereditor__bg > * {
+            padding: 8px;
+            border: 1px dotted transparent;
         }
 
         .qor-bannereditor__button-inline {
             position: absolute;
-            top: -48px;
-            right: 0;
+            top: -49px;
+            right: -1px;
             line-height: 1;
             font-size: 0;
             background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            box-shadow: 1 -3px 4px rgba(0,0,0,.1);
             min-width: 80px;
             padding: 8px;
             border-radius: 2px 2px 0 0;
@@ -69,6 +74,7 @@
         .qor-bannereditor__dragging {
             background-color: #fff;
             box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            border: 1px dotted rgba(0,0,0,.1);
             padding: 8px;
             border-radius: 2px 0 2px 2px;
         }
@@ -76,5 +82,82 @@
         .draging {
             border: 1px dotted rgba(0,0,0,.2);
         }
+    }
+
+    .ui-resizable-handle {
+        position: absolute;
+        font-size: 0.1px;
+        display: block;
+        -ms-touch-action: none;
+        touch-action: none;
+    }
+
+    .ui-resizable-autohide .ui-resizable-handle,
+    .ui-resizable-disabled .ui-resizable-handle {
+        display: none;
+    }
+
+    .ui-resizable-n {
+        cursor: n-resize;
+        height: 7px;
+        width: 100%;
+        top: -5px;
+        left: 0;
+    }
+
+    .ui-resizable-s {
+        cursor: s-resize;
+        height: 7px;
+        width: 100%;
+        bottom: -5px;
+        left: 0;
+    }
+
+    .ui-resizable-e {
+        cursor: e-resize;
+        width: 7px;
+        right: -5px;
+        top: 0;
+        height: 100%;
+    }
+
+    .ui-resizable-w {
+        cursor: w-resize;
+        width: 7px;
+        left: -5px;
+        top: 0;
+        height: 100%;
+    }
+
+    .ui-resizable-se {
+        cursor: se-resize;
+        width: 12px;
+        height: 12px;
+        right: 1px;
+        bottom: 1px;
+    }
+
+    .ui-resizable-sw {
+        cursor: sw-resize;
+        width: 9px;
+        height: 9px;
+        left: -5px;
+        bottom: -5px;
+    }
+
+    .ui-resizable-nw {
+        cursor: nw-resize;
+        width: 9px;
+        height: 9px;
+        left: -5px;
+        top: -5px;
+    }
+
+    .ui-resizable-ne {
+        cursor: ne-resize;
+        width: 9px;
+        height: 9px;
+        right: -5px;
+        top: -5px;
     }
 }

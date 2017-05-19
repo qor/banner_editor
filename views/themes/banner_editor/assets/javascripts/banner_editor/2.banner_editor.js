@@ -78,7 +78,14 @@
                 .on(EVENT_DRAGSTOP, CLASS_DRAGGABLE, this.handleDragStop.bind(this))
                 .on(EVENT_DRAG, CLASS_DRAGGABLE, this.handleDrag.bind(this));
 
-            $(CLASS_DRAGGABLE).draggable();
+            $(CLASS_DRAGGABLE).draggable({
+                    addClasses: false,
+                    distance: 10,
+                    snap: true
+                })
+                .resizable({
+                    handles: "e"
+                });
 
             $(document)
                 .on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this))
@@ -164,6 +171,7 @@
             });
 
             this.BottomSheets.hide();
+            this.setValue();
             return false;
         },
 
@@ -208,7 +216,7 @@
                 data = $element.data();
 
             if (type == 'edit') {
-                this.showEditForm(data);
+                this.showEditForm(data, $element);
             }
 
             if (type == 'delete') {
@@ -219,10 +227,11 @@
             return false;
         },
 
-        showEditForm: function(data) {
+        showEditForm: function(data, $element) {
             let url = this.config.editURL.replace(/:id/, data.editId);
 
-            this.ajaxForm(url);
+            this.$editElement = $element;
+            this.ajaxForm(url, null, true, $element);
         },
 
         deleteElement: function($element) {
@@ -243,7 +252,7 @@
                 css = {
                     'left': helperLeft,
                     'top': helperTop
-                }
+                };
 
             helper.css(css).attr({
                 'data-position-left': helperLeft,
@@ -259,14 +268,14 @@
             let $form = $(e.target).closest('form'),
                 url = $form.prop('action'),
                 method = $form.prop('method'),
+                _this = this,
                 formData = new FormData($form[0]),
                 $canvas = this.$canvas,
                 $bg = this.$bg,
                 $body = $bg.length ? $bg : $canvas,
                 $textarea = this.$textarea,
                 $popover = this.$popover,
-                draggableEvent = this.draggableEvent,
-                elementType = this.elementType;
+                $editElement = this.$editElement;
 
             if (!$form.length) {
                 return;
@@ -279,22 +288,74 @@
                 processData: false,
                 contentType: false,
                 success: function(data) {
-                    $(data.Template)
-                        .addClass('qor-bannereditor__draggable')
-                        .css({
-                            'position': 'absolute',
-                            'left': '30px',
-                            'top': '80px'
-                        })
-                        .attr('data-edit-id', data.ID)
-                        .appendTo($body)
-                        .draggable({
-                            addClasses: false,
-                            distance: 10,
-                            snap: true
+                    let $ele = $(data.Template);
+
+                    if ($editElement && $editElement.length) {
+                        let left = $editElement[0].style.left,
+                            top = $editElement[0].style.top,
+                            attrs = $editElement.prop("attributes");
+
+                        $ele
+                            .addClass('qor-bannereditor__draggable')
+                            .css({
+                                'position': 'absolute',
+                                'left': left,
+                                'top': top
+                            })
+                            .attr('data-edit-id', data.ID);
+
+                        $.each(attrs, function() {
+                            let name = this.name;
+
+                            if (name == 'style' || name == 'class' || name == 'data-edit-id') {
+                                return;
+                            }
+
+                            $ele.attr(this.name, this.value);
+
                         });
-                    $textarea.val($canvas.html());
-                    $popover.qorModal('hide');
+
+                        $ele
+                            .appendTo($body)
+                            .draggable({
+                                addClasses: false,
+                                distance: 10,
+                                snap: true
+                            })
+                            .resizable({
+                                handles: "e"
+                            });
+
+                        $textarea.val($canvas.html());
+                        $popover.qorModal('hide');
+
+                        $editElement.remove();
+                        _this.$editElement = null;
+
+
+                    } else {
+                        $ele
+                            .addClass('qor-bannereditor__draggable')
+                            .css({
+                                'position': 'absolute',
+                                'left': '10%',
+                                'top': '10%'
+                            })
+                            .attr('data-edit-id', data.ID)
+                            .appendTo($body)
+                            .draggable({
+                                addClasses: false,
+                                distance: 10,
+                                snap: true
+                            })
+                            .resizable({
+                                handles: "e"
+                            });
+                        $textarea.val($canvas.html());
+                        $popover.qorModal('hide');
+
+                    }
+
                 }
             });
 
@@ -308,8 +369,6 @@
 
             this.elementType = title;
             this.ajaxForm(url, title);
-
-
         },
 
         setValue: function() {
