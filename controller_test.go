@@ -107,6 +107,15 @@ func TestControllerCRUD(t *testing.T) {
 	})
 	body, _ = ioutil.ReadAll(resp.Body)
 	assetPageHaveText(t, string(body), `{"ID":2,"Template":"<a style='color:Red' href='http://www.yahoo.com'>Search by Yahoo</a>"`)
+
+	resp, _ = http.PostForm(Server.URL+"/admin/qor_banner_editor_settings/2.json?kind=Button", url.Values{
+		"_method":                           {"PUT"},
+		"QorResource.Kind":                  {"Button"},
+		"QorResource.SerializableMeta.Text": {"Search by Bing"},
+		"QorResource.SerializableMeta.Link": {"http://www.bing.com"},
+	})
+	body, _ = ioutil.ReadAll(resp.Body)
+	assetPageHaveText(t, string(body), `{"ID":2,"Template":"<a style='color:Red' href='http://www.bing.com'>Search by Bing</a>"`)
 }
 
 func assetPageHaveText(t *testing.T, body string, text string) {
