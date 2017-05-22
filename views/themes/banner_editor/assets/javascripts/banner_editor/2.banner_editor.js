@@ -262,6 +262,8 @@
             if (!helper.find('.qor-bannereditor__button-inline').length) {
                 helper.removeClass(CLASS_BANNEREDITOR_DRAGGING);
             }
+
+            this.setValue();
         },
 
         renderElement: function(e) {
@@ -356,6 +358,8 @@
 
                     }
 
+                    _this.setValue();
+
                 }
             });
 
@@ -374,8 +378,8 @@
         setValue: function() {
             let $html = this.$canvas.clone();
 
-            $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle');
-            $html.find('.qor-bannereditor__button-inline').remove();
+            $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable');
+            $html.find('.qor-bannereditor__button-inline,.ui-resizable-handle').remove();
 
             this.$textarea.val($html.html());
         }
