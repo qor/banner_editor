@@ -17,11 +17,8 @@
         EVENT_ENABLE = 'enable.' + NAMESPACE,
         EVENT_DISABLE = 'disable.' + NAMESPACE,
         EVENT_CLICK = 'click.' + NAMESPACE,
-        EVENT_DRAGSTART = 'dragstart.' + NAMESPACE,
         EVENT_DRAGSTOP = 'dragstop.' + NAMESPACE,
         EVENT_DRAG = 'drag.' + NAMESPACE,
-        EVENT_DROP = 'drop.' + NAMESPACE,
-
         CLASS_DRAGGABLE = '.qor-bannereditor__draggable',
         CLASS_BOTTOMSHEETS = '.qor-bottomsheets',
         CLASS_MEDIABOX = 'qor-bottomsheets__mediabox',
@@ -65,7 +62,7 @@
             this.$textarea = $textarea;
             this.$canvas = $element.find(CLASS_CANVAS);
             this.$bg = $element.find(CLASS_BANNEREDITOR_BG);
-            this.initToolbar();
+            this.initBannerEditor();
             this.bind();
         },
 
@@ -80,8 +77,7 @@
 
             $(CLASS_DRAGGABLE).draggable({
                     addClasses: false,
-                    distance: 10,
-                    snap: true
+                    distance: 10
                 })
                 .resizable({
                     handles: "e"
@@ -92,11 +88,16 @@
                 .on(EVENT_CLICK, this.hideElement.bind(this));
         },
 
-        initToolbar: function() {
+        initBannerEditor: function() {
             let $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config));
 
             $toolbar.appendTo($('.qor-bannereditor__toolbar-btns'));
             this.$popover = $(QorBannerEditor.popover).appendTo('body');
+
+            if (this.$bg.length && this.$bg.data('image-width')) {
+                this.$canvas.width(this.$bg.data('image-width')).height(this.$bg.data('image-height'));
+            }
+
         },
 
         initMedia: function() {
@@ -118,7 +119,7 @@
 
         hideElement: function(e) {
             if (!$(e.target).closest('.qor-bannereditor__canvas').length) {
-                $('.qor-bannereditor__button-inline').remove();
+                $('.qor-bannereditor__button-inline,.qor-bannereditor__draggable-coordinate').remove();
                 $(CLASS_DRAGGABLE).removeClass('qor-bannereditor__dragging');
             }
         },
@@ -179,8 +180,11 @@
             let $canvas = this.$canvas;
 
             getImgSize(url, function(width, height) {
-                $canvas.width(width);
-                $canvas.height(height);
+                $canvas.width(width).height(height);
+                $bg.attr({
+                    'data-image-width': width,
+                    'data-image-height': height
+                });
             });
         },
 
@@ -240,7 +244,10 @@
         },
 
         handleDrag: function(event, ui) {
-            ui.helper.addClass(CLASS_BANNEREDITOR_DRAGGING);
+            ui.position.left = parseInt(ui.position.left, 10);
+            ui.position.top = parseInt(ui.position.top, 10);
+            this.$element.find('.qor-bannereditor__draggable-coordinate').remove();
+            ui.helper.addClass(CLASS_BANNEREDITOR_DRAGGING).append(window.Mustache.render(QorBannerEditor.dragCoordinate, ui.position));
         },
 
         handleDragStop: function(event, ui) {
@@ -321,8 +328,7 @@
                             .appendTo($body)
                             .draggable({
                                 addClasses: false,
-                                distance: 10,
-                                snap: true
+                                distance: 10
                             })
                             .resizable({
                                 handles: "e"
@@ -347,8 +353,7 @@
                             .appendTo($body)
                             .draggable({
                                 addClasses: false,
-                                distance: 10,
-                                snap: true
+                                distance: 10
                             })
                             .resizable({
                                 handles: "e"
@@ -379,13 +384,15 @@
             let $html = this.$canvas.clone();
 
             $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable');
-            $html.find('.qor-bannereditor__button-inline,.ui-resizable-handle').remove();
+            $html.find('.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate').remove();
 
-            this.$textarea.val($html.html());
+            this.$textarea.val($html.html().replace(/&quot;/g,''));
         }
     };
 
     QorBannerEditor.toolbar = `[[#toolbar]]<button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__button" data-banner-url="[[CreateUrl]]" data-title="[[Name]]" type="button">[[Name]]</button>[[/toolbar]]`;
+
+    QorBannerEditor.dragCoordinate = `<div class="qor-bannereditor__draggable-coordinate"><span>x :<em>[[left]]</em></span><span>y :<em>[[top]]</em></span></div>`;
 
     QorBannerEditor.inlineEdit = `<div class="qor-bannereditor__button-inline">
                                     <button class="mdl-button mdl-button--icon qor-bannereditor__button-edit" data-edit-type="edit" type="button"><i class="material-icons">mode_edit</i></button>
