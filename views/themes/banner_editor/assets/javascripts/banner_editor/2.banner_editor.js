@@ -177,7 +177,8 @@
         },
 
         resetBoxSize: function(url, $bg) {
-            let $canvas = this.$canvas;
+            let $canvas = this.$canvas,
+                _this = this;
 
             getImgSize(url, function(width, height) {
                 $canvas.width(width).height(height);
@@ -185,6 +186,7 @@
                     'data-image-width': width,
                     'data-image-height': height
                 });
+                _this.setValue();
             });
         },
 
@@ -382,10 +384,8 @@
 
         setValue: function() {
             let $html = this.$canvas.clone();
-
             $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable');
             $html.find('.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate').remove();
-
             this.$textarea.val($html.html().replace(/&quot;/g,''));
         }
     };

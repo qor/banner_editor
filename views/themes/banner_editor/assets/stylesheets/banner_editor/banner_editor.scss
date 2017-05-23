@@ -33,6 +33,10 @@
         margin: 0 auto;
         overflow: hidden;
 
+        h1, h1 small, h2 small, h3 small, h4 small, h5 small, h6 small{
+            letter-spacing: normal;
+        }
+
         .qor-bannereditor__draggable {
             display: inline-block;
             margin: 0;
