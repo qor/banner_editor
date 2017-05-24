@@ -18,6 +18,7 @@
         EVENT_DISABLE = 'disable.' + NAMESPACE,
         EVENT_CLICK = 'click.' + NAMESPACE,
         EVENT_DRAGSTOP = 'dragstop.' + NAMESPACE,
+        EVENT_RESIZESTOP = 'resizestop.' + NAMESPACE,
         EVENT_DRAG = 'drag.' + NAMESPACE,
         CLASS_DRAGGABLE = '.qor-bannereditor__draggable',
         CLASS_BOTTOMSHEETS = '.qor-bottomsheets',
@@ -73,6 +74,7 @@
                 .on(EVENT_CLICK, CLASS_DRAGGABLE, this.handleInlineEdit.bind(this))
                 .on(EVENT_CLICK, '.qor-bannereditor__button-inline button', this.showEdit.bind(this))
                 .on(EVENT_DRAGSTOP, CLASS_DRAGGABLE, this.handleDragStop.bind(this))
+                .on(EVENT_RESIZESTOP, CLASS_DRAGGABLE, this.handleResizeStop.bind(this))
                 .on(EVENT_DRAG, CLASS_DRAGGABLE, this.handleDrag.bind(this));
 
             $(CLASS_DRAGGABLE).draggable({
@@ -93,6 +95,10 @@
 
             $toolbar.appendTo($('.qor-bannereditor__toolbar-btns'));
             this.$popover = $(QorBannerEditor.popover).appendTo('body');
+
+            if ($('.qor-slideout').is(':visible')){
+                $('.qor-slideout__fullscreen').click();
+            }
 
             if (this.$bg.length && this.$bg.data('image-width')) {
                 this.$canvas.width(this.$bg.data('image-width')).height(this.$bg.data('image-height'));
@@ -194,7 +200,10 @@
             let $target = $(e.target);
 
             $('.qor-bannereditor__button-inline').remove();
+            $(CLASS_DRAGGABLE).removeClass(CLASS_BANNEREDITOR_DRAGGING);
             $target.addClass(CLASS_BANNEREDITOR_DRAGGING).append(QorBannerEditor.inlineEdit);
+
+            return false;
         },
 
         ajaxForm: function(url, title) {
@@ -248,8 +257,10 @@
         handleDrag: function(event, ui) {
             ui.position.left = parseInt(ui.position.left, 10);
             ui.position.top = parseInt(ui.position.top, 10);
+
             this.$element.find('.qor-bannereditor__draggable-coordinate').remove();
             ui.helper.addClass(CLASS_BANNEREDITOR_DRAGGING).append(window.Mustache.render(QorBannerEditor.dragCoordinate, ui.position));
+            ui.helper.find('.qor-bannereditor__button-inline').hide();
         },
 
         handleDragStop: function(event, ui) {
@@ -272,7 +283,17 @@
                 helper.removeClass(CLASS_BANNEREDITOR_DRAGGING);
             }
 
+            ui.helper.find('.qor-bannereditor__button-inline').show();
+            ui.helper.find('.qor-bannereditor__draggable-coordinate').remove();
+
             this.setValue();
+        },
+
+        handleResizeStop: function(event, ui){
+            let cWidth = this.$canvas.width(),
+                helperWidth = ui.size.width / cWidth * 100 + '%';
+
+            ui.helper.css('width', helperWidth);
         },
 
         renderElement: function(e) {

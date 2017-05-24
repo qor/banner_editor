@@ -1,5 +1,3 @@
-<link rel="stylesheet" href="/admin/assets/stylesheets/banner_editor.css?theme=banner_editor" />
-
 <div class="qor-field">
 
   <div class="qor-field__show">
@@ -8,6 +6,7 @@
 
   <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor">
 
+    <link rel="stylesheet" href="/admin/assets/stylesheets/banner_editor.css?theme=banner_editor" />
     <ul class="qor-bannereditor__toolbar clearfix">
       <li class="qor-bannereditor__toolbar-btns"></li>
       <li>
@@ -19,6 +18,6 @@
 
     <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure}}" style="display: none;">{{unsafe_raw .Value}}</textarea>
 
+    <script type="text/javascript" src="/admin/assets/javascripts/banner_editor.js?theme=banner_editor"></script>
   </div>
 </div>
-<script type="text/javascript" src="/admin/assets/javascripts/banner_editor.js?theme=banner_editor"></script>
