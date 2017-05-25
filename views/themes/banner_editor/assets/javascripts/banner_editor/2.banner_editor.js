@@ -17,6 +17,7 @@
         EVENT_ENABLE = 'enable.' + NAMESPACE,
         EVENT_DISABLE = 'disable.' + NAMESPACE,
         EVENT_CLICK = 'click.' + NAMESPACE,
+        EVENT_DBCLICK = 'dblclick.' + NAMESPACE,
         EVENT_DRAGSTOP = 'dragstop.' + NAMESPACE,
         EVENT_RESIZESTOP = 'resizestop.' + NAMESPACE,
         EVENT_DRAG = 'drag.' + NAMESPACE,
@@ -54,6 +55,10 @@
             let $element = this.$element,
                 $textarea = $element.find(CLASS_BANNEREDITOR_VALUE),
                 config = {},
+                _this = this,
+                $canvas = $element.find(CLASS_CANVAS),
+                html = $canvas.clone(),
+                $iframe = $('<iframe id="qor-bannereditor__iframe" width="100%" height="300px" />'),
                 configure = $textarea.data('configure');
 
             config.toolbar = configure.Elements;
@@ -61,23 +66,46 @@
 
             this.config = config;
             this.$textarea = $textarea;
-            this.$canvas = $element.find(CLASS_CANVAS);
-            this.$bg = $element.find(CLASS_BANNEREDITOR_BG);
-            this.initBannerEditor();
-            this.bind();
+
+            $canvas.html('').removeClass('qor-bannereditor__canvas');
+            $iframe.appendTo($canvas);
+
+            this.$iframe = $iframe;
+
+            $iframe.on('load', function() {
+                let $ele = $iframe.contents();
+
+                $ele.find('head').append(`<link rel="stylesheet" type="text/css" href="${$element.data('stylesheet')}">`);
+                $ele.find('body').html(html);
+                _this.$bg = $ele.find(CLASS_BANNEREDITOR_BG);
+                _this.$canvas = $ele.find(CLASS_CANVAS);
+
+                _this.initBannerEditor();
+                _this.bind();
+
+            });
+
         },
 
         bind: function() {
+            let $canvas = this.$canvas;
+
             this.$element
+                .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
+                .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this));
+
+            $canvas
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
                 .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
                 .on(EVENT_CLICK, CLASS_DRAGGABLE, this.handleInlineEdit.bind(this))
+                .on(EVENT_DBCLICK, CLASS_DRAGGABLE, this.showInlineEdit.bind(this))
                 .on(EVENT_CLICK, '.qor-bannereditor__button-inline button', this.showEdit.bind(this))
                 .on(EVENT_DRAGSTOP, CLASS_DRAGGABLE, this.handleDragStop.bind(this))
                 .on(EVENT_RESIZESTOP, CLASS_DRAGGABLE, this.handleResizeStop.bind(this))
                 .on(EVENT_DRAG, CLASS_DRAGGABLE, this.handleDrag.bind(this));
 
-            $(CLASS_DRAGGABLE).draggable({
+            $canvas
+                .find(CLASS_DRAGGABLE).draggable({
                     addClasses: false,
                     distance: 10
                 })
@@ -91,7 +119,8 @@
         },
 
         initBannerEditor: function() {
-            let $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config));
+            let $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config)),
+                $bg = this.$bg;
 
             $toolbar.appendTo($('.qor-bannereditor__toolbar-btns'));
             this.$popover = $(QorBannerEditor.popover).appendTo('body');
@@ -100,8 +129,9 @@
                 $('.qor-slideout__fullscreen').click();
             }
 
-            if (this.$bg.length && this.$bg.data('image-width')) {
-                this.$canvas.width(this.$bg.data('image-width')).height(this.$bg.data('image-height'));
+            if ($bg.length && $bg.data('image-width')) {
+                this.$canvas.width($bg.data('image-width')).height($bg.data('image-height'));
+                this.$iframe.width($bg.data('image-width')).height($bg.data('image-height'));
             }
 
         },
@@ -124,9 +154,11 @@
         },
 
         hideElement: function(e) {
-            if (!$(e.target).closest('.qor-bannereditor__canvas').length) {
-                $('.qor-bannereditor__button-inline,.qor-bannereditor__draggable-coordinate').remove();
-                $(CLASS_DRAGGABLE).removeClass('qor-bannereditor__dragging');
+            let $canvas = this.$canvas;
+
+            if (!$(e.target).closest('.qor-bannereditor__contents').length) {
+                $canvas.find('.qor-bannereditor__button-inline,.qor-bannereditor__draggable-coordinate').remove();
+                $canvas.find(CLASS_DRAGGABLE).removeClass('qor-bannereditor__dragging');
             }
         },
 
@@ -164,7 +196,7 @@
 
             if (!$bg.length) {
                 this.$canvas.wrapInner(bg);
-                this.$bg = $bg = this.$element.find(CLASS_BANNEREDITOR_BG);
+                this.$bg = $bg = this.$canvas.find(CLASS_BANNEREDITOR_BG);
             }
 
             this.resetBoxSize(imgUrl, $bg);
@@ -184,10 +216,12 @@
 
         resetBoxSize: function(url, $bg) {
             let $canvas = this.$canvas,
+                $iframe = this.$iframe,
                 _this = this;
 
             getImgSize(url, function(width, height) {
                 $canvas.width(width).height(height);
+                $iframe.width(width).height(height);
                 $bg.attr({
                     'data-image-width': width,
                     'data-image-height': height
@@ -197,10 +231,11 @@
         },
 
         handleInlineEdit: function(e) {
-            let $target = $(e.target);
+            let $target = $(e.target).closest(CLASS_DRAGGABLE),
+                $canvas = this.$canvas;
 
-            $('.qor-bannereditor__button-inline').remove();
-            $(CLASS_DRAGGABLE).removeClass(CLASS_BANNEREDITOR_DRAGGING);
+            $canvas.find('.qor-bannereditor__button-inline').remove();
+            $canvas.find(CLASS_DRAGGABLE).removeClass(CLASS_BANNEREDITOR_DRAGGING);
             $target.addClass(CLASS_BANNEREDITOR_DRAGGING).append(QorBannerEditor.inlineEdit);
 
             return false;
@@ -242,6 +277,12 @@
             return false;
         },
 
+        showInlineEdit: function(e){
+            let $ele = $(e.target).closest(CLASS_DRAGGABLE);
+
+            this.showEditForm($ele.data(), $ele);
+        },
+
         showEditForm: function(data, $element) {
             let url = this.config.editURL.replace(/:id/, data.editId);
 
@@ -258,7 +299,7 @@
             ui.position.left = parseInt(ui.position.left, 10);
             ui.position.top = parseInt(ui.position.top, 10);
 
-            this.$element.find('.qor-bannereditor__draggable-coordinate').remove();
+            this.$canvas.find('.qor-bannereditor__draggable-coordinate').remove();
             ui.helper.addClass(CLASS_BANNEREDITOR_DRAGGING).append(window.Mustache.render(QorBannerEditor.dragCoordinate, ui.position));
             ui.helper.find('.qor-bannereditor__button-inline').hide();
         },
@@ -320,16 +361,20 @@
                 processData: false,
                 contentType: false,
                 success: function(data) {
-                    let $ele = $(data.Template);
+
+
+                    if (!data.Template){
+                        return;
+                    }
+
+                    let $ele = $(`<span class="${CLASS_DRAGGABLE.slice(1)}">${data.Template}</span>`);
 
                     if ($editElement && $editElement.length) {
                         let left = $editElement[0].style.left,
                             top = $editElement[0].style.top,
                             attrs = $editElement.prop("attributes");
 
-                        $ele
-                            .addClass('qor-bannereditor__draggable')
-                            .css({
+                        $ele.css({
                                 'position': 'absolute',
                                 'left': left,
                                 'top': top
@@ -347,8 +392,7 @@
 
                         });
 
-                        $ele
-                            .appendTo($body)
+                        $ele.appendTo($body)
                             .draggable({
                                 addClasses: false,
                                 distance: 10
@@ -365,9 +409,7 @@
 
 
                     } else {
-                        $ele
-                            .addClass('qor-bannereditor__draggable')
-                            .css({
+                        $ele.css({
                                 'position': 'absolute',
                                 'left': '10%',
                                 'top': '10%'
@@ -399,7 +441,6 @@
                 url = $target.data('banner-url'),
                 title = $target.data('title');
 
-            this.elementType = title;
             this.ajaxForm(url, title);
         },
 

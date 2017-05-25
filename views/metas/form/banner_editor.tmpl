@@ -1,11 +1,8 @@
 <div class="qor-field">
 
-  <div class="qor-field__show">
-    {{unsafe_raw .Value}}
-  </div>
+  <div class="qor-field__show"></div>
 
-  <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor">
-
+  <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor" data-stylesheet="/admin/assets/stylesheets/banner_editor_iframe.css?theme=banner_editor">
     <link rel="stylesheet" href="/admin/assets/stylesheets/banner_editor.css?theme=banner_editor" />
     <ul class="qor-bannereditor__toolbar clearfix">
       <li class="qor-bannereditor__toolbar-btns"></li>
@@ -14,7 +11,9 @@
       </li>
     </ul>
 
-    <div class="qor-bannereditor__canvas">{{unsafe_raw .Value}}</div>
+    <div class="qor-bannereditor__canvas qor-bannereditor__contents">
+      {{unsafe_raw .Value}}
+    </div>
 
     <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure}}" style="display: none;">{{unsafe_raw .Value}}</textarea>
 

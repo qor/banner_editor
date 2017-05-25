@@ -1,0 +1,139 @@
+@import "iframe";
+
+.qor-bannereditor {
+    position: relative;
+    overflow: hidden;
+
+    .qor-bannereditor__toolbar {
+        margin: 0 0 24px;
+        padding: 0;
+
+        button {
+            font-size: 12px;
+        }
+
+        li {
+            list-style: none;
+            display: inline-block;
+            vertical-align: middle;
+        }
+    }
+}
+
+
+.qor-bannereditor__canvas {
+    border: 2px dotted rgba(0,0,0,.2);
+    height: 300px;
+    position: relative;
+    margin: 0 auto;
+    overflow: hidden;
+    max-width: 1200px;
+    max-height: 1000px;
+    box-sizing: border-box;
+
+    h1, h1 small, h2 small, h3 small, h4 small, h5 small, h6 small{
+        letter-spacing: normal;
+    }
+
+    a:focus {
+        outline: 0;
+    }
+
+    .qor-bannereditor__draggable {
+        display: inline-block;
+        margin: 0;
+        padding: 0;
+    }
+
+     > *:not(.qor-bannereditor__bg),
+    .qor-bannereditor__bg > * {
+        border: 1px dotted transparent;
+        max-width: 100%;
+        cursor: move;
+    }
+
+    .qor-bannereditor__draggable-coordinate{
+        position: absolute;
+        top: -30px;
+        left: 0;
+        background: #333;
+        border-radius: 14px;
+        font-size: 12px;
+        line-height: 1;
+        color: #fff;
+        padding: 4px 8px;
+        em{
+            font-style: normal;
+            padding-left: 4px;
+        }
+        span{
+            margin-right: 8px;
+        }
+    }
+
+    .qor-bannereditor__button-inline {
+        position: absolute;
+        top: -49px;
+        right: -1px;
+        line-height: 1;
+        font-size: 0;
+        min-width: 80px;
+        padding: 8px;
+        button{
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            color: #333;
+        }
+
+        .qor-bannereditor__button-delete {
+            margin-left: 16px;
+            color: #f00;
+        }
+    }
+
+    .qor-bannereditor__dragging {
+        border-color: #0277bd;
+        z-index: 99;
+        .ui-resizable-e {
+            cursor: e-resize;
+            width: 7px;
+            right: -5px;
+            top: 0;
+            height: 100%;
+            background-color: transparent;
+            &::after{
+                content: "";
+                width: 7px;
+                height: 7px;
+                background-color: #fff;
+                border: 1px solid #3899ec;
+                border-radius: 50%;
+                position: absolute;
+                top: 50%;
+                right: 50%;
+                margin-top: -5px;
+                margin-right: -3px;
+            }
+        }
+    }
+
+    .draging {
+        border: 1px dotted rgba(0,0,0,.2);
+    }
+
+    .ui-resizable-handle {
+        position: absolute;
+        font-size: 0.1px;
+        display: block;
+        -ms-touch-action: none;
+        touch-action: none;
+        background-color: rgba(0,0,0,.2);
+    }
+
+    .ui-resizable-autohide .ui-resizable-handle,
+    .ui-resizable-disabled .ui-resizable-handle {
+        display: none;
+    }
+
+}
+
