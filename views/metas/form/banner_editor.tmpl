@@ -7,13 +7,11 @@
     <ul class="qor-bannereditor__toolbar clearfix">
       <li class="qor-bannereditor__toolbar-btns"></li>
       <li>
-        <button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__toolbar-image" data-banner-media-url="/admin/product_images" type="button">{{t "qor_admin.banner_editor.add_image" "Add Image"}}</button>
+        <button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__toolbar-image" data-select-Modal="selectone" data-banner-media-url="/admin/product_images" type="button">{{t "qor_admin.banner_editor.add_image" "Add Image"}}</button>
       </li>
     </ul>
 
-    <div class="qor-bannereditor__canvas qor-bannereditor__contents">
-      {{unsafe_raw .Value}}
-    </div>
+    <div class="qor-bannereditor__canvas qor-bannereditor__contents"></div>
 
     <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure}}" style="display: none;">{{unsafe_raw .Value}}</textarea>
 

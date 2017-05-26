@@ -1,6 +1,9 @@
 .qor-bannereditor {
     position: relative;
     overflow: hidden;
+    iframe{
+        margin: 0 auto;
+    }
 
     .qor-bannereditor__toolbar {
         margin: 0 0 24px;

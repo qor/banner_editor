@@ -43,12 +43,12 @@
         display: inline-block;
         margin: 0;
         padding: 0;
+        max-width: 96%;
     }
 
      > *:not(.qor-bannereditor__bg),
     .qor-bannereditor__bg > * {
         border: 1px dotted transparent;
-        max-width: 100%;
         cursor: move;
     }
 

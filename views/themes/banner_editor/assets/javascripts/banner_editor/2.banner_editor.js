@@ -29,7 +29,8 @@
         CLASS_BANNEREDITOR_BG = '.qor-bannereditor__bg',
         CLASS_BANNEREDITOR_IMAGE = '.qor-bannereditor__toolbar-image',
         CLASS_BANNEREDITOR_DRAGGING = 'qor-bannereditor__dragging',
-        CLASS_CANVAS = '.qor-bannereditor__canvas';
+        CLASS_CANVAS = '.qor-bannereditor__canvas',
+        CLASS_NEED_REMOVE = '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable';
 
     function getImgSize(url, callback) {
         let img = new Image();
@@ -57,34 +58,44 @@
                 config = {},
                 _this = this,
                 $canvas = $element.find(CLASS_CANVAS),
-                html = $canvas.clone(),
+                html = $(`<div class="qor-bannereditor__canvas">${$textarea.val()}</div>`),
                 $iframe = $('<iframe id="qor-bannereditor__iframe" width="100%" height="300px" />'),
                 configure = $textarea.data('configure');
 
             config.toolbar = configure.Elements;
             config.editURL = configure.EditUrl;
 
+            $canvas.hide();
+
             this.config = config;
             this.$textarea = $textarea;
 
-            $canvas.html('').removeClass('qor-bannereditor__canvas');
-            $iframe.appendTo($canvas);
+            $canvas.html($iframe).removeClass('qor-bannereditor__canvas');
 
             this.$iframe = $iframe;
 
-            $iframe.on('load', function() {
-                let $ele = $iframe.contents();
+            if ($('.qor-slideout').is(':visible')) {
+                // for sliderout
+                $iframe.ready(function() {
+                    _this.initIframe(html);
+                });
+            } else {
+                // for single page
+                $iframe.on('load', function() {
+                    _this.initIframe(html);
+                });
+            }
+        },
 
-                $ele.find('head').append(`<link rel="stylesheet" type="text/css" href="${$element.data('stylesheet')}">`);
+        initIframe: function(html){
+            let $ele = this.$iframe.contents();
+
+                $ele.find('head').append(`<link rel="stylesheet" type="text/css" href="${this.$element.data('stylesheet')}">`);
                 $ele.find('body').html(html);
-                _this.$bg = $ele.find(CLASS_BANNEREDITOR_BG);
-                _this.$canvas = $ele.find(CLASS_CANVAS);
-
-                _this.initBannerEditor();
-                _this.bind();
-
-            });
-
+                this.$bg = $ele.find(CLASS_BANNEREDITOR_BG);
+                this.$canvas = $ele.find(CLASS_CANVAS);
+                this.initBannerEditor();
+                this.bind();
         },
 
         bind: function() {
@@ -104,14 +115,7 @@
                 .on(EVENT_RESIZESTOP, CLASS_DRAGGABLE, this.handleResizeStop.bind(this))
                 .on(EVENT_DRAG, CLASS_DRAGGABLE, this.handleDrag.bind(this));
 
-            $canvas
-                .find(CLASS_DRAGGABLE).draggable({
-                    addClasses: false,
-                    distance: 10
-                })
-                .resizable({
-                    handles: "e"
-                });
+            $canvas.find(CLASS_DRAGGABLE).draggable(this.options.draggable).resizable(this.options.resizable);
 
             $(document)
                 .on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this))
@@ -133,6 +137,8 @@
                 this.$canvas.width($bg.data('image-width')).height($bg.data('image-height'));
                 this.$iframe.width($bg.data('image-width')).height($bg.data('image-height'));
             }
+
+            this.$element.find('.qor-bannereditor__contents').show();
 
         },
 
@@ -164,13 +170,12 @@
 
         openBottomSheets: function(e) {
             var $ele = $(e.target).closest(CLASS_BANNEREDITOR_IMAGE),
-                url = $ele.data('banner-media-url');
+                data = $ele.data();
+
             this.BottomSheets = $('body').data('qor.bottomsheets');
 
-            this.BottomSheets.open({
-                url: url,
-                ingoreSubmit: true
-            }, this.handleBannerImage.bind(this));
+            data.url = data.bannerMediaUrl;
+            this.BottomSheets.open(data, this.handleBannerImage.bind(this));
 
             return false;
 
@@ -221,7 +226,7 @@
 
             getImgSize(url, function(width, height) {
                 $canvas.width(width).height(height);
-                $iframe.width(width).height(height);
+                $iframe.width(width+4).height(height+4);
                 $bg.attr({
                     'data-image-width': width,
                     'data-image-height': height
@@ -326,7 +331,6 @@
 
             ui.helper.find('.qor-bannereditor__button-inline').show();
             ui.helper.find('.qor-bannereditor__draggable-coordinate').remove();
-
             this.setValue();
         },
 
@@ -335,6 +339,7 @@
                 helperWidth = ui.size.width / cWidth * 100 + '%';
 
             ui.helper.css('width', helperWidth);
+            this.setValue();
         },
 
         renderElement: function(e) {
@@ -346,9 +351,9 @@
                 $canvas = this.$canvas,
                 $bg = this.$bg,
                 $body = $bg.length ? $bg : $canvas,
-                $textarea = this.$textarea,
                 $popover = this.$popover,
-                $editElement = this.$editElement;
+                $editElement = this.$editElement,
+                options = this.options;
 
             if (!$form.length) {
                 return;
@@ -361,8 +366,6 @@
                 processData: false,
                 contentType: false,
                 success: function(data) {
-
-
                     if (!data.Template){
                         return;
                     }
@@ -372,12 +375,14 @@
                     if ($editElement && $editElement.length) {
                         let left = $editElement[0].style.left,
                             top = $editElement[0].style.top,
+                            width = $editElement[0].style.width,
                             attrs = $editElement.prop("attributes");
 
                         $ele.css({
                                 'position': 'absolute',
                                 'left': left,
-                                'top': top
+                                'top': top,
+                                'width': width
                             })
                             .attr('data-edit-id', data.ID);
 
@@ -392,21 +397,12 @@
 
                         });
 
-                        $ele.appendTo($body)
-                            .draggable({
-                                addClasses: false,
-                                distance: 10
-                            })
-                            .resizable({
-                                handles: "e"
-                            });
+                        $ele.appendTo($body).draggable(options.draggable).resizable(options.resizable);
 
-                        $textarea.val($canvas.html());
                         $popover.qorModal('hide');
 
                         $editElement.remove();
                         _this.$editElement = null;
-
 
                     } else {
                         $ele.css({
@@ -415,17 +411,9 @@
                                 'top': '10%'
                             })
                             .attr('data-edit-id', data.ID)
-                            .appendTo($body)
-                            .draggable({
-                                addClasses: false,
-                                distance: 10
-                            })
-                            .resizable({
-                                handles: "e"
-                            });
-                        $textarea.val($canvas.html());
-                        $popover.qorModal('hide');
+                            .appendTo($body).draggable(options.draggable).resizable(options.resizable);
 
+                        $popover.qorModal('hide');
                     }
 
                     _this.setValue();
@@ -446,10 +434,15 @@
 
         setValue: function() {
             let $html = this.$canvas.clone();
-            $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable');
-            $html.find('.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate').remove();
+            $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging');
+            $html.find(CLASS_NEED_REMOVE).remove();
             this.$textarea.val($html.html().replace(/&quot;/g,''));
         }
+    };
+
+    QorBannerEditor.DEFAULTS = {
+        'draggable' : { addClasses: false, distance: 10 },
+        'resizable' : { handles: "e" }
     };
 
     QorBannerEditor.toolbar = `[[#toolbar]]<button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__button" data-banner-url="[[CreateUrl]]" data-title="[[Name]]" type="button">[[Name]]</button>[[/toolbar]]`;
