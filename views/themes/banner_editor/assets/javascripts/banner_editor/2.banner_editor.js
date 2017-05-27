@@ -17,6 +17,7 @@
         EVENT_ENABLE = 'enable.' + NAMESPACE,
         EVENT_DISABLE = 'disable.' + NAMESPACE,
         EVENT_CLICK = 'click.' + NAMESPACE,
+        EVENT_KEYDOWN = 'keydown.'  + NAMESPACE,
         EVENT_DBCLICK = 'dblclick.' + NAMESPACE,
         EVENT_DRAGSTOP = 'dragstop.' + NAMESPACE,
         EVENT_RESIZESTOP = 'resizestop.' + NAMESPACE,
@@ -119,7 +120,74 @@
 
             $(document)
                 .on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this))
-                .on(EVENT_CLICK, this.hideElement.bind(this));
+                .on(EVENT_CLICK, this.hideElement.bind(this))
+                .on(EVENT_KEYDOWN, this.handleKeyupMove.bind(this));
+        },
+
+        handleKeyupMove: function(e) {
+            let keyCode = e.keyCode,
+                $canvas = this.$canvas,
+                $target = $canvas.find('.qor-bannereditor__dragging'),
+                cWidth = $canvas.width(),
+                cHeight = $canvas.height(),
+                oLeft = parseInt($target.attr('data-position-left'), 10),
+                oTop = parseInt($target.attr('data-position-top'), 10);
+
+            if (!$target.length) {
+                return;
+            }
+
+            // up arrow
+            if (keyCode == 38 & oTop >= 0) {
+                $target
+                    .css('top', (oTop - 1) / cHeight * 100 + '%')
+                    .attr({
+                        'data-position-top': oTop - 1
+                });
+                this.showCoordinate();
+            }
+
+            // down arrow
+            if (keyCode == 40 & oTop <= (cHeight - $target.height())) {
+                $target
+                    .css('top', (oTop + 1) / cHeight * 100 + '%')
+                    .attr({
+                        'data-position-top': oTop + 1
+                });
+                this.showCoordinate();
+            }
+
+            // left arrow
+            if (keyCode == 37 & oLeft >= 0) {
+                $target
+                    .css('left', (oLeft - 1) / cWidth * 100 + '%')
+                    .attr({
+                        'data-position-left': oLeft - 1
+                });
+                this.showCoordinate();
+            }
+
+            // right arrow
+            if (keyCode == 39 & oLeft <= (cWidth - $target.width())) {
+                $target
+                    .css('left', (oLeft + 1) / cWidth * 100 + '%')
+                    .attr({
+                        'data-position-left': oLeft + 1
+                });
+                this.showCoordinate();
+            }
+        },
+
+        showCoordinate: function(){
+            let $target = this.$canvas.find('.qor-bannereditor__dragging'),
+                position = {};
+
+            position.left = parseInt($target.attr('data-position-left'), 10),
+            position.top = parseInt($target.attr('data-position-top'), 10);
+
+            this.$canvas.find('.qor-bannereditor__draggable-coordinate').remove();
+            $target.append(window.Mustache.render(QorBannerEditor.dragCoordinate, position));
+            $target.find('.qor-bannereditor__button-inline').hide();
         },
 
         initBannerEditor: function() {
@@ -239,7 +307,7 @@
             let $target = $(e.target).closest(CLASS_DRAGGABLE),
                 $canvas = this.$canvas;
 
-            $canvas.find('.qor-bannereditor__button-inline').remove();
+            $canvas.find('.qor-bannereditor__button-inline, .qor-bannereditor__draggable-coordinate').remove();
             $canvas.find(CLASS_DRAGGABLE).removeClass(CLASS_BANNEREDITOR_DRAGGING);
             $target.addClass(CLASS_BANNEREDITOR_DRAGGING).append(QorBannerEditor.inlineEdit);
 
@@ -304,6 +372,12 @@
             ui.position.left = parseInt(ui.position.left, 10);
             ui.position.top = parseInt(ui.position.top, 10);
 
+            if (ui.position.top < 40){
+                ui.helper.addClass('qor-bannereditor__draggable-top');
+            } else {
+                ui.helper.removeClass('qor-bannereditor__draggable-top');
+            }
+
             this.$canvas.find('.qor-bannereditor__draggable-coordinate').remove();
             ui.helper.addClass(CLASS_BANNEREDITOR_DRAGGING).append(window.Mustache.render(QorBannerEditor.dragCoordinate, ui.position));
             ui.helper.find('.qor-bannereditor__button-inline').hide();
@@ -321,8 +395,8 @@
                 };
 
             helper.css(css).attr({
-                'data-position-left': helperLeft,
-                'data-position-top': helperTop
+                'data-position-left': ui.position.left,
+                'data-position-top': ui.position.top
             });
 
             if (!helper.find('.qor-bannereditor__button-inline').length) {
@@ -441,7 +515,7 @@
     };
 
     QorBannerEditor.DEFAULTS = {
-        'draggable' : { addClasses: false, distance: 10 },
+        'draggable' : { addClasses: false, distance: 10, snap: true, containment: 'parent', scroll: false },
         'resizable' : { handles: "e" }
     };
 

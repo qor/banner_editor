@@ -91,6 +91,16 @@
         }
     }
 
+    .qor-bannereditor__draggable-top{
+        .qor-bannereditor__draggable-coordinate, .qor-bannereditor__button-inline{
+            top: auto;
+            bottom: -30px;
+        }
+        .qor-bannereditor__button-inline{
+            bottom: -45px;
+        }
+    }
+
     .qor-bannereditor__dragging {
         border-color: #0277bd;
         z-index: 99;
