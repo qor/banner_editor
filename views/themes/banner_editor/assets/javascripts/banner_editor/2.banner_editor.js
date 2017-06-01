@@ -124,6 +124,31 @@
                 .on(EVENT_KEYDOWN, this.handleKeyupMove.bind(this));
         },
 
+        unbind: function() {
+            let $canvas = this.$canvas;
+
+            this.$element
+                .off(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
+                .off(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this));
+
+            $canvas
+                .off(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
+                .off(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
+                .off(EVENT_CLICK, CLASS_DRAGGABLE, this.handleInlineEdit.bind(this))
+                .off(EVENT_DBCLICK, CLASS_DRAGGABLE, this.showInlineEdit.bind(this))
+                .off(EVENT_CLICK, '.qor-bannereditor__button-inline button', this.showEdit.bind(this))
+                .off(EVENT_DRAGSTOP, CLASS_DRAGGABLE, this.handleDragStop.bind(this))
+                .off(EVENT_RESIZESTOP, CLASS_DRAGGABLE, this.handleResizeStop.bind(this))
+                .off(EVENT_DRAG, CLASS_DRAGGABLE, this.handleDrag.bind(this));
+
+            $canvas.find(CLASS_DRAGGABLE).draggable('destroy').resizable('destroy');
+
+            $(document)
+                .off(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this))
+                .off(EVENT_CLICK, this.hideElement.bind(this))
+                .off(EVENT_KEYDOWN, this.handleKeyupMove.bind(this));
+        },
+
         handleKeyupMove: function(e) {
             let keyCode = e.keyCode,
                 $canvas = this.$canvas,
@@ -202,8 +227,16 @@
             }
 
             if ($bg.length && $bg.data('image-width')) {
-                this.$canvas.width($bg.data('image-width')).height($bg.data('image-height'));
-                this.$iframe.width($bg.data('image-width')).height($bg.data('image-height'));
+                let bWidth = $bg.data('image-width'),
+                    bHeight = $bg.data('image-height');
+
+                this.$element.attr({
+                    'data-image-width': bWidth,
+                    'data-image-height': bHeight
+                });
+
+                this.$canvas.width(bWidth).height(bHeight);
+                this.$iframe.width(bWidth).height(bHeight);
             }
 
             this.$element.find('.qor-bannereditor__contents').show();
@@ -290,11 +323,16 @@
         resetBoxSize: function(url, $bg) {
             let $canvas = this.$canvas,
                 $iframe = this.$iframe,
+                $element = this.$element,
                 _this = this;
 
             getImgSize(url, function(width, height) {
                 $canvas.width(width).height(height);
                 $iframe.width(width+4).height(height+4);
+                $element.attr({
+                    'data-image-width': width,
+                    'data-image-height': height
+                });
                 $bg.attr({
                     'data-image-width': width,
                     'data-image-height': height
@@ -489,7 +527,6 @@
 
                         $popover.qorModal('hide');
                     }
-
                     _this.setValue();
 
                 }
@@ -508,9 +545,14 @@
 
         setValue: function() {
             let $html = this.$canvas.clone();
-            $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging');
+            $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging qor-bannereditor__dragging');
             $html.find(CLASS_NEED_REMOVE).remove();
             this.$textarea.val($html.html().replace(/&quot;/g,''));
+        },
+
+        destroy: function () {
+          this.unbind();
+          this.$element.removeData(NAMESPACE);
         }
     };
 

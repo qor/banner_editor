@@ -3,6 +3,11 @@
     overflow: hidden;
     iframe{
         margin: 0 auto;
+        max-width: 1200px;
+    }
+
+    .qor-bannereditor__contents{
+        background: url(../images/bg-transparents.png);
     }
 
     .qor-bannereditor__toolbar {
@@ -20,5 +25,3 @@
         }
     }
 }
-
-@import 'jquery.ui.ruler';
