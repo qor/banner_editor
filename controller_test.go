@@ -11,6 +11,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/qor/admin"
+	"github.com/qor/banner_editor/test/config/bindatafs"
 	"github.com/qor/qor"
 	"github.com/qor/qor/test/utils"
 )
@@ -23,7 +24,6 @@ var (
 )
 
 func init() {
-
 	// Banner Editor
 	type bannerEditorArgument struct {
 		Value string
@@ -87,6 +87,7 @@ func TestControllerCRUD(t *testing.T) {
 	resp, _ = http.Get(Server.URL + "/admin/qor_banner_editor_settings/new?kind=Button")
 	assetPageHaveAttributes(t, resp, "Text", "Link")
 
+	// Test create setting via HTML request
 	resp, _ = http.PostForm(Server.URL+"/admin/qor_banner_editor_settings?kind=Button", url.Values{
 		"QorResource.Kind":                  {"Button"},
 		"QorResource.SerializableMeta.Text": {"Search by Google"},
@@ -101,6 +102,7 @@ func TestControllerCRUD(t *testing.T) {
 	assetPageHaveText(t, string(body), "Search by Google")
 	assetPageHaveText(t, string(body), "http://www.google.com")
 
+	// Test create setting via JSON request
 	resp, _ = http.PostForm(Server.URL+"/admin/qor_banner_editor_settings.json?kind=Button", url.Values{
 		"QorResource.Kind":                  {"Button"},
 		"QorResource.SerializableMeta.Text": {"Search by Yahoo"},
@@ -109,6 +111,7 @@ func TestControllerCRUD(t *testing.T) {
 	body, _ = ioutil.ReadAll(resp.Body)
 	assetPageHaveText(t, string(body), `{"ID":2,"Template":"<a style='color:Red' href='http://www.yahoo.com'>Search by Yahoo</a>\n"`)
 
+	// Test update setting via JSON request
 	resp, _ = http.PostForm(Server.URL+"/admin/qor_banner_editor_settings/2.json?kind=Button", url.Values{
 		"_method":                           {"PUT"},
 		"QorResource.Kind":                  {"Button"},
@@ -117,6 +120,16 @@ func TestControllerCRUD(t *testing.T) {
 	})
 	body, _ = ioutil.ReadAll(resp.Body)
 	assetPageHaveText(t, string(body), `{"ID":2,"Template":"<a style='color:Red' href='http://www.bing.com'>Search by Bing</a>\n"`)
+
+	// Test Customize AssetFS
+	SetAssetFS(bindatafs.AssetFS)
+	resp, _ = http.PostForm(Server.URL+"/admin/qor_banner_editor_settings.json?kind=Button", url.Values{
+		"QorResource.Kind":                  {"Button"},
+		"QorResource.SerializableMeta.Text": {"Search by Baidu"},
+		"QorResource.SerializableMeta.Link": {"http://www.baidu.com"},
+	})
+	body, _ = ioutil.ReadAll(resp.Body)
+	assetPageHaveText(t, string(body), `{"ID":3,"Template":"<a style='color:Red' href='http://www.baidu.com'>Search by Baidu</a>\n"`)
 }
 
 func assetPageHaveText(t *testing.T, body string, text string) {
