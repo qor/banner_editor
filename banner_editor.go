@@ -13,7 +13,13 @@ import (
 
 var (
 	registeredElements []*Element
+	viewPaths          []string
+	assetFileSystem    admin.AssetFSInterface
 )
+
+func init() {
+	assetFileSystem = &admin.AssetFileSystem{}
+}
 
 type BannerEditorConfig struct {
 	Elements        []string

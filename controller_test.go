@@ -44,10 +44,11 @@ func init() {
 	buttonRes := Admin.NewResource(&buttonSetting{})
 	buttonRes.Meta(&admin.Meta{Name: "Text"})
 	buttonRes.Meta(&admin.Meta{Name: "Link"})
+	RegisterViewPath("github.com/qor/banner_editor/test/views")
 
 	RegisterElement(&Element{
 		Name:     "Sub Header",
-		Template: "<em style=\"color: {{.Color}};\">{{.Text}}</em>",
+		Template: "sub_header",
 		Resource: subHeaderRes,
 		Context: func(c *admin.Context, r interface{}) interface{} {
 			return r.(QorBannerEditorSettingInterface).GetSerializableArgument(r.(QorBannerEditorSettingInterface))
@@ -55,7 +56,7 @@ func init() {
 	})
 	RegisterElement(&Element{
 		Name:     "Button",
-		Template: "<a style='color:{{.Color}}' href='{{.Link}}'>{{.Text}}</a>",
+		Template: "button",
 		Resource: buttonRes,
 		Context: func(c *admin.Context, r interface{}) interface{} {
 			setting := r.(QorBannerEditorSettingInterface).GetSerializableArgument(r.(QorBannerEditorSettingInterface)).(*buttonSetting)
@@ -106,7 +107,7 @@ func TestControllerCRUD(t *testing.T) {
 		"QorResource.SerializableMeta.Link": {"http://www.yahoo.com"},
 	})
 	body, _ = ioutil.ReadAll(resp.Body)
-	assetPageHaveText(t, string(body), `{"ID":2,"Template":"<a style='color:Red' href='http://www.yahoo.com'>Search by Yahoo</a>"`)
+	assetPageHaveText(t, string(body), `{"ID":2,"Template":"<a style='color:Red' href='http://www.yahoo.com'>Search by Yahoo</a>\n"`)
 
 	resp, _ = http.PostForm(Server.URL+"/admin/qor_banner_editor_settings/2.json?kind=Button", url.Values{
 		"_method":                           {"PUT"},
@@ -115,7 +116,7 @@ func TestControllerCRUD(t *testing.T) {
 		"QorResource.SerializableMeta.Link": {"http://www.bing.com"},
 	})
 	body, _ = ioutil.ReadAll(resp.Body)
-	assetPageHaveText(t, string(body), `{"ID":2,"Template":"<a style='color:Red' href='http://www.bing.com'>Search by Bing</a>"`)
+	assetPageHaveText(t, string(body), `{"ID":2,"Template":"<a style='color:Red' href='http://www.bing.com'>Search by Bing</a>\n"`)
 }
 
 func assetPageHaveText(t *testing.T, body string, text string) {
