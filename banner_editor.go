@@ -13,7 +13,13 @@ import (
 
 var (
 	registeredElements []*Element
+	viewPaths          []string
+	assetFileSystem    admin.AssetFSInterface
 )
+
+func init() {
+	assetFileSystem = &admin.AssetFileSystem{}
+}
 
 type BannerEditorConfig struct {
 	Elements        []string
@@ -65,14 +71,25 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 		router.Put(fmt.Sprintf("%v/%v", res.ToParam(), res.ParamIDName()), Update, &admin.RouteConfig{Resource: res})
 		Admin.RegisterResourceRouters(res, "read", "update")
 
-		Admin.RegisterFuncMap("banner_editor_configure", func() string {
+		Admin.RegisterFuncMap("banner_editor_configure", func(config *BannerEditorConfig) string {
 			type element struct {
 				Name      string
 				CreateUrl string
 			}
-			elements := []element{}
-			newElementURL := router.Prefix + fmt.Sprintf("/%v/new", res.ToParam())
-			for _, e := range registeredElements {
+			var (
+				selectedElements = registeredElements
+				elements         = []element{}
+				newElementURL    = router.Prefix + fmt.Sprintf("/%v/new", res.ToParam())
+			)
+			if len(config.Elements) != 0 {
+				selectedElements = []*Element{}
+				for _, name := range config.Elements {
+					if e := GetElement(name); e != nil {
+						selectedElements = append(selectedElements, e)
+					}
+				}
+			}
+			for _, e := range selectedElements {
 				elements = append(elements, element{Name: e.Name, CreateUrl: fmt.Sprintf("%v?kind=%v", newElementURL, template.URLQueryEscaper(e.Name))})
 			}
 			results, err := json.Marshal(struct {

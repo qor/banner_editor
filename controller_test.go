@@ -11,6 +11,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/qor/admin"
+	"github.com/qor/banner_editor/test/config/bindatafs"
 	"github.com/qor/qor"
 	"github.com/qor/qor/test/utils"
 )
@@ -22,12 +23,12 @@ var (
 	Admin  = admin.New(&qor.Config{DB: db})
 )
 
-func init() {
+type bannerEditorArgument struct {
+	Value string
+}
 
+func init() {
 	// Banner Editor
-	type bannerEditorArgument struct {
-		Value string
-	}
 	type subHeaderSetting struct {
 		Text  string
 		Color string
@@ -44,10 +45,11 @@ func init() {
 	buttonRes := Admin.NewResource(&buttonSetting{})
 	buttonRes.Meta(&admin.Meta{Name: "Text"})
 	buttonRes.Meta(&admin.Meta{Name: "Link"})
+	RegisterViewPath("github.com/qor/banner_editor/test/views")
 
 	RegisterElement(&Element{
 		Name:     "Sub Header",
-		Template: "<em style=\"color: {{.Color}};\">{{.Text}}</em>",
+		Template: "sub_header",
 		Resource: subHeaderRes,
 		Context: func(c *admin.Context, r interface{}) interface{} {
 			return r.(QorBannerEditorSettingInterface).GetSerializableArgument(r.(QorBannerEditorSettingInterface))
@@ -55,7 +57,7 @@ func init() {
 	})
 	RegisterElement(&Element{
 		Name:     "Button",
-		Template: "<a style='color:{{.Color}}' href='{{.Link}}'>{{.Text}}</a>",
+		Template: "button",
 		Resource: buttonRes,
 		Context: func(c *admin.Context, r interface{}) interface{} {
 			setting := r.(QorBannerEditorSettingInterface).GetSerializableArgument(r.(QorBannerEditorSettingInterface)).(*buttonSetting)
@@ -63,6 +65,7 @@ func init() {
 			return setting
 		},
 	})
+
 	bannerEditorResource := Admin.AddResource(&bannerEditorArgument{})
 	bannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{}})
 
@@ -74,9 +77,19 @@ func init() {
 }
 
 func TestGetConfig(t *testing.T) {
-	resp, _ := http.Get(Server.URL + "/admin/banner_editor_arguments/new")
-	body, _ := ioutil.ReadAll(resp.Body)
-	assetPageHaveText(t, string(body), `data-configure="{&#34;Elements&#34;:[{&#34;Name&#34;:&#34;Sub Header&#34;,&#34;CreateUrl&#34;:&#34;/admin/qor_banner_editor_settings/new?kind=Sub&#43;Header&#34;},{&#34;Name&#34;:&#34;Button&#34;,&#34;CreateUrl&#34;:&#34;/admin/qor_banner_editor_settings/new?kind=Button&#34;}],&#34;EditUrl&#34;:&#34;/admin/qor_banner_editor_settings/:id/edit&#34;}"`)
+	otherBannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "other_banner_editor_argument"})
+	otherBannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{
+		Elements: []string{"Sub Header"},
+	}})
+
+	anotherBannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "another_banner_editor_argument"})
+	anotherBannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{
+		Elements: []string{"Button"},
+	}})
+
+	assertConfigIncludeElements(t, "banner_editor_arguments", []string{"Sub Header", "Button"})
+	assertConfigIncludeElements(t, "other_banner_editor_arguments", []string{"Sub Header"})
+	assertConfigIncludeElements(t, "another_banner_editor_arguments", []string{"Button"})
 }
 
 func TestControllerCRUD(t *testing.T) {
@@ -86,6 +99,7 @@ func TestControllerCRUD(t *testing.T) {
 	resp, _ = http.Get(Server.URL + "/admin/qor_banner_editor_settings/new?kind=Button")
 	assetPageHaveAttributes(t, resp, "Text", "Link")
 
+	// Test create setting via HTML request
 	resp, _ = http.PostForm(Server.URL+"/admin/qor_banner_editor_settings?kind=Button", url.Values{
 		"QorResource.Kind":                  {"Button"},
 		"QorResource.SerializableMeta.Text": {"Search by Google"},
@@ -100,14 +114,16 @@ func TestControllerCRUD(t *testing.T) {
 	assetPageHaveText(t, string(body), "Search by Google")
 	assetPageHaveText(t, string(body), "http://www.google.com")
 
+	// Test create setting via JSON request
 	resp, _ = http.PostForm(Server.URL+"/admin/qor_banner_editor_settings.json?kind=Button", url.Values{
 		"QorResource.Kind":                  {"Button"},
 		"QorResource.SerializableMeta.Text": {"Search by Yahoo"},
 		"QorResource.SerializableMeta.Link": {"http://www.yahoo.com"},
 	})
 	body, _ = ioutil.ReadAll(resp.Body)
-	assetPageHaveText(t, string(body), `{"ID":2,"Template":"<a style='color:Red' href='http://www.yahoo.com'>Search by Yahoo</a>"`)
+	assetPageHaveText(t, string(body), `{"ID":2,"Template":"<a style='color:Red' href='http://www.yahoo.com'>Search by Yahoo</a>\n"`)
 
+	// Test update setting via JSON request
 	resp, _ = http.PostForm(Server.URL+"/admin/qor_banner_editor_settings/2.json?kind=Button", url.Values{
 		"_method":                           {"PUT"},
 		"QorResource.Kind":                  {"Button"},
@@ -115,7 +131,17 @@ func TestControllerCRUD(t *testing.T) {
 		"QorResource.SerializableMeta.Link": {"http://www.bing.com"},
 	})
 	body, _ = ioutil.ReadAll(resp.Body)
-	assetPageHaveText(t, string(body), `{"ID":2,"Template":"<a style='color:Red' href='http://www.bing.com'>Search by Bing</a>"`)
+	assetPageHaveText(t, string(body), `{"ID":2,"Template":"<a style='color:Red' href='http://www.bing.com'>Search by Bing</a>\n"`)
+
+	// Test Customize AssetFS
+	SetAssetFS(bindatafs.AssetFS)
+	resp, _ = http.PostForm(Server.URL+"/admin/qor_banner_editor_settings.json?kind=Button", url.Values{
+		"QorResource.Kind":                  {"Button"},
+		"QorResource.SerializableMeta.Text": {"Search by Baidu"},
+		"QorResource.SerializableMeta.Link": {"http://www.baidu.com"},
+	})
+	body, _ = ioutil.ReadAll(resp.Body)
+	assetPageHaveText(t, string(body), `{"ID":3,"Template":"<a style='color:Red' href='http://www.baidu.com'>Search by Baidu</a>\n"`)
 }
 
 func assetPageHaveText(t *testing.T, body string, text string) {
@@ -131,4 +157,15 @@ func assetPageHaveAttributes(t *testing.T, resp *http.Response, attributes ...st
 			t.Error(color.RedString("PageHaveAttrributes: expect page have attributes %v, but got %v", attr, string(body)))
 		}
 	}
+}
+
+func assertConfigIncludeElements(t *testing.T, resourceName string, elements []string) {
+	resp, _ := http.Get(fmt.Sprintf("%v/admin/%v/new", Server.URL, resourceName))
+	body, _ := ioutil.ReadAll(resp.Body)
+	results := []string{}
+	for _, elm := range elements {
+		results = append(results, fmt.Sprintf("{&#34;Name&#34;:&#34;%v&#34;,&#34;CreateUrl&#34;:&#34;/admin/qor_banner_editor_settings/new?kind=%v&#34;}", elm, strings.Replace(elm, " ", "&#43;", -1)))
+	}
+	resultStr := strings.Join(results, ",")
+	assetPageHaveText(t, string(body), fmt.Sprintf("data-configure=\"{&#34;Elements&#34;:[%v],&#34;EditUrl&#34;:&#34;/admin/qor_banner_editor_settings/:id/edit&#34;}\"", resultStr))
 }

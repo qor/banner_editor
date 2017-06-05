@@ -29,15 +29,14 @@ func Create(context *admin.Context) {
 		result  = res.NewStruct()
 		kind    = context.Request.Form.Get("QorResource.Kind")
 		element = GetElement(kind)
-		t       = template.Must(template.New("Template").Parse(element.Template))
-		html    = bytes.Buffer{}
 	)
 	if context.AddError(res.Decode(context.Context, result)); !context.HasError() {
 		context.AddError(res.CallSave(result, context.Context))
 	}
 
 	c := element.Context(context, result)
-	if err := t.Execute(&html, c); err != nil {
+	html, err := render(element.Template, c)
+	if err != nil {
 		context.AddError(errors.New(fmt.Sprintf("BannerEditor: can't parse %v's template, got %v", kind, err)))
 	}
 	if context.HasError() {
@@ -67,8 +66,8 @@ func Update(context *admin.Context) {
 		res     = context.Resource
 		kind    = context.Request.Form.Get("QorResource.Kind")
 		element = GetElement(kind)
-		t       = template.Must(template.New("Template").Parse(element.Template))
-		html    = bytes.Buffer{}
+		html    template.HTML
+		err     error
 	)
 	result, err := context.FindOne()
 
@@ -80,7 +79,8 @@ func Update(context *admin.Context) {
 		}
 
 		c := element.Context(context, result)
-		if err := t.Execute(&html, c); err != nil {
+		html, err = render(element.Template, c)
+		if err != nil {
 			context.AddError(errors.New(fmt.Sprintf("BannerEditor: can't parse %v's template, got %v", kind, err)))
 		}
 	}
@@ -106,16 +106,16 @@ func Update(context *admin.Context) {
 	}
 }
 
-func settingJSON(html bytes.Buffer, result interface{}) ([]byte, error) {
+func settingJSON(html template.HTML, result interface{}) ([]byte, error) {
 	jsonValue := &bytes.Buffer{}
 	encoder := json.NewEncoder(jsonValue)
 	encoder.SetEscapeHTML(false)
 	err := encoder.Encode(struct {
 		ID       uint
-		Template string
+		Template template.HTML
 	}{
 		ID:       result.(QorBannerEditorSettingInterface).GetID(),
-		Template: html.String(),
+		Template: html,
 	})
 	if err != nil {
 		return nil, err
