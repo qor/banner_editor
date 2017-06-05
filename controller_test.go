@@ -23,11 +23,12 @@ var (
 	Admin  = admin.New(&qor.Config{DB: db})
 )
 
+type bannerEditorArgument struct {
+	Value string
+}
+
 func init() {
 	// Banner Editor
-	type bannerEditorArgument struct {
-		Value string
-	}
 	type subHeaderSetting struct {
 		Text  string
 		Color string
@@ -64,6 +65,7 @@ func init() {
 			return setting
 		},
 	})
+
 	bannerEditorResource := Admin.AddResource(&bannerEditorArgument{})
 	bannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{}})
 
@@ -75,9 +77,19 @@ func init() {
 }
 
 func TestGetConfig(t *testing.T) {
-	resp, _ := http.Get(Server.URL + "/admin/banner_editor_arguments/new")
-	body, _ := ioutil.ReadAll(resp.Body)
-	assetPageHaveText(t, string(body), `data-configure="{&#34;Elements&#34;:[{&#34;Name&#34;:&#34;Sub Header&#34;,&#34;CreateUrl&#34;:&#34;/admin/qor_banner_editor_settings/new?kind=Sub&#43;Header&#34;},{&#34;Name&#34;:&#34;Button&#34;,&#34;CreateUrl&#34;:&#34;/admin/qor_banner_editor_settings/new?kind=Button&#34;}],&#34;EditUrl&#34;:&#34;/admin/qor_banner_editor_settings/:id/edit&#34;}"`)
+	otherBannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "other_banner_editor_argument"})
+	otherBannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{
+		Elements: []string{"Sub Header"},
+	}})
+
+	anotherBannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "another_banner_editor_argument"})
+	anotherBannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{
+		Elements: []string{"Button"},
+	}})
+
+	assertConfigIncludeElements(t, "banner_editor_arguments", []string{"Sub Header", "Button"})
+	assertConfigIncludeElements(t, "other_banner_editor_arguments", []string{"Sub Header"})
+	assertConfigIncludeElements(t, "another_banner_editor_arguments", []string{"Button"})
 }
 
 func TestControllerCRUD(t *testing.T) {
@@ -145,4 +157,15 @@ func assetPageHaveAttributes(t *testing.T, resp *http.Response, attributes ...st
 			t.Error(color.RedString("PageHaveAttrributes: expect page have attributes %v, but got %v", attr, string(body)))
 		}
 	}
+}
+
+func assertConfigIncludeElements(t *testing.T, resourceName string, elements []string) {
+	resp, _ := http.Get(fmt.Sprintf("%v/admin/%v/new", Server.URL, resourceName))
+	body, _ := ioutil.ReadAll(resp.Body)
+	results := []string{}
+	for _, elm := range elements {
+		results = append(results, fmt.Sprintf("{&#34;Name&#34;:&#34;%v&#34;,&#34;CreateUrl&#34;:&#34;/admin/qor_banner_editor_settings/new?kind=%v&#34;}", elm, strings.Replace(elm, " ", "&#43;", -1)))
+	}
+	resultStr := strings.Join(results, ",")
+	assetPageHaveText(t, string(body), fmt.Sprintf("data-configure=\"{&#34;Elements&#34;:[%v],&#34;EditUrl&#34;:&#34;/admin/qor_banner_editor_settings/:id/edit&#34;}\"", resultStr))
 }
