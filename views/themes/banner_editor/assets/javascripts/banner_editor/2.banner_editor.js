@@ -480,7 +480,6 @@
                 processData: false,
                 contentType: false,
                 success: function(data) {
-                    console.log(data)
                     if (!data.Template){
                         return;
                     }
