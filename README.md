@@ -4,7 +4,7 @@ A visual editor to design a banner with customize elements, e.g. Text, Button, e
 
 ## Documentation
 
-<https://doc.getqor.com/helpers/banner_editor.html>
+<https://doc.getqor.com/metas/banner-editor.html>
 
 ## License
 
