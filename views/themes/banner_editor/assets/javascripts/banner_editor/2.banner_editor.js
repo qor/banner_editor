@@ -465,7 +465,9 @@
                 $body = $bg.length ? $bg : $canvas,
                 $popover = this.$popover,
                 $editElement = this.$editElement,
-                options = this.options;
+                options = this.options,
+                eleID = `qor-bannereditor__${(Math.random() + 1).toString(36).substring(7)}`;
+
 
             if (!$form.length) {
                 return;
@@ -478,11 +480,12 @@
                 processData: false,
                 contentType: false,
                 success: function(data) {
+                    console.log(data)
                     if (!data.Template){
                         return;
                     }
 
-                    let $ele = $(`<span class="${CLASS_DRAGGABLE.slice(1)}">${data.Template}</span>`);
+                    let $ele = $(`<span id="${eleID}" class="${CLASS_DRAGGABLE.slice(1)}">${data.Template}</span>`);
 
                     if ($editElement && $editElement.length) {
                         let left = $editElement[0].style.left,
