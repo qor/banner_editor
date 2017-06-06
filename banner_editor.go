@@ -21,25 +21,25 @@ func init() {
 	assetFileSystem = &admin.AssetFileSystem{}
 }
 
+// BannerEditorConfig configure display elements and setting model
 type BannerEditorConfig struct {
 	Elements        []string
 	SettingResource *admin.Resource
 }
 
+// QorBannerEditorSettingInterface interface to support customize setting model
 type QorBannerEditorSettingInterface interface {
 	GetID() uint
 	serializable_meta.SerializableMetaInterface
 }
 
+// QorBannerEditorSetting default setting model
 type QorBannerEditorSetting struct {
 	gorm.Model
 	serializable_meta.SerializableMeta
 }
 
-func (setting QorBannerEditorSetting) GetID() uint {
-	return setting.ID
-}
-
+// Element represent a button/element in banner_editor toolbar
 type Element struct {
 	Name     string
 	Template string
@@ -51,10 +51,12 @@ func init() {
 	admin.RegisterViewPath("github.com/qor/banner_editor/views")
 }
 
+// RegisterElement register a element
 func RegisterElement(e *Element) {
 	registeredElements = append(registeredElements, e)
 }
 
+// ConfigureQorMeta configure route and funcmap for banner_editor meta
 func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 	if meta, ok := metaor.(*admin.Meta); ok {
 		meta.Type = "banner_editor"
@@ -74,7 +76,7 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 		Admin.RegisterFuncMap("banner_editor_configure", func(config *BannerEditorConfig) string {
 			type element struct {
 				Name      string
-				CreateUrl string
+				CreateURL string
 			}
 			var (
 				selectedElements = registeredElements
@@ -90,14 +92,14 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 				}
 			}
 			for _, e := range selectedElements {
-				elements = append(elements, element{Name: e.Name, CreateUrl: fmt.Sprintf("%v?kind=%v", newElementURL, template.URLQueryEscaper(e.Name))})
+				elements = append(elements, element{Name: e.Name, CreateURL: fmt.Sprintf("%v?kind=%v", newElementURL, template.URLQueryEscaper(e.Name))})
 			}
 			results, err := json.Marshal(struct {
 				Elements []element
-				EditUrl  string
+				EditURL  string
 			}{
 				Elements: elements,
-				EditUrl:  fmt.Sprintf("%v/%v/:id/edit", router.Prefix, res.ToParam()),
+				EditURL:  fmt.Sprintf("%v/%v/:id/edit", router.Prefix, res.ToParam()),
 			})
 			if err != nil {
 				return err.Error()
@@ -107,6 +109,7 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 	}
 }
 
+// GetElement returnn element struct by name
 func GetElement(name string) *Element {
 	for _, e := range registeredElements {
 		if e.Name == name {
@@ -116,6 +119,12 @@ func GetElement(name string) *Element {
 	return nil
 }
 
+// GetID return setting ID
+func (setting QorBannerEditorSetting) GetID() uint {
+	return setting.ID
+}
+
+// GetSerializableArgumentResource return setting's resource
 func (setting QorBannerEditorSetting) GetSerializableArgumentResource() *admin.Resource {
 	element := GetElement(setting.Kind)
 	if element != nil {

@@ -164,8 +164,8 @@ func assertConfigIncludeElements(t *testing.T, resourceName string, elements []s
 	body, _ := ioutil.ReadAll(resp.Body)
 	results := []string{}
 	for _, elm := range elements {
-		results = append(results, fmt.Sprintf("{&#34;Name&#34;:&#34;%v&#34;,&#34;CreateUrl&#34;:&#34;/admin/qor_banner_editor_settings/new?kind=%v&#34;}", elm, strings.Replace(elm, " ", "&#43;", -1)))
+		results = append(results, fmt.Sprintf("{&#34;Name&#34;:&#34;%v&#34;,&#34;CreateURL&#34;:&#34;/admin/qor_banner_editor_settings/new?kind=%v&#34;}", elm, strings.Replace(elm, " ", "&#43;", -1)))
 	}
 	resultStr := strings.Join(results, ",")
-	assetPageHaveText(t, string(body), fmt.Sprintf("data-configure=\"{&#34;Elements&#34;:[%v],&#34;EditUrl&#34;:&#34;/admin/qor_banner_editor_settings/:id/edit&#34;}\"", resultStr))
+	assetPageHaveText(t, string(body), fmt.Sprintf("data-configure=\"{&#34;Elements&#34;:[%v],&#34;EditURL&#34;:&#34;/admin/qor_banner_editor_settings/:id/edit&#34;}\"", resultStr))
 }

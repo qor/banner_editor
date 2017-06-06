@@ -64,7 +64,7 @@
                 configure = $textarea.data('configure');
 
             config.toolbar = configure.Elements;
-            config.editURL = configure.EditUrl;
+            config.editURL = configure.EditURL;
 
             $canvas.hide();
 
@@ -563,7 +563,7 @@
         'resizable' : { handles: "e" }
     };
 
-    QorBannerEditor.toolbar = `[[#toolbar]]<button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__button" data-banner-url="[[CreateUrl]]" data-title="[[Name]]" type="button">[[Name]]</button>[[/toolbar]]`;
+    QorBannerEditor.toolbar = `[[#toolbar]]<button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__button" data-banner-url="[[CreateURL]]" data-title="[[Name]]" type="button">[[Name]]</button>[[/toolbar]]`;
 
     QorBannerEditor.dragCoordinate = `<div class="qor-bannereditor__draggable-coordinate"><span>x :<em>[[left]]</em></span><span>y :<em>[[top]]</em></span></div>`;
 

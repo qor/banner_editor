@@ -3,7 +3,6 @@ package banner_editor
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -12,17 +11,19 @@ import (
 	"github.com/qor/responder"
 )
 
+// New handle new setting page
 func New(context *admin.Context) {
 	setting := context.Resource.NewStruct().(QorBannerEditorSettingInterface)
 	kind := context.Request.URL.Query().Get("kind")
 	if GetElement(kind) != nil {
 		setting.SetSerializableArgumentKind(kind)
 	} else {
-		context.AddError(errors.New(fmt.Sprintf("BannerEditor: It isn't any element match %v", kind)))
+		context.AddError(fmt.Errorf("BannerEditor: It isn't any element match %v", kind))
 	}
 	context.Execute("new", setting)
 }
 
+// Create handle create setting
 func Create(context *admin.Context) {
 	var (
 		res     = context.Resource
@@ -37,7 +38,7 @@ func Create(context *admin.Context) {
 	c := element.Context(context, result)
 	html, err := render(element.Template, c)
 	if err != nil {
-		context.AddError(errors.New(fmt.Sprintf("BannerEditor: can't parse %v's template, got %v", kind, err)))
+		context.AddError(fmt.Errorf("BannerEditor: can't parse %v's template, got %v", kind, err))
 	}
 	if context.HasError() {
 		responder.With("html", func() {
@@ -61,6 +62,7 @@ func Create(context *admin.Context) {
 	}
 }
 
+// Update handle update setting
 func Update(context *admin.Context) {
 	var (
 		res     = context.Resource
@@ -81,7 +83,7 @@ func Update(context *admin.Context) {
 		c := element.Context(context, result)
 		html, err = render(element.Template, c)
 		if err != nil {
-			context.AddError(errors.New(fmt.Sprintf("BannerEditor: can't parse %v's template, got %v", kind, err)))
+			context.AddError(fmt.Errorf("BannerEditor: can't parse %v's template, got %v", kind, err))
 		}
 	}
 
