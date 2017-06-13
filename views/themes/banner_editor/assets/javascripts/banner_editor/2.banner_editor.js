@@ -217,20 +217,27 @@
 
         initBannerEditor: function() {
             let $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config)),
-                $bg = this.$bg;
+                $bg = this.$bg,
+                $element = this.$element,
+                isInBottomsheet = $element.closest('.qor-bottomsheets').length,
+                isInSlideout = $('.qor-slideout').is(':visible');
 
             $toolbar.appendTo($('.qor-bannereditor__toolbar-btns'));
             this.$popover = $(QorBannerEditor.popover).appendTo('body');
 
-            if ($('.qor-slideout').is(':visible')){
+            if (isInSlideout && !isInBottomsheet){
                 $('.qor-slideout__fullscreen').click();
+            }
+
+            if (isInBottomsheet){
+                $element.closest('.qor-bottomsheets').addClass('qor-bottomsheets__fullscreen');
             }
 
             if ($bg.length && $bg.data('image-width')) {
                 let bWidth = $bg.data('image-width'),
                     bHeight = $bg.data('image-height');
 
-                this.$element.attr({
+                $element.attr({
                     'data-image-width': bWidth,
                     'data-image-height': bHeight
                 });
@@ -239,7 +246,7 @@
                 this.$iframe.width(bWidth).height(bHeight);
             }
 
-            this.$element.find('.qor-bannereditor__contents').show();
+            $element.find('.qor-bannereditor__contents').show();
 
         },
 
@@ -282,15 +289,14 @@
 
         },
 
-        handleBannerImage: function() {
-
-            var $bottomsheets = $(CLASS_BOTTOMSHEETS),
-                options = {
+        handleBannerImage: function($bottomsheets) {
+            let options = {
                     onSelect: this.addBannerImage.bind(this),
                     onSubmit: this.addBannerImage.bind(this)
                 };
 
             $bottomsheets.qorSelectCore(options).addClass(CLASS_MEDIABOX);
+            this.$bottomsheets = $bottomsheets;
             this.initMedia();
         },
 
@@ -315,7 +321,7 @@
                 'height': '100%'
             });
 
-            this.BottomSheets.hide();
+            this.$bottomsheets.remove();
             this.setValue();
             return false;
         },
