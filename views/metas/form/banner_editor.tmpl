@@ -1,9 +1,9 @@
 <div class="qor-field">
-
+  {{$prefix := .Context.Admin.GetRouter.Prefix}}
   <div class="qor-field__show"></div>
 
-  <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor" data-stylesheet="/admin/assets/stylesheets/banner_editor_iframe.css?theme=banner_editor">
-    <link rel="stylesheet" href="/admin/assets/stylesheets/banner_editor.css?theme=banner_editor" />
+  <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor" data-stylesheet="{{$prefix}}/assets/stylesheets/banner_editor_iframe.css?theme=banner_editor">
+    <link rel="stylesheet" href="{{$prefix}}/assets/stylesheets/banner_editor.css?theme=banner_editor" />
     <ul class="qor-bannereditor__toolbar clearfix">
       <li class="qor-bannereditor__toolbar-btns"></li>
       <li>
@@ -15,6 +15,6 @@
 
     <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure .Meta.Config}}" style="display: none;">{{unsafe_raw .Value}}</textarea>
 
-    <script type="text/javascript" src="/admin/assets/javascripts/banner_editor.js?theme=banner_editor"></script>
+    <script type="text/javascript" src="{{$prefix}}/assets/javascripts/banner_editor.js?theme=banner_editor"></script>
   </div>
 </div>
