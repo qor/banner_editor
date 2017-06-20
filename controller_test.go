@@ -6,10 +6,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/fatih/color"
+	"github.com/jinzhu/gorm"
 	"github.com/qor/admin"
 	"github.com/qor/banner_editor/test/config/bindatafs"
 	"github.com/qor/qor"
@@ -24,7 +27,8 @@ var (
 )
 
 type bannerEditorArgument struct {
-	Value string
+	gorm.Model
+	Value string `gorm:"size:4294967295";`
 }
 
 func init() {
@@ -66,14 +70,23 @@ func init() {
 		},
 	})
 
-	bannerEditorResource := Admin.AddResource(&bannerEditorArgument{})
+	bannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "Banner"})
 	bannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{}})
 
-	if err := db.DropTableIfExists(&QorBannerEditorSetting{}).Error; err != nil {
+	if err := db.DropTableIfExists(&QorBannerEditorSetting{}, &bannerEditorArgument{}).Error; err != nil {
 		panic(err)
 	}
-	db.AutoMigrate(&QorBannerEditorSetting{})
+	db.AutoMigrate(&QorBannerEditorSetting{}, &bannerEditorArgument{})
 	Admin.MountTo("/admin", mux)
+
+	if os.Getenv("MODE") == "server" {
+		db.Create(&bannerEditorArgument{
+			Value: `<span id="qor-bannereditor__i9mt1" class="qor-bannereditor__draggable" data-edit-id="1" data-position-left="202" data-position-top="152" style="position: absolute; left: 16.8896%; top: 50.6667%;"><em style="color: #ff0000;">Hello World!</em>
+</span>`,
+		})
+		fmt.Printf("Test Server URL: %v\n", Server.URL+"/admin")
+		time.Sleep(time.Second * 3000)
+	}
 }
 
 func TestGetConfig(t *testing.T) {
@@ -87,7 +100,7 @@ func TestGetConfig(t *testing.T) {
 		Elements: []string{"Button"},
 	}})
 
-	assertConfigIncludeElements(t, "banner_editor_arguments", []string{"Sub Header", "Button"})
+	assertConfigIncludeElements(t, "banners", []string{"Sub Header", "Button"})
 	assertConfigIncludeElements(t, "other_banner_editor_arguments", []string{"Sub Header"})
 	assertConfigIncludeElements(t, "another_banner_editor_arguments", []string{"Button"})
 }
