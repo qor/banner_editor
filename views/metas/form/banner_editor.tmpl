@@ -1,14 +1,19 @@
+{{$prefix := .Context.Admin.GetRouter.Prefix}}
+{{$asset_manager := .Meta.Config.AssetManager}}
+
 <div class="qor-field">
-  {{$prefix := .Context.Admin.GetRouter.Prefix}}
   <div class="qor-field__show"></div>
 
   <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor" data-stylesheet="{{$prefix}}/assets/stylesheets/banner_editor_iframe.css?theme=banner_editor">
     <link rel="stylesheet" href="{{$prefix}}/assets/stylesheets/banner_editor.css?theme=banner_editor" />
     <ul class="qor-bannereditor__toolbar clearfix">
       <li class="qor-bannereditor__toolbar-btns"></li>
-      <li>
-        <button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__toolbar-image" data-select-Modal="selectone" data-banner-media-url="/admin/product_images" type="button">{{t "qor_admin.banner_editor.add_image" "Add Image"}}</button>
-      </li>
+      {{if $asset_manager}}
+        <li>
+          {{$asset_router := printf "%v/%v" $asset_manager.GetAdmin.GetRouter.Prefix $asset_manager.ToParam}}
+          <button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__toolbar-image" data-select-Modal="selectone" data-banner-media-url="{{$asset_router}}" type="button">{{t "qor_admin.banner_editor.add_image" "Add Image"}}</button>
+        </li>
+      {{end}}
     </ul>
 
     <div class="qor-bannereditor__canvas qor-bannereditor__contents"></div>

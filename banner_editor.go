@@ -23,6 +23,7 @@ func init() {
 
 // BannerEditorConfig configure display elements and setting model
 type BannerEditorConfig struct {
+	AssetManager    *admin.Resource
 	Elements        []string
 	SettingResource *admin.Resource
 }

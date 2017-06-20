@@ -15,8 +15,11 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/qor/admin"
 	"github.com/qor/banner_editor/test/config/bindatafs"
+	"github.com/qor/media"
+	"github.com/qor/media/media_library"
 	"github.com/qor/qor"
 	"github.com/qor/qor/test/utils"
+	qor_utils "github.com/qor/qor/utils"
 )
 
 var (
@@ -70,14 +73,22 @@ func init() {
 		},
 	})
 
-	bannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "Banner"})
-	bannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{}})
+	assetManagerResource := Admin.AddResource(&media_library.MediaLibrary{})
+	assetManagerResource.IndexAttrs("Title", "File")
 
-	if err := db.DropTableIfExists(&QorBannerEditorSetting{}, &bannerEditorArgument{}).Error; err != nil {
+	bannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "Banner"})
+	bannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{
+		AssetManager: assetManagerResource,
+	}})
+
+	if err := db.DropTableIfExists(&QorBannerEditorSetting{}, &bannerEditorArgument{}, &media_library.MediaLibrary{}).Error; err != nil {
 		panic(err)
 	}
-	db.AutoMigrate(&QorBannerEditorSetting{}, &bannerEditorArgument{})
+	media.RegisterCallbacks(db)
+	db.AutoMigrate(&QorBannerEditorSetting{}, &bannerEditorArgument{}, &media_library.MediaLibrary{})
+
 	Admin.MountTo("/admin", mux)
+	mux.Handle("/system/", qor_utils.FileServer(http.Dir("public")))
 
 	if os.Getenv("MODE") == "server" {
 		db.Create(&bannerEditorArgument{
