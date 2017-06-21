@@ -23,10 +23,11 @@ import (
 )
 
 var (
-	mux    = http.NewServeMux()
-	Server = httptest.NewServer(mux)
-	db     = utils.TestDB()
-	Admin  = admin.New(&qor.Config{DB: db})
+	mux                  = http.NewServeMux()
+	Server               = httptest.NewServer(mux)
+	db                   = utils.TestDB()
+	Admin                = admin.New(&qor.Config{DB: db})
+	assetManagerResource *admin.Resource
 )
 
 type bannerEditorArgument struct {
@@ -35,6 +36,13 @@ type bannerEditorArgument struct {
 }
 
 func init() {
+	// Migrate database
+	if err := db.DropTableIfExists(&QorBannerEditorSetting{}, &bannerEditorArgument{}, &media_library.MediaLibrary{}).Error; err != nil {
+		panic(err)
+	}
+	media.RegisterCallbacks(db)
+	db.AutoMigrate(&QorBannerEditorSetting{}, &bannerEditorArgument{}, &media_library.MediaLibrary{})
+
 	// Banner Editor
 	type subHeaderSetting struct {
 		Text  string
@@ -73,7 +81,8 @@ func init() {
 		},
 	})
 
-	assetManagerResource := Admin.AddResource(&media_library.MediaLibrary{})
+	// Add asset resource
+	assetManagerResource = Admin.AddResource(&media_library.MediaLibrary{})
 	assetManagerResource.IndexAttrs("Title", "File")
 
 	bannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "Banner"})
@@ -81,14 +90,17 @@ func init() {
 		AssetManager: assetManagerResource,
 	}})
 
-	if err := db.DropTableIfExists(&QorBannerEditorSetting{}, &bannerEditorArgument{}, &media_library.MediaLibrary{}).Error; err != nil {
-		panic(err)
-	}
-	media.RegisterCallbacks(db)
-	db.AutoMigrate(&QorBannerEditorSetting{}, &bannerEditorArgument{}, &media_library.MediaLibrary{})
-
 	Admin.MountTo("/admin", mux)
 	mux.Handle("/system/", qor_utils.FileServer(http.Dir("public")))
+
+	// Add dummy background image
+	image := media_library.MediaLibrary{}
+	file, err := os.Open("test/views/images/background.jpg")
+	if err != nil {
+		panic(err)
+	}
+	image.File.Scan(file)
+	db.Create(&image)
 
 	if os.Getenv("MODE") == "server" {
 		db.Create(&bannerEditorArgument{
@@ -103,12 +115,14 @@ func init() {
 func TestGetConfig(t *testing.T) {
 	otherBannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "other_banner_editor_argument"})
 	otherBannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{
-		Elements: []string{"Sub Header"},
+		Elements:     []string{"Sub Header"},
+		AssetManager: assetManagerResource,
 	}})
 
 	anotherBannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "another_banner_editor_argument"})
 	anotherBannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{
-		Elements: []string{"Button"},
+		Elements:     []string{"Button"},
+		AssetManager: assetManagerResource,
 	}})
 
 	assertConfigIncludeElements(t, "banners", []string{"Sub Header", "Button"})
@@ -166,6 +180,12 @@ func TestControllerCRUD(t *testing.T) {
 	})
 	body, _ = ioutil.ReadAll(resp.Body)
 	assetPageHaveText(t, string(body), `{"ID":3,"Template":"<a style='color:Red' href='http://www.baidu.com'>Search by Baidu</a>\n"`)
+}
+
+func TestMediaLibraryURL(t *testing.T) {
+	resp, _ := http.Get(Server.URL + "/admin/media_libraries")
+	body, _ := ioutil.ReadAll(resp.Body)
+	assetPageHaveText(t, string(body), "/system/media_libraries/1/file.jpg")
 }
 
 func assetPageHaveText(t *testing.T, body string, text string) {

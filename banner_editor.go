@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"reflect"
 
 	"github.com/jinzhu/gorm"
 	"github.com/qor/admin"
+	"github.com/qor/qor"
 	"github.com/qor/qor/resource"
 	"github.com/qor/serializable_meta"
 )
@@ -65,6 +67,28 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 
 		if config.SettingResource == nil {
 			config.SettingResource = Admin.NewResource(&QorBannerEditorSetting{})
+		}
+		if config.AssetManager == nil {
+			panic("BannerEditor: AssetManager can't be blank.")
+		} else {
+			urlMeta := config.AssetManager.GetMeta("BannerEditorUrl")
+			if getAssetManagerResourceURLMethod(config.AssetManager.NewStruct()).IsNil() {
+				panic("BannerEditor: AssetManager's struct doesn't have any field implement URL method, please refer media_library.MediaLibrary{}.")
+			}
+			if urlMeta == nil {
+				config.AssetManager.Meta(&admin.Meta{
+					Name: "BannerEditorUrl",
+					Type: "hidden",
+					Valuer: func(v interface{}, c *qor.Context) interface{} {
+						values := getAssetManagerResourceURLMethod(v).Call([]reflect.Value{})
+						if len(values) > 0 {
+							return values[0]
+						}
+						return ""
+					},
+				})
+				config.AssetManager.IndexAttrs(config.AssetManager.IndexAttrs(), "BannerEditorUrl")
+			}
 		}
 
 		router := Admin.GetRouter()
@@ -132,4 +156,15 @@ func (setting QorBannerEditorSetting) GetSerializableArgumentResource() *admin.R
 		return element.Resource
 	}
 	return nil
+}
+
+func getAssetManagerResourceURLMethod(i interface{}) reflect.Value {
+	value := reflect.Indirect(reflect.ValueOf(i))
+	for i := 0; i < value.NumField(); i++ {
+		field := value.Field(i)
+		if urlMethod := field.MethodByName("URL"); urlMethod.IsValid() {
+			return urlMethod
+		}
+	}
+	return reflect.Value{}
 }
