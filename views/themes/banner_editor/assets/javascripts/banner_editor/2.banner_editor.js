@@ -301,8 +301,7 @@
         },
 
         addBannerImage: function(data) {
-            let MediaOption = data.MediaOption.OriginalURL ? data.MediaOption : JSON.parse(data.MediaOption),
-                imgUrl = MediaOption.OriginalURL,
+            let imgUrl = data.$clickElement.find('[data-heading="BannerEditorUrl"]').text(),
                 bg = `<div class="${CLASS_BANNEREDITOR_BG.slice(1)}" />`,
                 $bg = this.$bg;
 
