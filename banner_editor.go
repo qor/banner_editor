@@ -25,7 +25,7 @@ func init() {
 
 // BannerEditorConfig configure display elements and setting model
 type BannerEditorConfig struct {
-	AssetManager    *admin.Resource
+	MediaLibrary    *admin.Resource
 	Elements        []string
 	SettingResource *admin.Resource
 }
@@ -68,26 +68,26 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 		if config.SettingResource == nil {
 			config.SettingResource = Admin.NewResource(&QorBannerEditorSetting{})
 		}
-		if config.AssetManager == nil {
-			panic("BannerEditor: AssetManager can't be blank.")
+		if config.MediaLibrary == nil {
+			panic("BannerEditor: MediaLibrary can't be blank.")
 		} else {
-			urlMeta := config.AssetManager.GetMeta("BannerEditorUrl")
-			if getAssetManagerResourceURLMethod(config.AssetManager.NewStruct()).IsNil() {
-				panic("BannerEditor: AssetManager's struct doesn't have any field implement URL method, please refer media_library.MediaLibrary{}.")
+			urlMeta := config.MediaLibrary.GetMeta("BannerEditorUrl")
+			if getMediaLibraryResourceURLMethod(config.MediaLibrary.NewStruct()).IsNil() {
+				panic("BannerEditor: MediaLibrary's struct doesn't have any field implement URL method, please refer media_library.MediaLibrary{}.")
 			}
 			if urlMeta == nil {
-				config.AssetManager.Meta(&admin.Meta{
+				config.MediaLibrary.Meta(&admin.Meta{
 					Name: "BannerEditorUrl",
 					Type: "hidden",
 					Valuer: func(v interface{}, c *qor.Context) interface{} {
-						values := getAssetManagerResourceURLMethod(v).Call([]reflect.Value{})
+						values := getMediaLibraryResourceURLMethod(v).Call([]reflect.Value{})
 						if len(values) > 0 {
 							return values[0]
 						}
 						return ""
 					},
 				})
-				config.AssetManager.IndexAttrs(config.AssetManager.IndexAttrs(), "BannerEditorUrl")
+				config.MediaLibrary.IndexAttrs(config.MediaLibrary.IndexAttrs(), "BannerEditorUrl")
 			}
 		}
 
@@ -158,7 +158,7 @@ func (setting QorBannerEditorSetting) GetSerializableArgumentResource() *admin.R
 	return nil
 }
 
-func getAssetManagerResourceURLMethod(i interface{}) reflect.Value {
+func getMediaLibraryResourceURLMethod(i interface{}) reflect.Value {
 	value := reflect.Indirect(reflect.ValueOf(i))
 	for i := 0; i < value.NumField(); i++ {
 		field := value.Field(i)

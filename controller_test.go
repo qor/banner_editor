@@ -87,7 +87,7 @@ func init() {
 
 	bannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "Banner"})
 	bannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{
-		AssetManager: assetManagerResource,
+		MediaLibrary: assetManagerResource,
 	}})
 
 	Admin.MountTo("/admin", mux)
@@ -116,13 +116,13 @@ func TestGetConfig(t *testing.T) {
 	otherBannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "other_banner_editor_argument"})
 	otherBannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{
 		Elements:     []string{"Sub Header"},
-		AssetManager: assetManagerResource,
+		MediaLibrary: assetManagerResource,
 	}})
 
 	anotherBannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "another_banner_editor_argument"})
 	anotherBannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{
 		Elements:     []string{"Button"},
-		AssetManager: assetManagerResource,
+		MediaLibrary: assetManagerResource,
 	}})
 
 	assertConfigIncludeElements(t, "banners", []string{"Sub Header", "Button"})
