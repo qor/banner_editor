@@ -301,9 +301,18 @@
         },
 
         addBannerImage: function(data) {
-            let imgUrl = data.$clickElement.find('[data-heading="BannerEditorUrl"]').text(),
+            let MediaOption = data.MediaOption,
+                imgUrl,
                 bg = `<div class="${CLASS_BANNEREDITOR_BG.slice(1)}" />`,
                 $bg = this.$bg;
+
+                if (MediaOption){
+                    MediaOption = data.MediaOption.URL ? data.MediaOption : JSON.parse(data.MediaOption);
+                    imgUrl = MediaOption.URL;
+                } else {
+                    imgUrl = data.$clickElement.find('[data-heading="BannerEditorUrl"]').text();
+                }
+
 
             if (!$bg.length) {
                 this.$canvas.wrapInner(bg);
