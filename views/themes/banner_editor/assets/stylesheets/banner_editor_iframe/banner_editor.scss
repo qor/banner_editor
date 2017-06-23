@@ -44,7 +44,7 @@
         display: inline-block;
         margin: 0;
         padding: 0;
-        max-width: 96%;
+        max-width: 100%;
     }
 
      > *:not(.qor-bannereditor__bg),
@@ -78,16 +78,39 @@
         right: -1px;
         line-height: 1;
         font-size: 0;
-        min-width: 80px;
+        min-width: 300px;
+        box-sizing: border-box;
         padding: 8px;
+        background-color: #fff;
+        border-radius: 2px;
+        box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        cursor: auto;
+        hr{
+            display: inline-block;
+            vertical-align: middle;
+            width: 1px;
+            background-color: #ccc;
+            margin: 0 6px;
+            height: 20px;
+            border: 0;
+        }
         button{
             background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            box-shadow: none;
             color: #333;
+            height: 24px;
+            min-width: 24px;
+            width: 24px;
+            margin:  0 4px;
+            &:hover{
+                background-color: rgba(0, 0, 0, .05);
+            }
+            .material-icons{
+                font-size: 18px;
+            }
         }
 
         .qor-bannereditor__button-delete {
-            margin-left: 16px;
             color: #f00;
         }
     }

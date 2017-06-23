@@ -390,16 +390,56 @@
                 $element = $target.closest(CLASS_DRAGGABLE),
                 data = $element.data();
 
-            if (type == 'edit') {
-                this.showEditForm(data, $element);
-            }
+            switch(type){
+                case 'edit':
+                    this.showEditForm(data, $element);
+                    break;
 
-            if (type == 'delete') {
-                this.deleteElement($element);
+                case 'delete':
+                    this.deleteElement($element);
+                    break;
+
+                case 'left':
+                case 'center':
+                case 'right':
+                    this.alignHorizontally($element, type);
+                    break;
+
+                case 'top':
+                case 'middle':
+                case 'bottom':
+                    this.alignVertically($element, type);
+                    break;
             }
 
             e.stopPropagation();
             return false;
+        },
+
+        alignHorizontally: function($element, type){
+            $element.attr('align-horizontally', type);
+            this.alignElement($element, type);
+        },
+
+        alignVertically: function($element, type){
+            $element.attr('align-vertically', type);
+            this.alignElement($element, type);
+        },
+
+        alignElement: function($element, type){
+            let options = this.options,
+                horizontally = $element.attr('align-horizontally'),
+                vertically = $element.attr('align-vertically'),
+                css = options[type];
+
+            if (horizontally === 'center' && vertically === 'middle') {
+                css = options.centermiddle;
+            } else if (horizontally && vertically){
+                css = $.extend({}, options[horizontally], options[vertically]);
+            }
+
+            $element.css('transform', '').css(css);
+            this.setValue();
         },
 
         showInlineEdit: function(e){
@@ -573,8 +613,53 @@
     };
 
     QorBannerEditor.DEFAULTS = {
-        'draggable' : { addClasses: false, distance: 10, snap: true, containment: 'parent', scroll: false },
-        'resizable' : { handles: "e" }
+        'draggable' : {
+            addClasses: false,
+            distance: 10,
+            snap: true,
+            containment: 'parent',
+            scroll: false
+        },
+        'resizable' : {
+            handles: "e"
+        },
+        'left' : {
+            'left': 0,
+            'right': 'auto'
+        },
+        'center' : {
+            'left': '50%',
+            'right': 'auto',
+            'transform': 'translateX(-50%)'
+        },
+        'right' : {
+            'left': 'auto',
+            'right': 0
+        },
+        'top' : {
+            'top' : 0,
+            'bottom': 'auto'
+        },
+        'middle' : {
+            'top' : '50%',
+            'bottom': 'auto',
+            'transform': 'translateY(-50%)'
+        },
+        'bottom' : {
+            'top' : 'auto',
+            'bottom': 0
+        },
+        'leftmiddle' : {
+            'top' : '50%',
+            'left': '0',
+            'right': 'auto',
+            'transform': 'translate(0,-50%)'
+        },
+        'centermiddle' : {
+            'top' : '50%',
+            'left': '50%',
+            'transform': 'translate(-50%,-50%)'
+        }
     };
 
     QorBannerEditor.toolbar = `[[#toolbar]]<button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__button" data-banner-url="[[CreateURL]]" data-title="[[Name]]" type="button">[[Name]]</button>[[/toolbar]]`;
@@ -582,8 +667,16 @@
     QorBannerEditor.dragCoordinate = `<div class="qor-bannereditor__draggable-coordinate"><span>x :<em>[[left]]</em></span><span>y :<em>[[top]]</em></span></div>`;
 
     QorBannerEditor.inlineEdit = `<div class="qor-bannereditor__button-inline">
-                                    <button class="mdl-button mdl-button--icon qor-bannereditor__button-edit" data-edit-type="edit" type="button"><i class="material-icons">mode_edit</i></button>
-                                    <button class="mdl-button mdl-button--icon qor-bannereditor__button-delete" data-edit-type="delete" type="button"><i class="material-icons">delete_forever</i></button>
+                                    <button class="mdl-button mdl-button--icon" data-edit-type="left" type="button"><i class="material-icons">format_align_left</i></button>
+                                    <button class="mdl-button mdl-button--icon" data-edit-type="center" type="button"><i class="material-icons">format_align_center</i></button>
+                                    <button class="mdl-button mdl-button--icon" data-edit-type="right" type="button"><i class="material-icons">format_align_right</i></button>
+                                    <hr />
+                                    <button class="mdl-button mdl-button--icon" data-edit-type="top" type="button"><i class="material-icons">vertical_align_top</i></button>
+                                    <button class="mdl-button mdl-button--icon" data-edit-type="middle" type="button"><i class="material-icons">vertical_align_center</i></button>
+                                    <button class="mdl-button mdl-button--icon" data-edit-type="bottom" type="button"><i class="material-icons">vertical_align_bottom</i></button>
+                                    <hr />
+                                    <button class="mdl-button mdl-button--icon" data-edit-type="edit" type="button"><i class="material-icons">mode_edit</i></button>
+                                    <button class="mdl-button mdl-button--icon" data-edit-type="delete" type="button"><i class="material-icons">delete_forever</i></button>
                                   </div>`;
 
     QorBannerEditor.popover = `<div class="qor-modal fade qor-bannereditor__form" tabindex="-1" role="dialog" aria-hidden="true">
