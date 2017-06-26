@@ -64,6 +64,7 @@
         color: #fff;
         padding: 4px 8px;
         min-width: 85px;
+        font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif;
         em{
             font-style: normal;
             padding-left: 4px;
@@ -76,7 +77,7 @@
     .qor-bannereditor__button-inline {
         position: absolute;
         top: -49px;
-        right: -1px;
+        right: 1px;
         line-height: 1;
         font-size: 0;
         min-width: 300px;
@@ -120,6 +121,12 @@
         }
     }
 
+    .qor-bannereditor__draggable-left{
+        .qor-bannereditor__button-inline{
+            right: auto;
+            left: 1px;
+        }
+    }
     .qor-bannereditor__draggable-top{
         .qor-bannereditor__draggable-coordinate, .qor-bannereditor__button-inline{
             top: auto;
@@ -129,6 +136,7 @@
             bottom: -45px;
         }
     }
+
 
     .qor-bannereditor__dragging {
         border-color: #0277bd;

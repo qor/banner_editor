@@ -32,6 +32,7 @@
         CLASS_BANNEREDITOR_DRAGGING = 'qor-bannereditor__dragging',
         CLASS_CANVAS = '.qor-bannereditor__canvas',
         CLASS_TOP = 'qor-bannereditor__draggable-top',
+        CLASS_LEFT = 'qor-bannereditor__draggable-left',
         CLASS_NEED_REMOVE = '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable';
 
     function getImgSize(url, callback) {
@@ -220,6 +221,7 @@
             this.$canvas.find('.qor-bannereditor__draggable-coordinate').remove();
             $target.append(window.Mustache.render(QorBannerEditor.dragCoordinate, position));
             $target.find('.qor-bannereditor__button-inline').hide();
+            this.setValue();
         },
 
         initBannerEditor: function() {
@@ -437,12 +439,19 @@
             let options = this.options,
                 horizontally = $element.attr('align-horizontally'),
                 vertically = $element.attr('align-vertically'),
+                positionWidth = 300 - $element.width(),
                 css = options[type];
 
             if (vertically === 'top') {
                 $element.addClass(CLASS_TOP);
             } else if ($element.hasClass(CLASS_TOP)){
                 $element.removeClass(CLASS_TOP);
+            }
+
+            if (horizontally === 'left' && positionWidth > 0) {
+                $element.addClass(CLASS_LEFT);
+            } else if ($element.hasClass(CLASS_LEFT)){
+                $element.removeClass(CLASS_LEFT);
             }
 
             if (horizontally === 'center' && vertically === 'middle') {
@@ -478,7 +487,8 @@
         },
 
         handleDrag: function(event, ui) {
-            let $target = ui.helper;
+            let $target = ui.helper,
+                positionWidth = 300 - $target.width();
 
             ui.position.left = parseInt(ui.position.left, 10);
             ui.position.top = parseInt(ui.position.top, 10);
@@ -499,6 +509,12 @@
                 $target.addClass(CLASS_TOP);
             } else if ($target.hasClass(CLASS_TOP)){
                 $target.removeClass(CLASS_TOP);
+            }
+
+            if (positionWidth > 0 && ui.position.left < positionWidth) {
+                $target.addClass(CLASS_LEFT);
+            } else if ($target.hasClass(CLASS_LEFT)){
+                $target.removeClass(CLASS_LEFT);
             }
 
             this.$canvas.find('.qor-bannereditor__draggable-coordinate').remove();
