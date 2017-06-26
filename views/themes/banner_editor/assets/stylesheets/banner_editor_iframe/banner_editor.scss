@@ -63,6 +63,7 @@
         line-height: 1;
         color: #fff;
         padding: 4px 8px;
+        min-width: 85px;
         em{
             font-style: normal;
             padding-left: 4px;
@@ -85,6 +86,10 @@
         border-radius: 2px;
         box-shadow: 0 2px 4px rgba(0,0,0,.1);
         cursor: auto;
+        .mdl-button--icon[data-edit-type="delete"] .material-icons{
+            -webkit-transform: translate(-9px,-12px);
+            transform: translate(-9px,-12px);
+        }
         hr{
             display: inline-block;
             vertical-align: middle;

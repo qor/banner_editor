@@ -31,6 +31,7 @@
         CLASS_BANNEREDITOR_IMAGE = '.qor-bannereditor__toolbar-image',
         CLASS_BANNEREDITOR_DRAGGING = 'qor-bannereditor__dragging',
         CLASS_CANVAS = '.qor-bannereditor__canvas',
+        CLASS_TOP = 'qor-bannereditor__draggable-top',
         CLASS_NEED_REMOVE = '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable';
 
     function getImgSize(url, callback) {
@@ -151,7 +152,7 @@
 
         handleKeyupMove: function(e) {
             let keyCode = e.keyCode,
-                $canvas = this.$canvas,
+                $canvas = this.$canvas.length ? this.$canvas : this.$iframe.contents().find(CLASS_CANVAS),
                 $target = $canvas.find('.qor-bannereditor__dragging'),
                 cWidth = $canvas.width(),
                 cHeight = $canvas.height(),
@@ -164,6 +165,9 @@
 
             // up arrow
             if (keyCode == 38 & oTop >= 0) {
+                if ($target.css('bottom') === '0px') {
+                    $target.css('bottom', 'auto');
+                }
                 $target
                     .css('top', (oTop - 1) / cHeight * 100 + '%')
                     .attr({
@@ -184,6 +188,9 @@
 
             // left arrow
             if (keyCode == 37 & oLeft >= 0) {
+                if ($target.css('right') === '0px') {
+                    $target.css('right', 'auto');
+                }
                 $target
                     .css('left', (oLeft - 1) / cWidth * 100 + '%')
                     .attr({
@@ -432,13 +439,23 @@
                 vertically = $element.attr('align-vertically'),
                 css = options[type];
 
+            if (vertically === 'top') {
+                $element.addClass(CLASS_TOP);
+            } else if ($element.hasClass(CLASS_TOP)){
+                $element.removeClass(CLASS_TOP);
+            }
+
             if (horizontally === 'center' && vertically === 'middle') {
                 css = options.centermiddle;
             } else if (horizontally && vertically){
                 css = $.extend({}, options[horizontally], options[vertically]);
             }
 
-            $element.css('transform', '').css(css);
+            $element
+                .css('transform', '').css(css)
+                .attr('data-position-left', parseInt($element.css('left')))
+                .attr('data-position-top', parseInt($element.css('top')));
+
             this.setValue();
         },
 
@@ -461,18 +478,32 @@
         },
 
         handleDrag: function(event, ui) {
+            let $target = ui.helper;
+
             ui.position.left = parseInt(ui.position.left, 10);
             ui.position.top = parseInt(ui.position.top, 10);
 
+            if ($target.css('transform')) {
+                $target.css('transform', '');
+            }
+
+            if ($target.css('bottom') === '0px' || $target.css('right') === '0px') {
+                $target.css({'bottom': 'auto', 'right': 'auto'});
+            }
+
+            if ($target.attr('align-vertically') || $target.attr('align-horizontally')) {
+                $target.removeAttr('align-vertically').removeAttr('align-horizontally');
+            }
+
             if (ui.position.top < 40){
-                ui.helper.addClass('qor-bannereditor__draggable-top');
-            } else {
-                ui.helper.removeClass('qor-bannereditor__draggable-top');
+                $target.addClass(CLASS_TOP);
+            } else if ($target.hasClass(CLASS_TOP)){
+                $target.removeClass(CLASS_TOP);
             }
 
             this.$canvas.find('.qor-bannereditor__draggable-coordinate').remove();
-            ui.helper.addClass(CLASS_BANNEREDITOR_DRAGGING).append(window.Mustache.render(QorBannerEditor.dragCoordinate, ui.position));
-            ui.helper.find('.qor-bannereditor__button-inline').hide();
+            $target.addClass(CLASS_BANNEREDITOR_DRAGGING).append(window.Mustache.render(QorBannerEditor.dragCoordinate, ui.position));
+            $target.find('.qor-bannereditor__button-inline').hide();
         },
 
         handleDragStop: function(event, ui) {
