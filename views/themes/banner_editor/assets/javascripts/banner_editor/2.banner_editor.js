@@ -696,12 +696,6 @@
             'top' : 'auto',
             'bottom': 0
         },
-        'leftmiddle' : {
-            'top' : '50%',
-            'left': '0',
-            'right': 'auto',
-            'transform': 'translate(0,-50%)'
-        },
         'centermiddle' : {
             'top' : '50%',
             'left': '50%',
