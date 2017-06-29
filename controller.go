@@ -96,7 +96,7 @@ func Update(context *admin.Context) {
 		}).Respond(context.Request)
 	} else {
 		responder.With("html", func() {
-			context.FlashNow(string(res.GetAdmin().T(context.Context, "qor_admin.form.successfully_updated", "{{.Name}} was successfully updated", res)), "success")
+			context.Flash(string(res.GetAdmin().T(context.Context, "qor_admin.form.successfully_updated", "{{.Name}} was successfully updated", res)), "success")
 			context.Execute("show", result)
 		}).With([]string{"json"}, func() {
 			json, err := settingJSON(html, result)
