@@ -122,8 +122,7 @@
 
             $(document)
                 .on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this))
-                .on(EVENT_CLICK, this.hideElement.bind(this))
-                .on(EVENT_KEYDOWN, this.handleKeyupMove.bind(this));
+                .on(EVENT_CLICK, this.hideElement.bind(this));
         },
 
         unbind: function() {
@@ -147,68 +146,7 @@
 
             $(document)
                 .off(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this))
-                .off(EVENT_CLICK, this.hideElement.bind(this))
-                .off(EVENT_KEYDOWN, this.handleKeyupMove.bind(this));
-        },
-
-        handleKeyupMove: function(e) {
-            let keyCode = e.keyCode,
-                $canvas = this.$canvas.length ? this.$canvas : this.$iframe.contents().find(CLASS_CANVAS),
-                $target = $canvas.find('.qor-bannereditor__dragging'),
-                cWidth = $canvas.width(),
-                cHeight = $canvas.height(),
-                oLeft = parseInt($target.attr('data-position-left'), 10),
-                oTop = parseInt($target.attr('data-position-top'), 10);
-
-            if (!$target.length) {
-                return;
-            }
-
-            // up arrow
-            if (keyCode == 38 & oTop >= 0) {
-                if ($target.css('bottom') === '0px') {
-                    $target.css('bottom', 'auto');
-                }
-                $target
-                    .css('top', (oTop - 1) / cHeight * 100 + '%')
-                    .attr({
-                        'data-position-top': oTop - 1
-                });
-                this.showCoordinate();
-            }
-
-            // down arrow
-            if (keyCode == 40 & oTop <= (cHeight - $target.height())) {
-                $target
-                    .css('top', (oTop + 1) / cHeight * 100 + '%')
-                    .attr({
-                        'data-position-top': oTop + 1
-                });
-                this.showCoordinate();
-            }
-
-            // left arrow
-            if (keyCode == 37 & oLeft >= 0) {
-                if ($target.css('right') === '0px') {
-                    $target.css('right', 'auto');
-                }
-                $target
-                    .css('left', (oLeft - 1) / cWidth * 100 + '%')
-                    .attr({
-                        'data-position-left': oLeft - 1
-                });
-                this.showCoordinate();
-            }
-
-            // right arrow
-            if (keyCode == 39 & oLeft <= (cWidth - $target.width())) {
-                $target
-                    .css('left', (oLeft + 1) / cWidth * 100 + '%')
-                    .attr({
-                        'data-position-left': oLeft + 1
-                });
-                this.showCoordinate();
-            }
+                .off(EVENT_CLICK, this.hideElement.bind(this));
         },
 
         showCoordinate: function(){
