@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/qor/admin"
+	"github.com/qor/assetfs"
 )
 
 // SetAssetFS set asset fs for render
-func SetAssetFS(assetFS admin.AssetFSInterface) {
+func SetAssetFS(assetFS assetfs.Interface) {
 	for _, viewPath := range viewPaths {
 		assetFS.RegisterPath(viewPath)
 	}

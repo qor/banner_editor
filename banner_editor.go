@@ -8,6 +8,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/qor/admin"
+	"github.com/qor/assetfs"
 	"github.com/qor/qor"
 	"github.com/qor/qor/resource"
 	"github.com/qor/serializable_meta"
@@ -16,11 +17,11 @@ import (
 var (
 	registeredElements []*Element
 	viewPaths          []string
-	assetFileSystem    admin.AssetFSInterface
+	assetFileSystem    assetfs.Interface
 )
 
 func init() {
-	assetFileSystem = &admin.AssetFileSystem{}
+	assetFileSystem = assetfs.AssetFS
 }
 
 // BannerEditorConfig configure display elements and setting model
