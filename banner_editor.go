@@ -21,7 +21,7 @@ var (
 )
 
 func init() {
-	assetFileSystem = assetfs.AssetFS
+	assetFileSystem = assetfs.AssetFS().NameSpace("banner_editor")
 }
 
 // BannerEditorConfig configure display elements and setting model
