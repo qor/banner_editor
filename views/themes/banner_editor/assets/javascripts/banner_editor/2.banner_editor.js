@@ -263,7 +263,11 @@
             });
 
             this.$bottomsheets.remove();
-            $('body').removeClass('qor-bottomsheets-open');
+
+            if (!$('.qor-bottomsheets').is(':visible')) {
+                $('body').removeClass('qor-bottomsheets-open');
+            }
+
             this.setValue();
             return false;
         },
