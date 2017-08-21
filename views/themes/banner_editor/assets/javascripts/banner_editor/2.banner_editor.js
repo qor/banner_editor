@@ -10,14 +10,12 @@
         factory(jQuery);
     }
 })(function($) {
-
     'use strict';
 
     let NAMESPACE = 'qor.bannereditor',
         EVENT_ENABLE = 'enable.' + NAMESPACE,
         EVENT_DISABLE = 'disable.' + NAMESPACE,
         EVENT_CLICK = 'click.' + NAMESPACE,
-        EVENT_KEYDOWN = 'keydown.'  + NAMESPACE,
         EVENT_DBCLICK = 'dblclick.' + NAMESPACE,
         EVENT_DRAGSTOP = 'dragstop.' + NAMESPACE,
         EVENT_RESIZESTOP = 'resizestop.' + NAMESPACE,
@@ -90,23 +88,21 @@
             }
         },
 
-        initIframe: function(html){
+        initIframe: function(html) {
             let $ele = this.$iframe.contents();
 
-                $ele.find('head').append(`<link rel="stylesheet" type="text/css" href="${this.$element.data('stylesheet')}">`);
-                $ele.find('body').html(html);
-                this.$bg = $ele.find(CLASS_BANNEREDITOR_BG);
-                this.$canvas = $ele.find(CLASS_CANVAS);
-                this.initBannerEditor();
-                this.bind();
+            $ele.find('head').append(`<link rel="stylesheet" type="text/css" href="${this.$element.data('stylesheet')}">`);
+            $ele.find('body').html(html);
+            this.$bg = $ele.find(CLASS_BANNEREDITOR_BG);
+            this.$canvas = $ele.find(CLASS_CANVAS);
+            this.initBannerEditor();
+            this.bind();
         },
 
         bind: function() {
             let $canvas = this.$canvas;
 
-            this.$element
-                .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
-                .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this));
+            this.$element.on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this)).on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this));
 
             $canvas
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
@@ -120,17 +116,13 @@
 
             $canvas.find(CLASS_DRAGGABLE).draggable(this.options.draggable).resizable(this.options.resizable);
 
-            $(document)
-                .on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this))
-                .on(EVENT_CLICK, this.hideElement.bind(this));
+            $(document).on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this)).on(EVENT_CLICK, this.hideElement.bind(this));
         },
 
         unbind: function() {
             let $canvas = this.$canvas;
 
-            this.$element
-                .off(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
-                .off(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this));
+            this.$element.off(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this)).off(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this));
 
             $canvas
                 .off(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
@@ -144,17 +136,14 @@
 
             $canvas.find(CLASS_DRAGGABLE).draggable('destroy').resizable('destroy');
 
-            $(document)
-                .off(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this))
-                .off(EVENT_CLICK, this.hideElement.bind(this));
+            $(document).off(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this)).off(EVENT_CLICK, this.hideElement.bind(this));
         },
 
-        showCoordinate: function(){
+        showCoordinate: function() {
             let $target = this.$canvas.find('.qor-bannereditor__dragging'),
                 position = {};
 
-            position.left = parseInt($target.attr('data-position-left'), 10),
-            position.top = parseInt($target.attr('data-position-top'), 10);
+            (position.left = parseInt($target.attr('data-position-left'), 10)), (position.top = parseInt($target.attr('data-position-top'), 10));
 
             this.$canvas.find('.qor-bannereditor__draggable-coordinate').remove();
             $target.append(window.Mustache.render(QorBannerEditor.dragCoordinate, position));
@@ -172,11 +161,11 @@
             $toolbar.appendTo($('.qor-bannereditor__toolbar-btns'));
             this.$popover = $(QorBannerEditor.popover).appendTo('body');
 
-            if (isInSlideout && !isInBottomsheet){
+            if (isInSlideout && !isInBottomsheet) {
                 $('.qor-slideout__fullscreen').click();
             }
 
-            if (isInBottomsheet){
+            if (isInBottomsheet) {
                 $element.closest('.qor-bottomsheets').addClass('qor-bottomsheets__fullscreen');
             }
 
@@ -194,7 +183,6 @@
             }
 
             $element.find('.qor-bannereditor__contents').show();
-
         },
 
         initMedia: function() {
@@ -233,14 +221,13 @@
             this.BottomSheets.open(data, this.handleBannerImage.bind(this));
 
             return false;
-
         },
 
         handleBannerImage: function($bottomsheets) {
             let options = {
-                    onSelect: this.addBannerImage.bind(this),
-                    onSubmit: this.addBannerImage.bind(this)
-                };
+                onSelect: this.addBannerImage.bind(this),
+                onSubmit: this.addBannerImage.bind(this)
+            };
 
             $bottomsheets.qorSelectCore(options).addClass(CLASS_MEDIABOX);
             this.$bottomsheets = $bottomsheets;
@@ -253,13 +240,12 @@
                 bg = `<div class="${CLASS_BANNEREDITOR_BG.slice(1)}" />`,
                 $bg = this.$bg;
 
-                if (MediaOption){
-                    MediaOption = data.MediaOption.URL ? data.MediaOption : JSON.parse(data.MediaOption);
-                    imgUrl = MediaOption.URL;
-                } else {
-                    imgUrl = data.$clickElement.find('[data-heading="BannerEditorUrl"]').text();
-                }
-
+            if (MediaOption) {
+                MediaOption = data.MediaOption.URL ? data.MediaOption : JSON.parse(data.MediaOption);
+                imgUrl = MediaOption.URL;
+            } else {
+                imgUrl = data.$clickElement.find('[data-heading="BannerEditorUrl"]').text();
+            }
 
             if (!$bg.length) {
                 this.$canvas.wrapInner(bg);
@@ -272,11 +258,12 @@
                 'background-image': `url(${imgUrl})`,
                 'background-repeat': 'no-repeat',
                 'background-position': 'center center',
-                'width': '100%',
-                'height': '100%'
+                width: '100%',
+                height: '100%'
             });
 
             this.$bottomsheets.remove();
+            $('body').removeClass('qor-bottomsheets-open');
             this.setValue();
             return false;
         },
@@ -289,7 +276,7 @@
 
             getImgSize(url, function(width, height) {
                 $canvas.width(width).height(height);
-                $iframe.width(width+4).height(height+4);
+                $iframe.width(width + 4).height(height + 4);
                 $element.attr({
                     'data-image-width': width,
                     'data-image-height': height
@@ -337,7 +324,7 @@
                 $element = $target.closest(CLASS_DRAGGABLE),
                 data = $element.data();
 
-            switch(type){
+            switch (type) {
                 case 'edit':
                     this.showEditForm(data, $element);
                     break;
@@ -363,17 +350,17 @@
             return false;
         },
 
-        alignHorizontally: function($element, type){
+        alignHorizontally: function($element, type) {
             $element.attr('align-horizontally', type);
             this.alignElement($element, type);
         },
 
-        alignVertically: function($element, type){
+        alignVertically: function($element, type) {
             $element.attr('align-vertically', type);
             this.alignElement($element, type);
         },
 
-        alignElement: function($element, type){
+        alignElement: function($element, type) {
             let options = this.options,
                 horizontally = $element.attr('align-horizontally'),
                 vertically = $element.attr('align-vertically'),
@@ -382,31 +369,28 @@
 
             if (vertically === 'top') {
                 $element.addClass(CLASS_TOP);
-            } else if ($element.hasClass(CLASS_TOP)){
+            } else if ($element.hasClass(CLASS_TOP)) {
                 $element.removeClass(CLASS_TOP);
             }
 
             if (horizontally === 'left' && positionWidth > 0) {
                 $element.addClass(CLASS_LEFT);
-            } else if ($element.hasClass(CLASS_LEFT)){
+            } else if ($element.hasClass(CLASS_LEFT)) {
                 $element.removeClass(CLASS_LEFT);
             }
 
             if (horizontally === 'center' && vertically === 'middle') {
                 css = options.centermiddle;
-            } else if (horizontally && vertically){
+            } else if (horizontally && vertically) {
                 css = $.extend({}, options[horizontally], options[vertically]);
             }
 
-            $element
-                .css('transform', '').css(css)
-                .attr('data-position-left', parseInt($element.css('left')))
-                .attr('data-position-top', parseInt($element.css('top')));
+            $element.css('transform', '').css(css).attr('data-position-left', parseInt($element.css('left'))).attr('data-position-top', parseInt($element.css('top')));
 
             this.setValue();
         },
 
-        showInlineEdit: function(e){
+        showInlineEdit: function(e) {
             let $ele = $(e.target).closest(CLASS_DRAGGABLE);
 
             this.showEditForm($ele.data(), $ele);
@@ -436,22 +420,22 @@
             }
 
             if ($target.css('bottom') === '0px' || $target.css('right') === '0px') {
-                $target.css({'bottom': 'auto', 'right': 'auto'});
+                $target.css({ bottom: 'auto', right: 'auto' });
             }
 
             if ($target.attr('align-vertically') || $target.attr('align-horizontally')) {
                 $target.removeAttr('align-vertically').removeAttr('align-horizontally');
             }
 
-            if (ui.position.top < 40){
+            if (ui.position.top < 40) {
                 $target.addClass(CLASS_TOP);
-            } else if ($target.hasClass(CLASS_TOP)){
+            } else if ($target.hasClass(CLASS_TOP)) {
                 $target.removeClass(CLASS_TOP);
             }
 
             if (positionWidth > 0 && ui.position.left < positionWidth) {
                 $target.addClass(CLASS_LEFT);
-            } else if ($target.hasClass(CLASS_LEFT)){
+            } else if ($target.hasClass(CLASS_LEFT)) {
                 $target.removeClass(CLASS_LEFT);
             }
 
@@ -467,8 +451,8 @@
                 helperTop = ui.position.top / cHeight * 100 + '%',
                 helper = ui.helper,
                 css = {
-                    'left': helperLeft,
-                    'top': helperTop
+                    left: helperLeft,
+                    top: helperTop
                 };
 
             helper.css(css).attr({
@@ -485,7 +469,7 @@
             this.setValue();
         },
 
-        handleResizeStop: function(event, ui){
+        handleResizeStop: function(event, ui) {
             let cWidth = this.$canvas.width(),
                 helperWidth = ui.size.width / cWidth * 100 + '%';
 
@@ -507,7 +491,6 @@
                 options = this.options,
                 eleID = `qor-bannereditor__${(Math.random() + 1).toString(36).substring(7)}`;
 
-
             if (!$form.length) {
                 return;
             }
@@ -519,7 +502,7 @@
                 processData: false,
                 contentType: false,
                 success: function(data) {
-                    if (!data.Template){
+                    if (!data.Template) {
                         return;
                     }
 
@@ -529,13 +512,14 @@
                         let left = $editElement[0].style.left,
                             top = $editElement[0].style.top,
                             width = $editElement[0].style.width,
-                            attrs = $editElement.prop("attributes");
+                            attrs = $editElement.prop('attributes');
 
-                        $ele.css({
-                                'position': 'absolute',
-                                'left': left,
-                                'top': top,
-                                'width': width
+                        $ele
+                            .css({
+                                position: 'absolute',
+                                left: left,
+                                top: top,
+                                width: width
                             })
                             .attr('data-edit-id', data.ID);
 
@@ -547,7 +531,6 @@
                             }
 
                             $ele.attr(this.name, this.value);
-
                         });
 
                         $ele.appendTo($body).draggable(options.draggable).resizable(options.resizable);
@@ -556,20 +539,21 @@
 
                         $editElement.remove();
                         _this.$editElement = null;
-
                     } else {
-                        $ele.css({
-                                'position': 'absolute',
-                                'left': '10%',
-                                'top': '10%'
+                        $ele
+                            .css({
+                                position: 'absolute',
+                                left: '10%',
+                                top: '10%'
                             })
                             .attr('data-edit-id', data.ID)
-                            .appendTo($body).draggable(options.draggable).resizable(options.resizable);
+                            .appendTo($body)
+                            .draggable(options.draggable)
+                            .resizable(options.resizable);
 
                         $popover.qorModal('hide');
                     }
                     _this.setValue();
-
                 }
             });
 
@@ -588,58 +572,58 @@
             let $html = this.$canvas.clone();
             $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging qor-bannereditor__dragging');
             $html.find(CLASS_NEED_REMOVE).remove();
-            this.$textarea.val($html.html().replace(/&quot;/g,''));
+            this.$textarea.val($html.html().replace(/&quot;/g, ''));
         },
 
-        destroy: function () {
-          this.unbind();
-          this.$element.removeData(NAMESPACE);
+        destroy: function() {
+            this.unbind();
+            this.$element.removeData(NAMESPACE);
         }
     };
 
     QorBannerEditor.DEFAULTS = {
-        'draggable' : {
+        draggable: {
             addClasses: false,
             distance: 10,
             snap: true,
             containment: 'parent',
             scroll: false
         },
-        'resizable' : {
-            handles: "e"
+        resizable: {
+            handles: 'e'
         },
-        'left' : {
-            'left': 0,
-            'right': 'auto'
+        left: {
+            left: 0,
+            right: 'auto'
         },
-        'center' : {
-            'left': '50%',
-            'right': 'auto',
-            'transform': 'translateX(-50%)'
+        center: {
+            left: '50%',
+            right: 'auto',
+            transform: 'translateX(-50%)'
         },
-        'right' : {
-            'left': 'auto',
-            'right': 0
+        right: {
+            left: 'auto',
+            right: 0
         },
-        'top' : {
-            'top' : 0,
-            'bottom': 'auto'
+        top: {
+            top: 0,
+            bottom: 'auto'
         },
-        'middle' : {
-            'top' : '50%',
-            'bottom': 'auto',
-            'transform': 'translateY(-50%)'
+        middle: {
+            top: '50%',
+            bottom: 'auto',
+            transform: 'translateY(-50%)'
         },
-        'bottom' : {
-            'top' : 'auto',
-            'bottom': 0
+        bottom: {
+            top: 'auto',
+            bottom: 0
         },
-        'centermiddle' : {
-            'top' : '50%',
-            'left': '50%',
-            'bottom': 'auto',
-            'right': 'auto',
-            'transform': 'translate(-50%,-50%)'
+        centermiddle: {
+            top: '50%',
+            left: '50%',
+            bottom: 'auto',
+            right: 'auto',
+            transform: 'translate(-50%,-50%)'
         }
     };
 
@@ -669,7 +653,6 @@
                                   </div>
                                 </div>`;
 
-
     QorBannerEditor.plugin = function(options) {
         return this.each(function() {
             let $this = $(this),
@@ -683,24 +666,23 @@
                 $this.data(NAMESPACE, (data = new QorBannerEditor(this, options)));
             }
 
-            if (typeof options === 'string' && $.isFunction(fn = data[options])) {
+            if (typeof options === 'string' && $.isFunction((fn = data[options]))) {
                 fn.apply(data);
             }
         });
     };
 
-
     $(function() {
         let selector = '[data-toggle="qor.bannereditor"]';
 
-        $(document).
-        on(EVENT_DISABLE, function(e) {
-            QorBannerEditor.plugin.call($(selector, e.target), 'destroy');
-        }).
-        on(EVENT_ENABLE, function(e) {
-            QorBannerEditor.plugin.call($(selector, e.target));
-        }).
-        triggerHandler(EVENT_ENABLE);
+        $(document)
+            .on(EVENT_DISABLE, function(e) {
+                QorBannerEditor.plugin.call($(selector, e.target), 'destroy');
+            })
+            .on(EVENT_ENABLE, function(e) {
+                QorBannerEditor.plugin.call($(selector, e.target));
+            })
+            .triggerHandler(EVENT_ENABLE);
     });
 
     return QorBannerEditor;
