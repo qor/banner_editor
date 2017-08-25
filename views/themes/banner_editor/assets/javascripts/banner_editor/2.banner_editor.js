@@ -258,7 +258,7 @@
             if (MediaOption) {
                 MediaOption = data.MediaOption.URL ? data.MediaOption : JSON.parse(data.MediaOption);
                 imgUrl = MediaOption.URL;
-            } else if ($ele.length && $ele.find('[data-heading="BannerEditorUrl"]').length) {
+            } else if ($ele && $ele.find('[data-heading="BannerEditorUrl"]').length) {
                 imgUrl = data.$clickElement.find('[data-heading="BannerEditorUrl"]').text();
             } else {
                 imgUrl = JSON.parse(data.File).Url;
