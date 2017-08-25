@@ -255,8 +255,6 @@
                 bg = `<div class="${CLASS_BANNEREDITOR_BG.slice(1)}" />`,
                 $bg = this.$bg;
 
-            console.log(data);
-
             if (MediaOption) {
                 MediaOption = data.MediaOption.URL ? data.MediaOption : JSON.parse(data.MediaOption);
                 imgUrl = MediaOption.URL;
