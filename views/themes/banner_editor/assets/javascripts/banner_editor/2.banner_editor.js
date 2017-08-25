@@ -31,7 +31,8 @@
         CLASS_CANVAS = '.qor-bannereditor__canvas',
         CLASS_TOP = 'qor-bannereditor__draggable-top',
         CLASS_LEFT = 'qor-bannereditor__draggable-left',
-        CLASS_NEED_REMOVE = '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable';
+        CLASS_NEED_REMOVE =
+            '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable';
 
     function getImgSize(url, callback) {
         let img = new Image();
@@ -91,7 +92,9 @@
         initIframe: function(html) {
             let $ele = this.$iframe.contents();
 
-            $ele.find('head').append(`<link rel="stylesheet" type="text/css" href="${this.$element.data('stylesheet')}">`);
+            $ele
+                .find('head')
+                .append(`<link rel="stylesheet" type="text/css" href="${this.$element.data('stylesheet')}">`);
             $ele.find('body').html(html);
             this.$bg = $ele.find(CLASS_BANNEREDITOR_BG);
             this.$canvas = $ele.find(CLASS_CANVAS);
@@ -102,7 +105,9 @@
         bind: function() {
             let $canvas = this.$canvas;
 
-            this.$element.on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this)).on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this));
+            this.$element
+                .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
+                .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this));
 
             $canvas
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
@@ -116,13 +121,17 @@
 
             $canvas.find(CLASS_DRAGGABLE).draggable(this.options.draggable).resizable(this.options.resizable);
 
-            $(document).on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this)).on(EVENT_CLICK, this.hideElement.bind(this));
+            $(document)
+                .on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this))
+                .on(EVENT_CLICK, this.hideElement.bind(this));
         },
 
         unbind: function() {
             let $canvas = this.$canvas;
 
-            this.$element.off(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this)).off(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this));
+            this.$element
+                .off(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
+                .off(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this));
 
             $canvas
                 .off(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
@@ -136,14 +145,19 @@
 
             $canvas.find(CLASS_DRAGGABLE).draggable('destroy').resizable('destroy');
 
-            $(document).off(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this)).off(EVENT_CLICK, this.hideElement.bind(this));
+            $(document)
+                .off(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this))
+                .off(EVENT_CLICK, this.hideElement.bind(this));
         },
 
         showCoordinate: function() {
             let $target = this.$canvas.find('.qor-bannereditor__dragging'),
                 position = {};
 
-            (position.left = parseInt($target.attr('data-position-left'), 10)), (position.top = parseInt($target.attr('data-position-top'), 10));
+            (position.left = parseInt($target.attr('data-position-left'), 10)), (position.top = parseInt(
+                $target.attr('data-position-top'),
+                10
+            ));
 
             this.$canvas.find('.qor-bannereditor__draggable-coordinate').remove();
             $target.append(window.Mustache.render(QorBannerEditor.dragCoordinate, position));
@@ -236,15 +250,20 @@
 
         addBannerImage: function(data) {
             let MediaOption = data.MediaOption,
+                $ele = data.$clickElement,
                 imgUrl,
                 bg = `<div class="${CLASS_BANNEREDITOR_BG.slice(1)}" />`,
                 $bg = this.$bg;
 
+            console.log(data);
+
             if (MediaOption) {
                 MediaOption = data.MediaOption.URL ? data.MediaOption : JSON.parse(data.MediaOption);
                 imgUrl = MediaOption.URL;
-            } else {
+            } else if ($ele.length && $ele.find('[data-heading="BannerEditorUrl"]').length) {
                 imgUrl = data.$clickElement.find('[data-heading="BannerEditorUrl"]').text();
+            } else {
+                imgUrl = JSON.parse(data.File).Url;
             }
 
             if (!$bg.length) {
@@ -389,7 +408,11 @@
                 css = $.extend({}, options[horizontally], options[vertically]);
             }
 
-            $element.css('transform', '').css(css).attr('data-position-left', parseInt($element.css('left'))).attr('data-position-top', parseInt($element.css('top')));
+            $element
+                .css('transform', '')
+                .css(css)
+                .attr('data-position-left', parseInt($element.css('left')))
+                .attr('data-position-top', parseInt($element.css('top')));
 
             this.setValue();
         },
@@ -444,7 +467,9 @@
             }
 
             this.$canvas.find('.qor-bannereditor__draggable-coordinate').remove();
-            $target.addClass(CLASS_BANNEREDITOR_DRAGGING).append(window.Mustache.render(QorBannerEditor.dragCoordinate, ui.position));
+            $target
+                .addClass(CLASS_BANNEREDITOR_DRAGGING)
+                .append(window.Mustache.render(QorBannerEditor.dragCoordinate, ui.position));
             $target.find('.qor-bannereditor__button-inline').hide();
         },
 
@@ -574,7 +599,9 @@
 
         setValue: function() {
             let $html = this.$canvas.clone();
-            $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging qor-bannereditor__dragging');
+            $html
+                .find(CLASS_DRAGGABLE)
+                .removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging qor-bannereditor__dragging');
             $html.find(CLASS_NEED_REMOVE).remove();
             this.$textarea.val($html.html().replace(/&quot;/g, ''));
         },
