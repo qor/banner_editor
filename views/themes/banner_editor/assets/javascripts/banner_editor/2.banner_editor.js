@@ -72,6 +72,8 @@
             this.config = config;
             this.$textarea = $textarea;
 
+            console.log(config);
+
             $canvas.html($iframe).removeClass('qor-bannereditor__canvas');
 
             this.$iframe = $iframe;
@@ -170,12 +172,13 @@
                 $bg = this.$bg,
                 $element = this.$element,
                 isInBottomsheet = $element.closest('.qor-bottomsheets').length,
-                isInSlideout = $('.qor-slideout').is(':visible');
+                isInSlideout = $('.qor-slideout').is(':visible'),
+                hasFullClass = $('.qor-slideout').hasClass('qor-slideout__fullscreen');
 
-            $toolbar.appendTo($('.qor-bannereditor__toolbar-btns'));
+            $toolbar.appendTo($element.find('.qor-bannereditor__toolbar-btns'));
             this.$popover = $(QorBannerEditor.popover).appendTo('body');
 
-            if (isInSlideout && !isInBottomsheet) {
+            if (isInSlideout && !isInBottomsheet && !hasFullClass) {
                 $('.qor-slideout__fullscreen').click();
             }
 
@@ -702,7 +705,7 @@
     };
 
     $(function() {
-        let selector = '[data-toggle="qor.bannereditor"]';
+        let selector = '[data-toggle="qor.bannereditor"]:visible'; // if element is hide, return fasle. (e.g., replicator)
 
         $(document)
             .on(EVENT_DISABLE, function(e) {
