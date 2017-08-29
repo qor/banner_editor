@@ -92,9 +92,7 @@
         initIframe: function(html) {
             let $ele = this.$iframe.contents();
 
-            $ele
-                .find('head')
-                .append(`<link rel="stylesheet" type="text/css" href="${this.$element.data('stylesheet')}">`);
+            $ele.find('head').append(`<link rel="stylesheet" type="text/css" href="${this.$element.data('stylesheet')}">`);
             $ele.find('body').html(html);
             this.$bg = $ele.find(CLASS_BANNEREDITOR_BG);
             this.$canvas = $ele.find(CLASS_CANVAS);
@@ -121,9 +119,7 @@
 
             $canvas.find(CLASS_DRAGGABLE).draggable(this.options.draggable).resizable(this.options.resizable);
 
-            $(document)
-                .on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this))
-                .on(EVENT_CLICK, this.hideElement.bind(this));
+            $(document).on(EVENT_CLICK, this.hideElement.bind(this));
         },
 
         unbind: function() {
@@ -145,9 +141,7 @@
 
             $canvas.find(CLASS_DRAGGABLE).draggable('destroy').resizable('destroy');
 
-            $(document)
-                .off(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', this.renderElement.bind(this))
-                .off(EVENT_CLICK, this.hideElement.bind(this));
+            $(document).off(EVENT_CLICK, this.hideElement.bind(this));
         },
 
         showCoordinate: function() {
@@ -271,7 +265,6 @@
             }
 
             this.resetBoxSize(imgUrl, $bg);
-
             $bg.css({
                 'background-image': `url(${imgUrl})`,
                 'background-repeat': 'no-repeat',
@@ -323,7 +316,8 @@
         },
 
         ajaxForm: function(url, title) {
-            let $popover = this.$popover;
+            let $popover = this.$popover,
+                _this = this;
 
             $.ajax(url, {
                 method: 'GET',
@@ -336,6 +330,8 @@
                     $popover.find('.qor-bannereditor__title').html(popupTitle);
                     $popover.find('.qor-bannereditor__content').html($content.html());
                     $popover.trigger('enable').qorModal('show');
+
+                    $popover.one(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', _this.renderElement.bind(_this));
                 }
             });
         },
@@ -466,9 +462,7 @@
             }
 
             this.$canvas.find('.qor-bannereditor__draggable-coordinate').remove();
-            $target
-                .addClass(CLASS_BANNEREDITOR_DRAGGING)
-                .append(window.Mustache.render(QorBannerEditor.dragCoordinate, ui.position));
+            $target.addClass(CLASS_BANNEREDITOR_DRAGGING).append(window.Mustache.render(QorBannerEditor.dragCoordinate, ui.position));
             $target.find('.qor-bannereditor__button-inline').hide();
         },
 
@@ -598,9 +592,7 @@
 
         setValue: function() {
             let $html = this.$canvas.clone();
-            $html
-                .find(CLASS_DRAGGABLE)
-                .removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging qor-bannereditor__dragging');
+            $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging qor-bannereditor__dragging');
             $html.find(CLASS_NEED_REMOVE).remove();
             this.$textarea.val($html.html().replace(/&quot;/g, ''));
         },
