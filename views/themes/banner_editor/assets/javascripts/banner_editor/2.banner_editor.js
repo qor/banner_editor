@@ -72,8 +72,6 @@
             this.config = config;
             this.$textarea = $textarea;
 
-            console.log(config);
-
             $canvas.html($iframe).removeClass('qor-bannereditor__canvas');
 
             this.$iframe = $iframe;
