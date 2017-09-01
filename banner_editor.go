@@ -15,9 +15,10 @@ import (
 )
 
 var (
-	registeredElements []*Element
-	viewPaths          []string
-	assetFileSystem    assetfs.Interface
+	registeredElements           []*Element
+	registeredExternalStylePaths []string
+	viewPaths                    []string
+	assetFileSystem              assetfs.Interface
 )
 
 func init() {
@@ -58,6 +59,11 @@ func init() {
 // RegisterElement register a element
 func RegisterElement(e *Element) {
 	registeredElements = append(registeredElements, e)
+}
+
+// RegisterExternalStylePath register a asset path
+func RegisterExternalStylePath(path string) {
+	registeredExternalStylePaths = append(registeredExternalStylePaths, path)
 }
 
 // ConfigureQorMeta configure route and funcmap for banner_editor meta
@@ -121,11 +127,13 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 				elements = append(elements, element{Name: e.Name, CreateURL: fmt.Sprintf("%v?kind=%v", newElementURL, template.URLQueryEscaper(e.Name))})
 			}
 			results, err := json.Marshal(struct {
-				Elements []element
-				EditURL  string
+				Elements          []element
+				ExternalStylePath []string
+				EditURL           string
 			}{
-				Elements: elements,
-				EditURL:  fmt.Sprintf("%v/%v/:id/edit", router.Prefix, res.ToParam()),
+				Elements:          elements,
+				ExternalStylePath: registeredExternalStylePaths,
+				EditURL:           fmt.Sprintf("%v/%v/:id/edit", router.Prefix, res.ToParam()),
 			})
 			if err != nil {
 				return err.Error()
