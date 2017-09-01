@@ -32,7 +32,8 @@
         CLASS_TOP = 'qor-bannereditor__draggable-top',
         CLASS_LEFT = 'qor-bannereditor__draggable-left',
         CLASS_NEED_REMOVE =
-            '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable';
+            '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable',
+        _ = window._;
 
     function getImgSize(url, callback) {
         let img = new Image();
@@ -66,6 +67,7 @@
 
             config.toolbar = configure.Elements;
             config.editURL = configure.EditURL;
+            config.externalStylePath = configure.ExternalStylePath;
 
             $canvas.hide();
 
@@ -90,9 +92,23 @@
         },
 
         initIframe: function(html) {
-            let $ele = this.$iframe.contents();
+            let $ele = this.$iframe.contents(),
+                $head = $ele.find('head'),
+                externalStylePath = this.config.externalStylePath;
 
-            $ele.find('head').append(`<link rel="stylesheet" type="text/css" href="${this.$element.data('stylesheet')}">`);
+            $head.append(`<link rel="stylesheet" type="text/css" href="${this.$element.data('stylesheet')}">`);
+
+            // load banner editor external style
+            if (externalStylePath) {
+                if (_.isString(externalStylePath)) {
+                    $head.append(`<link rel="stylesheet" type="text/css" href="${externalStylePath}">`);
+                } else if (_.isArray(externalStylePath) && externalStylePath.length > 0) {
+                    for (let i = externalStylePath.length - 1; i >= 0; i--) {
+                        $head.append(`<link rel="stylesheet" type="text/css" href="${externalStylePath[i]}">`);
+                    }
+                }
+            }
+
             $ele.find('body').html(html);
             this.$bg = $ele.find(CLASS_BANNEREDITOR_BG);
             this.$canvas = $ele.find(CLASS_CANVAS);
