@@ -204,7 +204,7 @@
                 });
 
                 this.$canvas.width(bWidth).height(bHeight);
-                this.$iframe.width(bWidth).height(bHeight);
+                this.$iframe.height(bHeight);
             }
 
             $element.find('.qor-bannereditor__contents').show();
@@ -307,7 +307,7 @@
 
             getImgSize(url, function(width, height) {
                 $canvas.width(width).height(height);
-                $iframe.width(width + 4).height(height + 4);
+                $iframe.height(height + 4);
                 $element.attr({
                     'data-image-width': width,
                     'data-image-height': height

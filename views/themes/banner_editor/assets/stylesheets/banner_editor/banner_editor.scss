@@ -1,12 +1,13 @@
 .qor-bannereditor {
     position: relative;
     overflow: hidden;
-    iframe{
+    iframe {
         margin: 0 auto;
         max-width: 1200px;
+        width: 100%;
     }
 
-    .qor-bannereditor__contents{
+    .qor-bannereditor__contents {
         background: url(../images/bg-transparents.png);
     }
 
