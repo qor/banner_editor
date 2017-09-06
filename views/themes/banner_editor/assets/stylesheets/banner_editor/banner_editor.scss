@@ -19,6 +19,9 @@
     .qor-bannereditor__device-toolbar {
         width: 320px;
         margin: 0 auto;
+        .select2-container {
+            width: 100% !important;
+        }
         .select2-container--default .select2-selection--single {
             border-color: #03a9f4;
         }
