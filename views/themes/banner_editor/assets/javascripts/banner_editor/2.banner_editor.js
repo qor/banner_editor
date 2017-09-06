@@ -16,6 +16,7 @@
         EVENT_ENABLE = 'enable.' + NAMESPACE,
         EVENT_DISABLE = 'disable.' + NAMESPACE,
         EVENT_CLICK = 'click.' + NAMESPACE,
+        EVENT_CHANGE = 'change.' + NAMESPACE,
         EVENT_DBCLICK = 'dblclick.' + NAMESPACE,
         EVENT_DRAGSTOP = 'dragstop.' + NAMESPACE,
         EVENT_RESIZESTOP = 'resizestop.' + NAMESPACE,
@@ -28,7 +29,12 @@
         CLASS_BANNEREDITOR_BG = '.qor-bannereditor__bg',
         CLASS_BANNEREDITOR_IMAGE = '.qor-bannereditor__toolbar-image',
         CLASS_BANNEREDITOR_DRAGGING = 'qor-bannereditor__dragging',
+        CLASS_BANNEREDITOR_CONTENT = '.qor-bannereditor__contents',
         CLASS_CANVAS = '.qor-bannereditor__canvas',
+        CLASS_DEVICE_TRIGGER = '.qor-bannereditor__device-trigger',
+        CLASS_DEVICE_SELECTOR = '.qor-bannereditor__device',
+        CLASS_DEVICE_TOOLBAR = '.qor-bannereditor__device-toolbar',
+        CLASS_DEVICE_MODE = 'qor-bannereditor__device-mode',
         CLASS_TOP = 'qor-bannereditor__draggable-top',
         CLASS_LEFT = 'qor-bannereditor__draggable-left',
         CLASS_NEED_REMOVE =
@@ -44,6 +50,14 @@
             }
         };
         img.src = url;
+    }
+
+    function getDeviceSize(size, sym) {
+        let arr = size.split(sym || 'x');
+        return {
+            width: parseInt(arr[0]),
+            height: parseInt(arr[1])
+        };
     }
 
     function QorBannerEditor(element, options) {
@@ -121,7 +135,9 @@
 
             this.$element
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
-                .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this));
+                .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
+                .on(EVENT_CLICK, CLASS_DEVICE_TRIGGER, this.toggleDevice.bind(this))
+                .on(EVENT_CHANGE, CLASS_DEVICE_SELECTOR, this.switchDevice.bind(this));
 
             $canvas
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
@@ -158,6 +174,61 @@
             $canvas.find(CLASS_DRAGGABLE).draggable('destroy').resizable('destroy');
 
             $(document).off(EVENT_CLICK, this.hideElement.bind(this));
+        },
+
+        toggleDevice: function() {
+            let $element = this.$element,
+                defaultValue = $element.find(CLASS_DEVICE_SELECTOR).val();
+
+            if ($element.hasClass(CLASS_DEVICE_MODE)) {
+                this.resetDevice();
+            }
+
+            this.$canvas.toggleClass(CLASS_DEVICE_MODE);
+            $element.toggleClass(CLASS_DEVICE_MODE).find(CLASS_DEVICE_TOOLBAR).toggle();
+            this.resetBannerEditorSize(defaultValue);
+        },
+
+        resetDevice: function() {
+            let initWidth = this.initWidth,
+                initHeight = this.initHeight;
+
+            this.$element.find(CLASS_BANNEREDITOR_CONTENT).css('width', 'auto');
+            this.$iframe.css({
+                width: '100%',
+                height: initHeight
+            });
+            this.$canvas.css({
+                width: initWidth
+            });
+        },
+
+        switchDevice: function(e) {
+            let size = $(e.target).val();
+
+            this.resetBannerEditorSize(size);
+        },
+
+        resetBannerEditorSize: function(size) {
+            let $element = this.$element,
+                deviceSize = getDeviceSize(size),
+                deviceWidth = deviceSize.width,
+                deviceHeight = deviceSize.height;
+
+            if (!$element.hasClass(CLASS_DEVICE_MODE)) {
+                return;
+            }
+
+            this.$iframe.css({
+                width: deviceWidth,
+                height: deviceHeight
+            });
+            this.$canvas.css({
+                width: deviceWidth
+            });
+
+            $element.find(CLASS_BANNEREDITOR_CONTENT).width(deviceWidth);
+            $element.find(CLASS_DEVICE_TOOLBAR).width(deviceWidth);
         },
 
         showCoordinate: function() {
@@ -205,6 +276,8 @@
 
                 this.$canvas.width(bWidth).height(bHeight);
                 this.$iframe.height(bHeight);
+                this.initWidth = bWidth;
+                this.initHeight = bHeight;
             }
 
             $element.find('.qor-bannereditor__contents').show();
@@ -316,6 +389,9 @@
                     'data-image-width': width,
                     'data-image-height': height
                 });
+
+                _this.initWidth = width;
+                _this.initHeight = height;
                 _this.setValue();
             });
         },
@@ -665,7 +741,11 @@
         }
     };
 
-    QorBannerEditor.toolbar = `[[#toolbar]]<button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__button" data-banner-url="[[CreateURL]]" data-title="[[Name]]" type="button">[[Name]]</button>[[/toolbar]]`;
+    QorBannerEditor.toolbar = `[[#toolbar]]
+                                    <button class="mdl-button mdl-button--colored qor-bannereditor__button" data-banner-url="[[CreateURL]]" data-title="[[Name]]" type="button">
+                                        [[Name]]
+                                    </button>
+                                [[/toolbar]]`;
 
     QorBannerEditor.dragCoordinate = `<div class="qor-bannereditor__draggable-coordinate"><span>x :<em>[[left]]</em></span><span>y :<em>[[top]]</em></span></div>`;
 

@@ -16,6 +16,21 @@
       {{end}}
     </ul>
 
+
+    <button class="mdl-button mdl-button--icon qor-bannereditor__device-trigger" title={{t "qor_admin.banner_editor.toggle_device_hint" "Responsive Design mode"}} type="button"><i class="material-icons">devices</i></button>
+    <div class="qor-bannereditor__device-toolbar" style="display: none;">
+      <p class="resolution">{{t "qor_admin.banner_editor.toggle_device_hint" "Responsive Design mode"}}</p>
+      <select data-toggle="qor.chooser" class="ignore-dirtyform qor-bannereditor__device">
+        <option value="320x528">iPhone 5 (320 x 528)</option>
+        <option value="375x667">iPhone 6 (375 x 667)</option>
+        <option value="414x736">iPhone 6 Plus (414 x 736)</option>
+        <option value="360x640">Google Nexus 5 (360 x 640)</option>
+        <option value="412x732">Google Nexus 6 (412 x 732)</option>
+        <option value="360x640">Samsung Galaxy S5 (360 x 640)</option>
+        <option value="1024x768">iPad (1024 x 768)</option>
+      </select>
+    </div>
+
     <div class="qor-bannereditor__canvas qor-bannereditor__contents"></div>
 
     <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure .Meta.Config}}" style="display: none;">{{unsafe_raw .Value}}</textarea>

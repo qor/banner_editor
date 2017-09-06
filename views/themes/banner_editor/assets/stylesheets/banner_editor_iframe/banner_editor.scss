@@ -20,7 +20,6 @@
     }
 }
 
-
 .qor-bannereditor__canvas {
     border-left: 2px dashed rgba(94, 255, 255, 0.7);
     border-right: 2px dashed rgba(94, 255, 255, 0.7);
@@ -32,7 +31,17 @@
     max-height: 1000px;
     box-sizing: border-box;
 
-    h1, h1 small, h2 small, h3 small, h4 small, h5 small, h6 small{
+    &.qor-bannereditor__device-mode {
+        border: 0;
+    }
+
+    h1,
+    h1 small,
+    h2 small,
+    h3 small,
+    h4 small,
+    h5 small,
+    h6 small {
         letter-spacing: normal;
     }
 
@@ -47,13 +56,13 @@
         max-width: 100%;
     }
 
-     > *:not(.qor-bannereditor__bg),
+    > *:not(.qor-bannereditor__bg),
     .qor-bannereditor__bg > * {
         border: 1px dotted transparent;
         cursor: move;
     }
 
-    .qor-bannereditor__draggable-coordinate{
+    .qor-bannereditor__draggable-coordinate {
         position: absolute;
         top: -30px;
         left: 0;
@@ -64,12 +73,12 @@
         color: #fff;
         padding: 4px 8px;
         min-width: 85px;
-        font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif;
-        em{
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        em {
             font-style: normal;
             padding-left: 4px;
         }
-        span{
+        span {
             margin-right: 8px;
         }
     }
@@ -85,13 +94,13 @@
         padding: 8px;
         background-color: #fff;
         border-radius: 2px;
-        box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
         cursor: auto;
-        .mdl-button--icon[data-edit-type="delete"] .material-icons{
-            -webkit-transform: translate(-9px,-12px);
-            transform: translate(-9px,-12px);
+        .mdl-button--icon[data-edit-type="delete"] .material-icons {
+            -webkit-transform: translate(-9px, -12px);
+            transform: translate(-9px, -12px);
         }
-        hr{
+        hr {
             display: inline-block;
             vertical-align: middle;
             width: 1px;
@@ -100,18 +109,18 @@
             height: 20px;
             border: 0;
         }
-        button{
+        button {
             background-color: #fff;
             box-shadow: none;
             color: #333;
             height: 24px;
             min-width: 24px;
             width: 24px;
-            margin:  0 4px;
-            &:hover{
+            margin: 0 4px;
+            &:hover {
                 background-color: rgba(0, 0, 0, .05);
             }
-            .material-icons{
+            .material-icons {
                 font-size: 18px;
             }
         }
@@ -121,22 +130,22 @@
         }
     }
 
-    .qor-bannereditor__draggable-left{
-        .qor-bannereditor__button-inline{
+    .qor-bannereditor__draggable-left {
+        .qor-bannereditor__button-inline {
             right: auto;
             left: 1px;
         }
     }
-    .qor-bannereditor__draggable-top{
-        .qor-bannereditor__draggable-coordinate, .qor-bannereditor__button-inline{
+    .qor-bannereditor__draggable-top {
+        .qor-bannereditor__draggable-coordinate,
+        .qor-bannereditor__button-inline {
             top: auto;
             bottom: -30px;
         }
-        .qor-bannereditor__button-inline{
+        .qor-bannereditor__button-inline {
             bottom: -45px;
         }
     }
-
 
     .qor-bannereditor__dragging {
         border-color: #0277bd;
@@ -148,7 +157,7 @@
             top: 0;
             height: 100%;
             background-color: transparent;
-            &::after{
+            &::after {
                 content: "";
                 width: 7px;
                 height: 7px;
@@ -165,7 +174,7 @@
     }
 
     .draging {
-        border: 1px dotted rgba(0,0,0,.2);
+        border: 1px dotted rgba(0, 0, 0, .2);
     }
 
     .ui-resizable-handle {
@@ -174,13 +183,11 @@
         display: block;
         -ms-touch-action: none;
         touch-action: none;
-        background-color: rgba(0,0,0,.2);
+        background-color: rgba(0, 0, 0, .2);
     }
 
     .ui-resizable-autohide .ui-resizable-handle,
     .ui-resizable-disabled .ui-resizable-handle {
         display: none;
     }
-
 }
-
