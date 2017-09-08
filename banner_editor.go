@@ -46,6 +46,7 @@ type QorBannerEditorSetting struct {
 
 // Element represent a button/element in banner_editor toolbar
 type Element struct {
+	Icon     string
 	Name     string
 	Template string
 	Resource *admin.Resource
@@ -109,6 +110,7 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 			type element struct {
 				Name      string
 				CreateURL string
+				Icon      string
 			}
 			var (
 				selectedElements = registeredElements
@@ -124,7 +126,7 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 				}
 			}
 			for _, e := range selectedElements {
-				elements = append(elements, element{Name: e.Name, CreateURL: fmt.Sprintf("%v?kind=%v", newElementURL, template.URLQueryEscaper(e.Name))})
+				elements = append(elements, element{Icon: e.Icon, Name: e.Name, CreateURL: fmt.Sprintf("%v?kind=%v", newElementURL, template.URLQueryEscaper(e.Name))})
 			}
 			results, err := json.Marshal(struct {
 				Elements          []element

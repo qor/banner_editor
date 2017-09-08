@@ -156,24 +156,10 @@
 
         unbind: function() {
             let $canvas = this.$canvas;
-
-            this.$element
-                .off(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
-                .off(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this));
-
-            $canvas
-                .off(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
-                .off(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
-                .off(EVENT_CLICK, CLASS_DRAGGABLE, this.handleInlineEdit.bind(this))
-                .off(EVENT_DBCLICK, CLASS_DRAGGABLE, this.showInlineEdit.bind(this))
-                .off(EVENT_CLICK, '.qor-bannereditor__button-inline button', this.showEdit.bind(this))
-                .off(EVENT_DRAGSTOP, CLASS_DRAGGABLE, this.handleDragStop.bind(this))
-                .off(EVENT_RESIZESTOP, CLASS_DRAGGABLE, this.handleResizeStop.bind(this))
-                .off(EVENT_DRAG, CLASS_DRAGGABLE, this.handleDrag.bind(this));
-
+            this.$element.off(EVENT_CLICK).off(EVENT_CHANGE);
+            $canvas.off(EVENT_CLICK).off(EVENT_DBCLICK).off(EVENT_DRAGSTOP).off(EVENT_RESIZESTOP).off(EVENT_DRAG);
             $canvas.find(CLASS_DRAGGABLE).draggable('destroy').resizable('destroy');
-
-            $(document).off(EVENT_CLICK, this.hideElement.bind(this));
+            $(document).off(EVENT_CLICK);
         },
 
         toggleDevice: function() {
@@ -247,13 +233,17 @@
         },
 
         initBannerEditor: function() {
-            let $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config)),
+            let $toolbar,
                 $bg = this.$bg,
                 $element = this.$element,
                 isInBottomsheet = $element.closest('.qor-bottomsheets').length,
                 isInSlideout = $('.qor-slideout').is(':visible'),
                 hasFullClass = $('.qor-slideout').hasClass('qor-slideout__fullscreen');
 
+            this.config.toolbar.forEach(function(obj) {
+                obj.id = obj.Name.toLowerCase().replace(/\s/g, '-');
+            });
+            $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config));
             $toolbar.appendTo($element.find('.qor-bannereditor__toolbar-btns'));
             this.$popover = $(QorBannerEditor.popover).appendTo('body');
 
@@ -675,7 +665,7 @@
         },
 
         addElements: function(e) {
-            let $target = $(e.target),
+            let $target = $(e.target).closest('button'),
                 url = $target.data('banner-url'),
                 title = $target.data('title');
 
@@ -742,9 +732,17 @@
     };
 
     QorBannerEditor.toolbar = `[[#toolbar]]
-                                    <button class="mdl-button mdl-button--colored qor-bannereditor__button" data-banner-url="[[CreateURL]]" data-title="[[Name]]" type="button">
-                                        [[Name]]
+                                    <button class="mdl-button mdl-button--colored qor-bannereditor__button" data-banner-url="[[CreateURL]]" id="[[id]]" data-title="[[Name]]" type="button">
+                                        [[#Icon]][[& Icon]][[/Icon]]
+                                        [[^Icon]]
+                                            [[Name]]
+                                        [[/Icon]]
                                     </button>
+                                    [[#Icon]]
+                                        <span class="mdl-tooltip" data-mdl-for="[[id]]">
+                                            [[Name]]
+                                        </span>
+                                    [[/Icon]]
                                 [[/toolbar]]`;
 
     QorBannerEditor.dragCoordinate = `<div class="qor-bannereditor__draggable-coordinate"><span>x :<em>[[left]]</em></span><span>y :<em>[[top]]</em></span></div>`;
