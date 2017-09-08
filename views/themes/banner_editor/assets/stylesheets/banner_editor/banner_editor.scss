@@ -11,11 +11,6 @@
             box-shadow: 0px 4px 6px 0px rgba(0, 0, 0, .2);
         }
     }
-    .qor-bannereditor__device-trigger {
-        position: absolute;
-        top: 2px;
-        right: 0;
-    }
     .qor-bannereditor__device-toolbar {
         width: 320px;
         margin: 0 auto;
@@ -50,12 +45,20 @@
         }
         button {
             font-size: 12px;
+            color: rgba(0, 0, 0, .75);
+            padding: 0 8px;
+            min-width: 24px;
+            margin-right: 16px;
         }
 
         li {
             list-style: none;
             display: inline-block;
             vertical-align: middle;
+            &:last-child {
+                border-left: 1px solid rgba(0, 0, 0, .42);
+                padding-left: 8px;
+            }
         }
     }
 }

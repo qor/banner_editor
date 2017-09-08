@@ -9,14 +9,24 @@
     <ul class="qor-bannereditor__toolbar clearfix">
       <li class="qor-bannereditor__toolbar-btns"></li>
       {{if $asset_manager}}
-        <li>
+        <li class="qor-bannereditor__toolbar--ml">
           {{$asset_router := printf "%v/%v" $asset_manager.GetAdmin.GetRouter.Prefix $asset_manager.ToParam}}
-          <button class="mdl-button mdl-button--colored mdl-js-button qor-bannereditor__toolbar-image" data-select-Modal="selectone" data-banner-media-url="{{$asset_router}}" type="button">{{t "qor_admin.banner_editor.add_image" "Add Image"}}</button>
+          <button class="mdl-button mdl-button--colored č qor-bannereditor__toolbar-image" data-select-Modal="selectone" data-banner-media-url="{{$asset_router}}" type="button">
+            <i class="material-icons">photo_library</i>
+          </button>
+          <span class="mdl-tooltip">
+              {{t "qor_admin.banner_editor.add_image_from_media_libraries" "Add Image From Media Libraries"}}
+          </span>
         </li>
       {{end}}
+      <li class="qor-bannereditor__toolbar--rdm">
+        <button class="mdl-button mdl-js-button qor-bannereditor__device-trigger" type="button"><i class="material-icons">devices</i></button>
+        <span class="mdl-tooltip">
+            {{t "qor_admin.banner_editor.toggle_device_hint" "Responsive Design Mode"}}
+        </span>
+      </li>
     </ul>
 
-    <button class="mdl-button mdl-button--icon qor-bannereditor__device-trigger" title={{t "qor_admin.banner_editor.toggle_device_hint" "Responsive Design mode"}} type="button"><i class="material-icons">devices</i></button>
     <div class="qor-bannereditor__device-toolbar" style="display: none;">
       <p class="resolution">{{t "qor_admin.banner_editor.toggle_device_hint" "Responsive Design mode"}}</p>
       <select data-toggle="qor.chooser" class="ignore-dirtyform qor-bannereditor__device">

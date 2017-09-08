@@ -236,16 +236,30 @@
             let $toolbar,
                 $bg = this.$bg,
                 $element = this.$element,
+                $buttons = $element.find('.qor-bannereditor__toolbar--ml, .qor-bannereditor__toolbar--rdm'),
                 isInBottomsheet = $element.closest('.qor-bottomsheets').length,
                 isInSlideout = $('.qor-slideout').is(':visible'),
-                hasFullClass = $('.qor-slideout').hasClass('qor-slideout__fullscreen');
+                hasFullClass = $('.qor-slideout').hasClass('qor-slideout__fullscreen'),
+                randomString = (Math.random() + 1).toString(36).substring(7);
 
             this.config.toolbar.forEach(function(obj) {
-                obj.id = obj.Name.toLowerCase().replace(/\s/g, '-');
+                obj.id = `${obj.Name.toLowerCase().replace(/\s/g, '-')}-${randomString}`;
             });
             $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config));
             $toolbar.appendTo($element.find('.qor-bannereditor__toolbar-btns'));
             this.$popover = $(QorBannerEditor.popover).appendTo('body');
+
+            $buttons.each(function(index) {
+                let $innerButtons = $(this).find(' > button'),
+                    $innerTip = $(this).find('.mdl-tooltip'),
+                    $all = $(this).find(' > button, .mdl-tooltip');
+
+                $all.removeAttr('data-upgraded');
+                $innerButtons.attr('id', `add-${index}-${randomString}`);
+                $innerTip.attr('data-mdl-for', `add-${index}-${randomString}`);
+            });
+
+            $element.find('.qor-bannereditor__toolbar').trigger('enable');
 
             if (isInSlideout && !isInBottomsheet && !hasFullClass) {
                 $('.qor-slideout__fullscreen').click();
