@@ -1,5 +1,8 @@
 @import "iframe";
 
+body {
+    background-color: transparent !important;
+}
 .qor-bannereditor {
     position: relative;
     overflow: hidden;
@@ -23,10 +26,11 @@
 .qor-bannereditor__canvas {
     border-left: 2px dashed rgba(94, 255, 255, 0.7);
     border-right: 2px dashed rgba(94, 255, 255, 0.7);
-    height: 300px;
+    height: 100%;
     position: relative;
     margin: 0 auto;
     overflow: hidden;
+    width: 800px;
     max-width: 1200px;
     max-height: 1200px;
     box-sizing: border-box;

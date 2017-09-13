@@ -182,17 +182,16 @@
             this.$element.find(CLASS_BANNEREDITOR_CONTENT).css('width', 'auto');
             this.$iframe.css({
                 width: '100%',
-                height: initHeight
+                height: initHeight || 300
             });
             this.$canvas.css({
-                width: initWidth
+                width: initWidth || 'auto',
+                height: initHeight || 300
             });
         },
 
         switchDevice: function(e) {
-            let size = $(e.target).val();
-
-            this.resetBannerEditorSize(size);
+            this.resetBannerEditorSize($(e.target).val());
         },
 
         resetBannerEditorSize: function(size) {
@@ -210,7 +209,8 @@
                 height: deviceHeight
             });
             this.$canvas.css({
-                width: deviceWidth
+                width: deviceWidth,
+                height: deviceHeight
             });
 
             $element.find(CLASS_BANNEREDITOR_CONTENT).width(deviceWidth);
@@ -459,7 +459,9 @@
                     $popover.find('.qor-bannereditor__content').html($content.html());
                     $popover.trigger('enable').qorModal('show');
 
-                    $popover.one(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', _this.renderElement.bind(_this));
+                    $popover
+                        .off(EVENT_CLICK)
+                        .on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', _this.renderElement.bind(_this));
                 }
             });
         },
@@ -704,6 +706,16 @@
                         $popover.qorModal('hide');
                     }
                     _this.setValue();
+                    _this.$popover.off(EVENT_CLICK);
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    if (xhr.status === 422 && xhr.responseJSON.errors[0]) {
+                        _this.$popover
+                            .find('form')
+                            .before(window.Mustache.render(QorBannerEditor.errorMessage, { message: xhr.responseJSON.errors[0] }));
+                    } else {
+                        window.alert([textStatus, errorThrown].join(': '));
+                    }
                 }
             });
 
@@ -792,6 +804,15 @@
                                 [[/toolbar]]`;
 
     QorBannerEditor.dragCoordinate = `<div class="qor-bannereditor__draggable-coordinate"><span>x :<em>[[left]]</em></span><span>y :<em>[[top]]</em></span></div>`;
+
+    QorBannerEditor.errorMessage = `<ul class="qor-error">
+                                        <li>
+                                            <label for="">
+                                                <i class="material-icons">error</i>
+                                                <span>[[message]]</span>
+                                            </label>
+                                        </li>
+                                    </ul>`;
 
     QorBannerEditor.inlineEdit = `<div class="qor-bannereditor__button-inline">
                                     <button class="mdl-button mdl-button--icon" data-edit-type="left" type="button"><i class="material-icons">format_align_left</i></button>
