@@ -271,7 +271,16 @@
 
             if ($bg.length && $bg.data('image-width')) {
                 let bWidth = $bg.data('image-width'),
-                    bHeight = $bg.data('image-height');
+                    bHeight = $bg.data('image-height'),
+                    iframeHeight = bHeight,
+                    cSize;
+
+                if (bWidth > 1200) {
+                    cSize = this.getContentSize(bWidth, bHeight);
+                    bWidth = cSize.width;
+                    bHeight = cSize.height;
+                    iframeHeight = bHeight + 15;
+                }
 
                 $element.attr({
                     'data-image-width': bWidth,
@@ -279,12 +288,19 @@
                 });
 
                 this.$canvas.width(bWidth).height(bHeight);
-                this.$iframe.height(bHeight);
+                this.$iframe.height(iframeHeight);
                 this.initWidth = bWidth;
                 this.initHeight = bHeight;
             }
 
             $element.find('.qor-bannereditor__contents').show();
+        },
+
+        getContentSize: function(w, h) {
+            return {
+                width: 1200,
+                height: 1200 * h / w
+            };
         },
 
         initMedia: function() {
@@ -380,18 +396,34 @@
             let $canvas = this.$canvas,
                 $iframe = this.$iframe,
                 $element = this.$element,
+                cSize,
+                imageWidth,
+                imageHeight,
+                iframeHeight,
                 _this = this;
 
             getImgSize(url, function(width, height) {
+                imageWidth = width;
+                imageHeight = height;
+                iframeHeight = height;
+                if (width > 1200) {
+                    cSize = _this.getContentSize(width, height);
+                    width = cSize.width;
+                    height = cSize.height;
+                    iframeHeight = height + 15;
+                }
+
                 $canvas.width(width).height(height);
-                $iframe.height(height + 4);
+                $iframe.height(iframeHeight);
+
                 $element.attr({
-                    'data-image-width': width,
-                    'data-image-height': height
+                    'data-image-width': imageWidth,
+                    'data-image-height': imageHeight
                 });
+
                 $bg.attr({
-                    'data-image-width': width,
-                    'data-image-height': height
+                    'data-image-width': imageHeight,
+                    'data-image-height': imageHeight
                 });
 
                 _this.initWidth = width;
