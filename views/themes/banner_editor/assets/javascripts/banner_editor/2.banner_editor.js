@@ -37,9 +37,7 @@
         CLASS_DEVICE_MODE = 'qor-bannereditor__device-mode',
         CLASS_TOP = 'qor-bannereditor__draggable-top',
         CLASS_LEFT = 'qor-bannereditor__draggable-left',
-        CLASS_NEED_REMOVE =
-            '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable',
-        _ = window._;
+        CLASS_NEED_REMOVE = '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable';
 
     function getImgSize(url, callback) {
         let img = new Image();
@@ -77,7 +75,8 @@
                 $canvas = $element.find(CLASS_CANVAS),
                 html = $(`<div class="qor-bannereditor__canvas">${$textarea.val()}</div>`),
                 $iframe = $('<iframe id="qor-bannereditor__iframe" width="100%" height="300px" />'),
-                configure = $textarea.data('configure');
+                configure = $textarea.data('configure'),
+                bannerSizes = configure.BannerSizes;
 
             config.toolbar = configure.Elements;
             config.editURL = configure.EditURL;
@@ -87,6 +86,17 @@
 
             this.config = config;
             this.$textarea = $textarea;
+
+            if (bannerSizes && bannerSizes.Laptop) {
+                this.initWidth = bannerSizes.Laptop.Width;
+                this.initHeight = bannerSizes.Laptop.Height;
+
+                $element
+                    .find('.qor-bannereditor__toolbar--size')
+                    .show()
+                    .find('span')
+                    .html(`${this.initWidth}px X ${this.initHeight}px`);
+            }
 
             $canvas.html($iframe).removeClass('qor-bannereditor__canvas');
 
@@ -108,18 +118,18 @@
         initIframe: function(html) {
             let $ele = this.$iframe.contents(),
                 $head = $ele.find('head'),
-                externalStylePath = this.config.externalStylePath;
+                externalStylePath = this.config.externalStylePath,
+                defaultCSS = this.$element.data('stylesheet'),
+                linkTemplate = function(url) {
+                    return `<link rel="stylesheet" type="text/css" href="${url}">`;
+                };
 
-            $head.append(`<link rel="stylesheet" type="text/css" href="${this.$element.data('stylesheet')}">`);
+            $head.append(linkTemplate(defaultCSS));
 
             // load banner editor external style
-            if (externalStylePath) {
-                if (_.isString(externalStylePath)) {
-                    $head.append(`<link rel="stylesheet" type="text/css" href="${externalStylePath}">`);
-                } else if (_.isArray(externalStylePath) && externalStylePath.length > 0) {
-                    for (let i = externalStylePath.length - 1; i >= 0; i--) {
-                        $head.append(`<link rel="stylesheet" type="text/css" href="${externalStylePath[i]}">`);
-                    }
+            if (externalStylePath && externalStylePath.length > 0) {
+                for (let i = externalStylePath.length - 1; i >= 0; i--) {
+                    $head.append(linkTemplate(externalStylePath[i]));
                 }
             }
 
@@ -149,7 +159,10 @@
                 .on(EVENT_RESIZESTOP, CLASS_DRAGGABLE, this.handleResizeStop.bind(this))
                 .on(EVENT_DRAG, CLASS_DRAGGABLE, this.handleDrag.bind(this));
 
-            $canvas.find(CLASS_DRAGGABLE).draggable(this.options.draggable).resizable(this.options.resizable);
+            $canvas
+                .find(CLASS_DRAGGABLE)
+                .draggable(this.options.draggable)
+                .resizable(this.options.resizable);
 
             $(document).on(EVENT_CLICK, this.hideElement.bind(this));
         },
@@ -157,8 +170,16 @@
         unbind: function() {
             let $canvas = this.$canvas;
             this.$element.off(EVENT_CLICK).off(EVENT_CHANGE);
-            $canvas.off(EVENT_CLICK).off(EVENT_DBCLICK).off(EVENT_DRAGSTOP).off(EVENT_RESIZESTOP).off(EVENT_DRAG);
-            $canvas.find(CLASS_DRAGGABLE).draggable('destroy').resizable('destroy');
+            $canvas
+                .off(EVENT_CLICK)
+                .off(EVENT_DBCLICK)
+                .off(EVENT_DRAGSTOP)
+                .off(EVENT_RESIZESTOP)
+                .off(EVENT_DRAG);
+            $canvas
+                .find(CLASS_DRAGGABLE)
+                .draggable('destroy')
+                .resizable('destroy');
             $(document).off(EVENT_CLICK);
         },
 
@@ -171,22 +192,25 @@
             }
 
             this.$canvas.toggleClass(CLASS_DEVICE_MODE);
-            $element.toggleClass(CLASS_DEVICE_MODE).find(CLASS_DEVICE_TOOLBAR).toggle();
+            $element
+                .toggleClass(CLASS_DEVICE_MODE)
+                .find(CLASS_DEVICE_TOOLBAR)
+                .toggle();
             this.resetBannerEditorSize(defaultValue);
         },
 
         resetDevice: function() {
-            let initWidth = this.initWidth,
-                initHeight = this.initHeight;
+            let initWidth = this.initWidth || this.bannerWidth || 'auto',
+                initHeight = this.initHeight || this.bannerHeight || 300;
 
             this.$element.find(CLASS_BANNEREDITOR_CONTENT).css('width', 'auto');
             this.$iframe.css({
                 width: '100%',
-                height: initHeight || 300
+                height: initHeight
             });
             this.$canvas.css({
-                width: initWidth || 'auto',
-                height: initHeight || 300
+                width: initWidth,
+                height: initHeight
             });
         },
 
@@ -221,10 +245,7 @@
             let $target = this.$canvas.find('.qor-bannereditor__dragging'),
                 position = {};
 
-            (position.left = parseInt($target.attr('data-position-left'), 10)), (position.top = parseInt(
-                $target.attr('data-position-top'),
-                10
-            ));
+            (position.left = parseInt($target.attr('data-position-left'), 10)), (position.top = parseInt($target.attr('data-position-top'), 10));
 
             this.$canvas.find('.qor-bannereditor__draggable-coordinate').remove();
             $target.append(window.Mustache.render(QorBannerEditor.dragCoordinate, position));
@@ -236,6 +257,10 @@
             let $toolbar,
                 $bg = this.$bg,
                 $element = this.$element,
+                $canvas = this.$canvas,
+                $iframe = this.$iframe,
+                initWidth = this.initWidth,
+                initHeight = this.initHeight,
                 $buttons = $element.find('.qor-bannereditor__toolbar--ml, .qor-bannereditor__toolbar--rdm'),
                 isInBottomsheet = $element.closest('.qor-bottomsheets').length,
                 isInSlideout = $('.qor-slideout').is(':visible'),
@@ -248,6 +273,8 @@
             $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config));
             $toolbar.appendTo($element.find('.qor-bannereditor__toolbar-btns'));
             this.$popover = $(QorBannerEditor.popover).appendTo('body');
+
+            $element.closest('.qor-fieldset').addClass('qor-fieldset-bannereditor');
 
             $buttons.each(function(index) {
                 let $innerButtons = $(this).find(' > button'),
@@ -269,28 +296,23 @@
                 $element.closest('.qor-bottomsheets').addClass('qor-bottomsheets__fullscreen');
             }
 
-            if ($bg.length && $bg.data('image-width')) {
-                let bWidth = $bg.data('image-width'),
-                    bHeight = $bg.data('image-height'),
-                    iframeHeight = bHeight,
-                    cSize;
+            if (initWidth && initHeight) {
+                $canvas.width(initWidth).height(initHeight);
+                $iframe.height(initHeight);
 
-                if (bWidth > 1200) {
-                    cSize = this.getContentSize(bWidth, bHeight);
-                    bWidth = cSize.width;
-                    bHeight = cSize.height;
-                    iframeHeight = bHeight + 15;
-                }
-
-                $element.attr({
-                    'data-image-width': bWidth,
-                    'data-image-height': bHeight
+                $bg.attr({
+                    'data-bannereditor-width': initWidth,
+                    'data-bannereditor-height': initHeight
                 });
+            } else if ($bg.length) {
+                let bWidth = initWidth || $bg.data('bannereditor-width'),
+                    bHeight = initHeight || $bg.data('bannereditor-height');
 
-                this.$canvas.width(bWidth).height(bHeight);
-                this.$iframe.height(iframeHeight);
-                this.initWidth = bWidth;
-                this.initHeight = bHeight;
+                $canvas.width(bWidth).height(bHeight);
+                $iframe.height(bHeight);
+
+                this.bannerWidth = bWidth;
+                this.bannerHeight = bHeight;
             }
 
             $element.find('.qor-bannereditor__contents').show();
@@ -395,41 +417,35 @@
         resetBoxSize: function(url, $bg) {
             let $canvas = this.$canvas,
                 $iframe = this.$iframe,
-                $element = this.$element,
+                initWidth = this.initWidth,
+                initHeight = this.initHeight,
                 cSize,
-                imageWidth,
-                imageHeight,
-                iframeHeight,
                 _this = this;
 
-            getImgSize(url, function(width, height) {
-                imageWidth = width;
-                imageHeight = height;
-                iframeHeight = height;
-                if (width > 1200) {
-                    cSize = _this.getContentSize(width, height);
-                    width = cSize.width;
-                    height = cSize.height;
-                    iframeHeight = height + 15;
-                }
+            if (!(initWidth && initHeight)) {
+                getImgSize(url, function(width, height) {
+                    if (width > 1200) {
+                        cSize = _this.getContentSize(width, height);
+                        width = cSize.width;
+                        height = cSize.height;
+                    }
 
-                $canvas.width(width).height(height);
-                $iframe.height(iframeHeight);
+                    width = initWidth || width;
+                    height = initHeight || height;
 
-                $element.attr({
-                    'data-image-width': imageWidth,
-                    'data-image-height': imageHeight
+                    $canvas.width(width).height(height);
+                    $iframe.height(height);
+
+                    $bg.attr({
+                        'data-bannereditor-width': width,
+                        'data-bannereditor-height': height
+                    });
+
+                    _this.bannerWidth = width;
+                    _this.bannerHeight = height;
+                    _this.setValue();
                 });
-
-                $bg.attr({
-                    'data-image-width': imageHeight,
-                    'data-image-height': imageHeight
-                });
-
-                _this.initWidth = width;
-                _this.initHeight = height;
-                _this.setValue();
-            });
+            }
         },
 
         handleInlineEdit: function(e) {
@@ -452,16 +468,21 @@
                 dataType: 'html',
                 success: function(html) {
                     let $content = $(html).find('.qor-form-container'),
-                        popupTitle = title || $(html).find('.mdl-layout-title').html();
+                        popupTitle =
+                            title ||
+                            $(html)
+                                .find('.mdl-layout-title')
+                                .html();
 
-                    $content.find('.qor-button--cancel').attr('data-dismiss', 'modal').removeAttr('href');
+                    $content
+                        .find('.qor-button--cancel')
+                        .attr('data-dismiss', 'modal')
+                        .removeAttr('href');
                     $popover.find('.qor-bannereditor__title').html(popupTitle);
                     $popover.find('.qor-bannereditor__content').html($content.html());
                     $popover.trigger('enable').qorModal('show');
 
-                    $popover
-                        .off(EVENT_CLICK)
-                        .on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', _this.renderElement.bind(_this));
+                    $popover.off(EVENT_CLICK).on(EVENT_CLICK, '.qor-bannereditor__content button[type="submit"]', _this.renderElement.bind(_this));
                 }
             });
         },
@@ -572,7 +593,7 @@
             }
 
             if ($target.css('bottom') === '0px' || $target.css('right') === '0px') {
-                $target.css({ bottom: 'auto', right: 'auto' });
+                $target.css({bottom: 'auto', right: 'auto'});
             }
 
             if ($target.attr('align-vertically') || $target.attr('align-horizontally')) {
@@ -685,7 +706,10 @@
                             $ele.attr(this.name, this.value);
                         });
 
-                        $ele.appendTo($body).draggable(options.draggable).resizable(options.resizable);
+                        $ele
+                            .appendTo($body)
+                            .draggable(options.draggable)
+                            .resizable(options.resizable);
 
                         $popover.qorModal('hide');
 
@@ -710,9 +734,7 @@
                 },
                 error: function(xhr, textStatus, errorThrown) {
                     if (xhr.status === 422 && xhr.responseJSON.errors[0]) {
-                        _this.$popover
-                            .find('form')
-                            .before(window.Mustache.render(QorBannerEditor.errorMessage, { message: xhr.responseJSON.errors[0] }));
+                        _this.$popover.find('form').before(window.Mustache.render(QorBannerEditor.errorMessage, {message: xhr.responseJSON.errors[0]}));
                     } else {
                         window.alert([textStatus, errorThrown].join(': '));
                     }

@@ -1,11 +1,12 @@
 {{$prefix := .Context.Admin.GetRouter.Prefix}}
 {{$asset_manager := .Meta.Config.MediaLibrary}}
 
+<link rel="stylesheet" href="{{$prefix}}/assets/stylesheets/banner_editor.css?theme=banner_editor" />
+
 <div class="qor-field">
   <div class="qor-field__show"></div>
 
-  <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor" data-stylesheet="{{$prefix}}/assets/stylesheets/banner_editor_iframe.css?theme=banner_editor">
-    <link rel="stylesheet" href="{{$prefix}}/assets/stylesheets/banner_editor.css?theme=banner_editor" />
+  <div class="qor-field__edit qor-bannereditor" data-toggle="qor.bannereditor" data-stylesheet="{{$prefix}}/assets/stylesheets/banner_editor_iframe.css?theme=banner_editor">    
     <ul class="qor-bannereditor__toolbar clearfix">
       <li class="qor-bannereditor__toolbar-btns"></li>
       {{if $asset_manager}}
@@ -24,6 +25,9 @@
         <span class="mdl-tooltip">
             {{t "qor_admin.banner_editor.toggle_device_hint" "Responsive Design Mode"}}
         </span>
+      </li>
+      <li class="qor-bannereditor__toolbar--size" style="display: none;">
+        {{t "qor_admin.banner_editor.size" "Banner Size:"}} <span></span>
       </li>
     </ul>
 

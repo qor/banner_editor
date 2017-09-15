@@ -1,4 +1,4 @@
-@import "iframe";
+@import 'iframe';
 
 body {
     background-color: transparent !important;
@@ -31,7 +31,7 @@ body {
     margin: 0 auto;
     overflow: hidden;
     width: 800px;
-    max-width: 1200px;
+    max-width: 1600px;
     max-height: 1200px;
     box-sizing: border-box;
 
@@ -98,9 +98,9 @@ body {
         padding: 8px;
         background-color: #fff;
         border-radius: 2px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         cursor: auto;
-        .mdl-button--icon[data-edit-type="delete"] .material-icons {
+        .mdl-button--icon[data-edit-type='delete'] .material-icons {
             -webkit-transform: translate(-9px, -12px);
             transform: translate(-9px, -12px);
         }
@@ -122,7 +122,7 @@ body {
             width: 24px;
             margin: 0 4px;
             &:hover {
-                background-color: rgba(0, 0, 0, .05);
+                background-color: rgba(0, 0, 0, 0.05);
             }
             .material-icons {
                 font-size: 18px;
@@ -162,7 +162,7 @@ body {
             height: 100%;
             background-color: transparent;
             &::after {
-                content: "";
+                content: '';
                 width: 7px;
                 height: 7px;
                 background-color: #fff;
@@ -178,7 +178,7 @@ body {
     }
 
     .draging {
-        border: 1px dotted rgba(0, 0, 0, .2);
+        border: 1px dotted rgba(0, 0, 0, 0.2);
     }
 
     .ui-resizable-handle {
@@ -187,7 +187,7 @@ body {
         display: block;
         -ms-touch-action: none;
         touch-action: none;
-        background-color: rgba(0, 0, 0, .2);
+        background-color: rgba(0, 0, 0, 0.2);
     }
 
     .ui-resizable-autohide .ui-resizable-handle,
