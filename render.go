@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"html/template"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -27,8 +26,8 @@ func RegisterViewPath(p string) {
 		assetFileSystem.RegisterPath(p)
 	} else {
 		for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
-			viewPaths = append(viewPaths, path.Join(gopath, "src", p))
-			assetFileSystem.RegisterPath(path.Join(gopath, "src", p))
+			viewPaths = append(viewPaths, filepath.Join(gopath, "src", p))
+			assetFileSystem.RegisterPath(filepath.Join(gopath, "src", p))
 		}
 	}
 }
