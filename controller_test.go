@@ -208,8 +208,13 @@ func assertConfigIncludeElements(t *testing.T, resourceName string, elements []s
 	body, _ := ioutil.ReadAll(resp.Body)
 	results := []string{}
 	for _, elm := range elements {
-		results = append(results, fmt.Sprintf("{&#34;Name&#34;:&#34;%v&#34;,&#34;CreateURL&#34;:&#34;/admin/qor_banner_editor_settings/new?kind=%v&#34;}", elm, strings.Replace(elm, " ", "&#43;", -1)))
+		urlParam := strings.Replace(elm, " ", "&#43;", -1)
+		data := fmt.Sprintf("{\"Name\":\"%v\",\"CreateURL\":\"/admin/qor_banner_editor_settings/new?kind=%v\",\"Icon\":\"\"}", elm, urlParam)
+		results = append(results, data)
 	}
 	resultStr := strings.Join(results, ",")
-	assetPageHaveText(t, string(body), fmt.Sprintf("data-configure=\"{&#34;Elements&#34;:[%v],&#34;EditURL&#34;:&#34;/admin/qor_banner_editor_settings/:id/edit&#34;}\"", resultStr))
+	expectedConfig := fmt.Sprintf("data-configure='{\"Elements\":[%v],\"ExternalStylePath\":null,\"EditURL\":\"/admin/qor_banner_editor_settings/:id/edit\",\"BannerSizes\":null}'", resultStr)
+	expectedConfig = strings.Replace(expectedConfig, "\"", "&#34;", -1)
+	expectedConfig = strings.Replace(expectedConfig, "'", "\"", -1)
+	assetPageHaveText(t, string(body), expectedConfig)
 }
