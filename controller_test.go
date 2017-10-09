@@ -88,6 +88,16 @@ func init() {
 	bannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "Banner"})
 	bannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{
 		MediaLibrary: assetManagerResource,
+		Platforms: []Platform{
+			{
+				Name:     "PC",
+				SafeArea: Size{Width: 1000, Height: 500},
+			},
+			{
+				Name:     "Mobile",
+				SafeArea: Size{Width: 600, Height: 300},
+			},
+		},
 	}})
 
 	Admin.MountTo("/admin", mux)
@@ -125,9 +135,9 @@ func TestGetConfig(t *testing.T) {
 		MediaLibrary: assetManagerResource,
 	}})
 
-	assertConfigIncludeElements(t, "banners", []string{"Sub Header", "Button"})
-	assertConfigIncludeElements(t, "other_banner_editor_arguments", []string{"Sub Header"})
-	assertConfigIncludeElements(t, "another_banner_editor_arguments", []string{"Button"})
+	assertConfigIncludeElements(t, "banners", []string{"Sub Header", "Button"}, []string{"PC:1000:500", "Mobile:600:300"})
+	assertConfigIncludeElements(t, "other_banner_editor_arguments", []string{"Sub Header"}, []string{})
+	assertConfigIncludeElements(t, "another_banner_editor_arguments", []string{"Button"}, []string{})
 }
 
 func TestControllerCRUD(t *testing.T) {
@@ -203,17 +213,24 @@ func assetPageHaveAttributes(t *testing.T, resp *http.Response, attributes ...st
 	}
 }
 
-func assertConfigIncludeElements(t *testing.T, resourceName string, elements []string) {
+func assertConfigIncludeElements(t *testing.T, resourceName string, elements []string, sizes []string) {
 	resp, _ := http.Get(fmt.Sprintf("%v/admin/%v/new", Server.URL, resourceName))
 	body, _ := ioutil.ReadAll(resp.Body)
-	results := []string{}
+	elementDatas := []string{}
 	for _, elm := range elements {
 		urlParam := strings.Replace(elm, " ", "&#43;", -1)
 		data := fmt.Sprintf("{\"Name\":\"%v\",\"CreateURL\":\"/admin/qor_banner_editor_settings/new?kind=%v\",\"Icon\":\"\"}", elm, urlParam)
-		results = append(results, data)
+		elementDatas = append(elementDatas, data)
 	}
-	resultStr := strings.Join(results, ",")
-	expectedConfig := fmt.Sprintf("data-configure='{\"Elements\":[%v],\"ExternalStylePath\":null,\"EditURL\":\"/admin/qor_banner_editor_settings/:id/edit\",\"BannerSizes\":null}'", resultStr)
+	sizeDatas := []string{}
+	for _, size := range sizes {
+		datas := strings.Split(size, ":")
+		data := fmt.Sprintf("{\"Name\":\"%v\",\"Width\":%v,\"Height\":%v}", datas[0], datas[1], datas[2])
+		sizeDatas = append(sizeDatas, data)
+	}
+	elementsStr := strings.Join(elementDatas, ",")
+	sizesStr := strings.Join(sizeDatas, ",")
+	expectedConfig := fmt.Sprintf("data-configure='{\"Elements\":[%v],\"ExternalStylePath\":null,\"EditURL\":\"/admin/qor_banner_editor_settings/:id/edit\",\"BannerSizes\":null,\"Platforms\":[%v]}'", elementsStr, sizesStr)
 	expectedConfig = strings.Replace(expectedConfig, "\"", "&#34;", -1)
 	expectedConfig = strings.Replace(expectedConfig, "'", "\"", -1)
 	assetPageHaveText(t, string(body), expectedConfig)

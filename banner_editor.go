@@ -36,6 +36,7 @@ type BannerEditorConfig struct {
 	BannerSizes     map[string]BannerSize
 	Elements        []string
 	SettingResource *admin.Resource
+	Platforms       []Platform
 }
 
 // QorBannerEditorSettingInterface interface to support customize setting model
@@ -57,6 +58,16 @@ type Element struct {
 	Template string
 	Resource *admin.Resource
 	Context  func(context *admin.Context, setting interface{}) interface{}
+}
+
+type Size struct {
+	Width  int
+	Height int
+}
+
+type Platform struct {
+	Name     string
+	SafeArea Size
 }
 
 func init() {
@@ -118,6 +129,11 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 				CreateURL string
 				Icon      string
 			}
+			type platform struct {
+				Name   string
+				Width  int
+				Height int
+			}
 			var (
 				selectedElements = registeredElements
 				elements         = []element{}
@@ -134,16 +150,23 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 			for _, e := range selectedElements {
 				elements = append(elements, element{Icon: e.Icon, Name: e.Name, CreateURL: fmt.Sprintf("%v?kind=%v", newElementURL, template.URLQueryEscaper(e.Name))})
 			}
+
+			platforms := []platform{}
+			for _, p := range config.Platforms {
+				platforms = append(platforms, platform{Name: p.Name, Width: p.SafeArea.Width, Height: p.SafeArea.Height})
+			}
 			results, err := json.Marshal(struct {
 				Elements          []element
 				ExternalStylePath []string
 				EditURL           string
 				BannerSizes       map[string]BannerSize
+				Platforms         []platform
 			}{
 				Elements:          elements,
 				ExternalStylePath: registeredExternalStylePaths,
 				EditURL:           fmt.Sprintf("%v/%v/:id/edit", router.Prefix, res.ToParam()),
 				BannerSizes:       config.BannerSizes,
+				Platforms:         platforms,
 			})
 			if err != nil {
 				return err.Error()
