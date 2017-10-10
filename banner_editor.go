@@ -70,6 +70,11 @@ type Platform struct {
 	SafeArea Size
 }
 
+type PlatformValue struct {
+	Name  string
+	Value string
+}
+
 func init() {
 	admin.RegisterViewPath("github.com/qor/banner_editor/views")
 }
@@ -123,6 +128,7 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 		router.Put(fmt.Sprintf("%v/%v", res.ToParam(), res.ParamIDName()), Update, &admin.RouteConfig{Resource: res})
 		Admin.RegisterResourceRouters(res, "read", "update")
 
+		Admin.RegisterFuncMap("formatted_banner_edit_value", formattedValue)
 		Admin.RegisterFuncMap("banner_editor_configure", func(config *BannerEditorConfig) string {
 			type element struct {
 				Name      string
@@ -202,11 +208,7 @@ func (setting QorBannerEditorSetting) GetSerializableArgumentResource() *admin.R
 
 // GetContextByPlatform return context by platform
 func GetContextByPlatform(value string, platform string) string {
-	type platformValue struct {
-		Name  string
-		Value string
-	}
-	platformValues := []platformValue{}
+	platformValues := []PlatformValue{}
 	if err := json.Unmarshal([]byte(value), &platformValues); err == nil {
 		if len(platformValues) == 0 {
 			return ""
@@ -223,6 +225,21 @@ func GetContextByPlatform(value string, platform string) string {
 		}
 	}
 	return value
+}
+
+func formattedValue(value string) string {
+	if value == "" {
+		return "[]"
+	}
+	platformValues := []PlatformValue{}
+	if err := json.Unmarshal([]byte(value), &platformValues); err == nil {
+		return value
+	}
+	jsonValue, err := json.Marshal(&[]PlatformValue{{Name: "Laptop", Value: value}})
+	if err != nil {
+		return fmt.Sprintf("BannerEditor: format value to json failure, got %v", err.Error())
+	}
+	return string(jsonValue)
 }
 
 func getMediaLibraryResourceURLMethod(i interface{}) reflect.Value {

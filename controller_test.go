@@ -90,7 +90,7 @@ func init() {
 		MediaLibrary: assetManagerResource,
 		Platforms: []Platform{
 			{
-				Name:     "PC",
+				Name:     "Laptop",
 				SafeArea: Size{Width: 1000, Height: 500},
 			},
 			{
@@ -135,7 +135,7 @@ func TestGetConfig(t *testing.T) {
 		MediaLibrary: assetManagerResource,
 	}})
 
-	assertConfigIncludeElements(t, "banners", []string{"Sub Header", "Button"}, []string{"PC:1000:500", "Mobile:600:300"})
+	assertConfigIncludeElements(t, "banners", []string{"Sub Header", "Button"}, []string{"Laptop:1000:500", "Mobile:600:300"})
 	assertConfigIncludeElements(t, "other_banner_editor_arguments", []string{"Sub Header"}, []string{})
 	assertConfigIncludeElements(t, "another_banner_editor_arguments", []string{"Button"}, []string{})
 }
@@ -205,13 +205,13 @@ func TestGetContextByPlatform(t *testing.T) {
 		ExpectedValue string
 	}
 	testCases := []testCase{
-		{Value: "PC Content", Platform: "PC", ExpectedValue: "PC Content"},
-		{Value: "PC Content", Platform: "", ExpectedValue: "PC Content"},
-		{Value: `[]`, Platform: "PC", ExpectedValue: ""},
-		{Value: `[{"Name": "PC", "Value": "PC Content"}]`, Platform: "PC", ExpectedValue: "PC Content"},
-		{Value: `[{"Name": "PC", "Value": "PC Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "PC", ExpectedValue: "PC Content"},
-		{Value: `[{"Name": "PC", "Value": "PC Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "Mobile", ExpectedValue: "Mobile Content"},
-		{Value: `[{"Name": "PC", "Value": "PC Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "Unknown", ExpectedValue: "PC Content"},
+		{Value: "Laptop Content", Platform: "Laptop", ExpectedValue: "Laptop Content"},
+		{Value: "Laptop Content", Platform: "", ExpectedValue: "Laptop Content"},
+		{Value: `[]`, Platform: "Laptop", ExpectedValue: ""},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Platform: "Laptop", ExpectedValue: "Laptop Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "Laptop", ExpectedValue: "Laptop Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "Mobile", ExpectedValue: "Mobile Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "Unknown", ExpectedValue: "Laptop Content"},
 	}
 	for i, testcase := range testCases {
 		value := GetContextByPlatform(testcase.Value, testcase.Platform)
@@ -219,6 +219,26 @@ func TestGetContextByPlatform(t *testing.T) {
 			t.Error(color.RedString("TestGetContextByPlatform #%v: expect value is %v, but got %v", i+1, testcase.ExpectedValue, value))
 		} else {
 			color.Green("TestGetContextByPlatform #%v: Success", i+1)
+		}
+	}
+}
+
+func TestFormattedValue(t *testing.T) {
+	type testCase struct {
+		Value         string
+		ExpectedValue string
+	}
+	testCases := []testCase{
+		{Value: "", ExpectedValue: `[]`},
+		{Value: "Laptop Content", ExpectedValue: `[{"Name":"Laptop","Value":"Laptop Content"}]`},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, ExpectedValue: `[{"Name": "Laptop", "Value": "Laptop Content"}]`},
+	}
+	for i, testcase := range testCases {
+		value := formattedValue(testcase.Value)
+		if value != testcase.ExpectedValue {
+			t.Error(color.RedString("TestFormattedValue #%v: expect value is %v, but got %v", i+1, testcase.ExpectedValue, value))
+		} else {
+			color.Green("TestFormattedValue #%v: Success", i+1)
 		}
 	}
 }
