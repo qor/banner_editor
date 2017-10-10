@@ -200,6 +200,31 @@ func (setting QorBannerEditorSetting) GetSerializableArgumentResource() *admin.R
 	return nil
 }
 
+// GetContextByPlatform return context by platform
+func GetContextByPlatform(value string, platform string) string {
+	type platformValue struct {
+		Name  string
+		Value string
+	}
+	platformValues := []platformValue{}
+	if err := json.Unmarshal([]byte(value), &platformValues); err == nil {
+		if len(platformValues) == 0 {
+			return ""
+		}
+		found := false
+		for _, p := range platformValues {
+			if p.Name == platform {
+				found = true
+				return p.Value
+			}
+		}
+		if !found {
+			return platformValues[0].Value
+		}
+	}
+	return value
+}
+
 func getMediaLibraryResourceURLMethod(i interface{}) reflect.Value {
 	value := reflect.Indirect(reflect.ValueOf(i))
 	for i := 0; i < value.NumField(); i++ {

@@ -198,6 +198,31 @@ func TestMediaLibraryURL(t *testing.T) {
 	assetPageHaveText(t, string(body), "/system/media_libraries/1/file.jpg")
 }
 
+func TestGetContextByPlatform(t *testing.T) {
+	type testCase struct {
+		Value         string
+		Platform      string
+		ExpectedValue string
+	}
+	testCases := []testCase{
+		{Value: "PC Content", Platform: "PC", ExpectedValue: "PC Content"},
+		{Value: "PC Content", Platform: "", ExpectedValue: "PC Content"},
+		{Value: `[]`, Platform: "PC", ExpectedValue: ""},
+		{Value: `[{"Name": "PC", "Value": "PC Content"}]`, Platform: "PC", ExpectedValue: "PC Content"},
+		{Value: `[{"Name": "PC", "Value": "PC Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "PC", ExpectedValue: "PC Content"},
+		{Value: `[{"Name": "PC", "Value": "PC Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "Mobile", ExpectedValue: "Mobile Content"},
+		{Value: `[{"Name": "PC", "Value": "PC Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "Unknown", ExpectedValue: "PC Content"},
+	}
+	for i, testcase := range testCases {
+		value := GetContextByPlatform(testcase.Value, testcase.Platform)
+		if value != testcase.ExpectedValue {
+			t.Error(color.RedString("TestGetContextByPlatform #%v: expect value is %v, but got %v", i+1, testcase.ExpectedValue, value))
+		} else {
+			color.Green("TestGetContextByPlatform #%v: Success", i+1)
+		}
+	}
+}
+
 func assetPageHaveText(t *testing.T, body string, text string) {
 	if !strings.Contains(body, text) {
 		t.Error(color.RedString("PageHaveText: expect page have text %v, but got %v", text, body))
