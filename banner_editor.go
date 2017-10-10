@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"net/http"
 	"reflect"
 
+	mobiledetect "github.com/Shaked/gomobiledetect"
 	"github.com/jinzhu/gorm"
 	"github.com/qor/admin"
 	"github.com/qor/assetfs"
@@ -206,8 +208,8 @@ func (setting QorBannerEditorSetting) GetSerializableArgumentResource() *admin.R
 	return nil
 }
 
-// GetContextByPlatform return context by platform
-func GetContextByPlatform(value string, platform string) string {
+// GetContentByPlatform return content by platform
+func GetContentByPlatform(value string, platform string) string {
 	platformValues := []PlatformValue{}
 	if err := json.Unmarshal([]byte(value), &platformValues); err == nil {
 		if len(platformValues) == 0 {
@@ -225,6 +227,15 @@ func GetContextByPlatform(value string, platform string) string {
 		}
 	}
 	return value
+}
+
+// GetContentByPlatform detect device type and return corresponding content
+func GetContent(value string, r *http.Request) string {
+	detect := mobiledetect.NewMobileDetect(r, nil)
+	if detect.IsMobile() {
+		return GetContentByPlatform(value, "Mobile")
+	}
+	return GetContentByPlatform(value, "Laptop")
 }
 
 func formattedValue(value string) string {

@@ -214,7 +214,7 @@ func TestGetContextByPlatform(t *testing.T) {
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "Unknown", ExpectedValue: "Laptop Content"},
 	}
 	for i, testcase := range testCases {
-		value := GetContextByPlatform(testcase.Value, testcase.Platform)
+		value := GetContentByPlatform(testcase.Value, testcase.Platform)
 		if value != testcase.ExpectedValue {
 			t.Error(color.RedString("TestGetContextByPlatform #%v: expect value is %v, but got %v", i+1, testcase.ExpectedValue, value))
 		} else {
@@ -239,6 +239,32 @@ func TestFormattedValue(t *testing.T) {
 			t.Error(color.RedString("TestFormattedValue #%v: expect value is %v, but got %v", i+1, testcase.ExpectedValue, value))
 		} else {
 			color.Green("TestFormattedValue #%v: Success", i+1)
+		}
+	}
+}
+
+func TestGetContent(t *testing.T) {
+	iphone := "Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Version/10.0 Mobile/14D27 Safari/602.1"
+	mac := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12"
+	type testCase struct {
+		Value         string
+		UserAgent     string
+		ExpectedValue string
+	}
+	testCases := []testCase{
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, UserAgent: mac, ExpectedValue: `Laptop Content`},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, UserAgent: iphone, ExpectedValue: `Mobile Content`},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, UserAgent: mac, ExpectedValue: `Laptop Content`},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, UserAgent: iphone, ExpectedValue: `Laptop Content`},
+	}
+	for i, testcase := range testCases {
+		req, _ := http.NewRequest("GET", "http://localhost:30000/user-agent", nil)
+		req.Header.Set("User-Agent", testcase.UserAgent)
+		value := GetContent(testcase.Value, req)
+		if value != testcase.ExpectedValue {
+			t.Error(color.RedString("TestGetContent #%v: expect value is %v, but got %v", i+1, testcase.ExpectedValue, value))
+		} else {
+			color.Green("TestGetContent #%v: Success", i+1)
 		}
 	}
 }
