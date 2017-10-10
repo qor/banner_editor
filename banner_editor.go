@@ -85,24 +85,23 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 		if config.MediaLibrary == nil {
 			panic("BannerEditor: MediaLibrary can't be blank.")
 		} else {
-			urlMeta := config.MediaLibrary.GetMeta("BannerEditorUrl")
 			if getMediaLibraryResourceURLMethod(config.MediaLibrary.NewStruct()).IsNil() {
 				panic("BannerEditor: MediaLibrary's struct doesn't have any field implement URL method, please refer media_library.MediaLibrary{}.")
 			}
-			if urlMeta == nil {
-				config.MediaLibrary.Meta(&admin.Meta{
-					Name: "BannerEditorUrl",
-					Type: "hidden",
-					Valuer: func(v interface{}, c *qor.Context) interface{} {
-						values := getMediaLibraryResourceURLMethod(v).Call([]reflect.Value{})
-						if len(values) > 0 {
-							return values[0]
-						}
-						return ""
-					},
-				})
-				config.MediaLibrary.IndexAttrs(config.MediaLibrary.IndexAttrs(), "BannerEditorUrl")
-			}
+
+			config.MediaLibrary.Meta(&admin.Meta{
+				Name: "BannerEditorUrl",
+				Type: "hidden",
+				Valuer: func(v interface{}, c *qor.Context) interface{} {
+					values := getMediaLibraryResourceURLMethod(v).Call([]reflect.Value{})
+					if len(values) > 0 {
+						return values[0]
+					}
+					return ""
+				},
+			})
+
+			config.MediaLibrary.IndexAttrs(config.MediaLibrary.IndexAttrs(), "BannerEditorUrl")
 		}
 
 		router := Admin.GetRouter()
