@@ -25,7 +25,9 @@ var (
 )
 
 const (
+	// Laptop default laptop platform name
 	Laptop = "Laptop"
+	// Mobile default mobile platform name
 	Mobile = "Mobile"
 )
 
@@ -62,17 +64,19 @@ type Element struct {
 	Context  func(context *admin.Context, setting interface{}) interface{}
 }
 
+// Size contains width ad height
 type Size struct {
 	Width  int
 	Height int
 }
 
+// Platform used to defined how many platform a banner need to support
 type Platform struct {
 	Name     string
 	SafeArea Size
 }
 
-type PlatformValue struct {
+type platformValue struct {
 	Name  string
 	Value string
 }
@@ -217,7 +221,7 @@ func (setting QorBannerEditorSetting) GetSerializableArgumentResource() *admin.R
 
 // GetContentByPlatform return content by platform
 func GetContentByPlatform(value string, platform string) string {
-	platformValues := []PlatformValue{}
+	platformValues := []platformValue{}
 	if err := json.Unmarshal([]byte(value), &platformValues); err == nil {
 		if len(platformValues) == 0 {
 			return ""
@@ -236,7 +240,7 @@ func GetContentByPlatform(value string, platform string) string {
 	return value
 }
 
-// GetContentByPlatform detect device type and return corresponding content
+// GetContent detect device type and return corresponding content
 func GetContent(value string, r *http.Request) string {
 	detect := mobiledetect.NewMobileDetect(r, nil)
 	if detect.IsMobile() {
@@ -249,11 +253,11 @@ func formattedValue(value string) string {
 	if value == "" {
 		return "[]"
 	}
-	platformValues := []PlatformValue{}
+	platformValues := []platformValue{}
 	if err := json.Unmarshal([]byte(value), &platformValues); err == nil {
 		return value
 	}
-	jsonValue, err := json.Marshal(&[]PlatformValue{{Name: "Laptop", Value: value}})
+	jsonValue, err := json.Marshal(&[]platformValue{{Name: "Laptop", Value: value}})
 	if err != nil {
 		return fmt.Sprintf("BannerEditor: format value to json failure, got %v", err.Error())
 	}
