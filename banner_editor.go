@@ -27,15 +27,9 @@ func init() {
 	assetFileSystem = assetfs.AssetFS().NameSpace("banner_editor")
 }
 
-type BannerSize struct {
-	Width  int
-	Height int
-}
-
 // BannerEditorConfig configure display elements and setting model
 type BannerEditorConfig struct {
 	MediaLibrary    *admin.Resource
-	BannerSizes     map[string]BannerSize
 	Elements        []string
 	SettingResource *admin.Resource
 	Platforms       []Platform
@@ -167,13 +161,11 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 				Elements          []element
 				ExternalStylePath []string
 				EditURL           string
-				BannerSizes       map[string]BannerSize
 				Platforms         []platform
 			}{
 				Elements:          elements,
 				ExternalStylePath: registeredExternalStylePaths,
 				EditURL:           fmt.Sprintf("%v/%v/:id/edit", router.Prefix, res.ToParam()),
-				BannerSizes:       config.BannerSizes,
 				Platforms:         platforms,
 			})
 			if err != nil {

@@ -301,7 +301,7 @@ func assertConfigIncludeElements(t *testing.T, resourceName string, elements []s
 	}
 	elementsStr := strings.Join(elementDatas, ",")
 	sizesStr := strings.Join(sizeDatas, ",")
-	expectedConfig := fmt.Sprintf("data-configure='{\"Elements\":[%v],\"ExternalStylePath\":null,\"EditURL\":\"/admin/qor_banner_editor_settings/:id/edit\",\"BannerSizes\":null,\"Platforms\":[%v]}'", elementsStr, sizesStr)
+	expectedConfig := fmt.Sprintf("data-configure='{\"Elements\":[%v],\"ExternalStylePath\":null,\"EditURL\":\"/admin/qor_banner_editor_settings/:id/edit\",\"Platforms\":[%v]}'", elementsStr, sizesStr)
 	expectedConfig = strings.Replace(expectedConfig, "\"", "&#34;", -1)
 	expectedConfig = strings.Replace(expectedConfig, "'", "\"", -1)
 	assetPageHaveText(t, string(body), expectedConfig)
