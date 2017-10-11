@@ -13,7 +13,6 @@ import (
 	"github.com/qor/assetfs"
 	"github.com/qor/qor"
 	"github.com/qor/qor/resource"
-	"github.com/qor/roles"
 	"github.com/qor/serializable_meta"
 )
 
@@ -76,14 +75,13 @@ type Platform struct {
 	SafeArea Size
 }
 
-type platformValue struct {
+type configurePlatform struct {
 	Name  string
 	Value string
 }
 
 func init() {
 	admin.RegisterViewPath("github.com/qor/banner_editor/views")
-	roles.Allow(roles.CRUD)
 }
 
 // RegisterElement register a element
@@ -221,21 +219,17 @@ func (setting QorBannerEditorSetting) GetSerializableArgumentResource() *admin.R
 
 // GetContentByPlatform return content by platform
 func GetContentByPlatform(value string, platform string) string {
-	platformValues := []platformValue{}
-	if err := json.Unmarshal([]byte(value), &platformValues); err == nil {
-		if len(platformValues) == 0 {
+	configurePlatforms := []configurePlatform{}
+	if err := json.Unmarshal([]byte(value), &configurePlatforms); err == nil {
+		if len(configurePlatforms) == 0 {
 			return ""
 		}
-		found := false
-		for _, p := range platformValues {
+		for _, p := range configurePlatforms {
 			if p.Name == platform {
-				found = true
 				return p.Value
 			}
 		}
-		if !found {
-			return platformValues[0].Value
-		}
+		return configurePlatforms[0].Value
 	}
 	return value
 }
@@ -253,11 +247,11 @@ func formattedValue(value string) string {
 	if value == "" {
 		return "[]"
 	}
-	platformValues := []platformValue{}
-	if err := json.Unmarshal([]byte(value), &platformValues); err == nil {
+	configurePlatforms := []configurePlatform{}
+	if err := json.Unmarshal([]byte(value), &configurePlatforms); err == nil {
 		return value
 	}
-	jsonValue, err := json.Marshal(&[]platformValue{{Name: "Laptop", Value: value}})
+	jsonValue, err := json.Marshal(&[]configurePlatform{{Name: Laptop, Value: value}})
 	if err != nil {
 		return fmt.Sprintf("BannerEditor: format value to json failure, got %v", err.Error())
 	}
