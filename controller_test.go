@@ -136,8 +136,8 @@ func TestGetConfig(t *testing.T) {
 	}})
 
 	assertConfigIncludeElements(t, "banners", []string{"Sub Header", "Button"}, []string{"Laptop:1000:500", "Mobile:600:300"})
-	assertConfigIncludeElements(t, "other_banner_editor_arguments", []string{"Sub Header"}, []string{})
-	assertConfigIncludeElements(t, "another_banner_editor_arguments", []string{"Button"}, []string{})
+	assertConfigIncludeElements(t, "other_banner_editor_arguments", []string{"Sub Header"}, []string{"Laptop:0:0", "Mobile:0:0"})
+	assertConfigIncludeElements(t, "another_banner_editor_arguments", []string{"Button"}, []string{"Laptop:0:0", "Mobile:0:0"})
 }
 
 func TestControllerCRUD(t *testing.T) {
@@ -208,9 +208,9 @@ func TestGetContextByPlatform(t *testing.T) {
 		{Value: "Laptop Content", Platform: "Laptop", ExpectedValue: "Laptop Content"},
 		{Value: "Laptop Content", Platform: "", ExpectedValue: "Laptop Content"},
 		{Value: `[]`, Platform: "Laptop", ExpectedValue: ""},
-		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Platform: "Laptop", ExpectedValue: "Laptop Content"},
-		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "Laptop", ExpectedValue: "Laptop Content"},
-		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "Mobile", ExpectedValue: "Mobile Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Platform: Laptop, ExpectedValue: "Laptop Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: Laptop, ExpectedValue: "Laptop Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: Mobile, ExpectedValue: "Mobile Content"},
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "Unknown", ExpectedValue: "Laptop Content"},
 	}
 	for i, testcase := range testCases {

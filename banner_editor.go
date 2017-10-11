@@ -13,6 +13,7 @@ import (
 	"github.com/qor/assetfs"
 	"github.com/qor/qor"
 	"github.com/qor/qor/resource"
+	"github.com/qor/roles"
 	"github.com/qor/serializable_meta"
 )
 
@@ -21,6 +22,11 @@ var (
 	registeredExternalStylePaths []string
 	viewPaths                    []string
 	assetFileSystem              assetfs.Interface
+)
+
+const (
+	Laptop = "Laptop"
+	Mobile = "Mobile"
 )
 
 func init() {
@@ -73,6 +79,7 @@ type PlatformValue struct {
 
 func init() {
 	admin.RegisterViewPath("github.com/qor/banner_editor/views")
+	roles.Allow(roles.CRUD)
 }
 
 // RegisterElement register a element
@@ -94,6 +101,7 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 		if config.SettingResource == nil {
 			config.SettingResource = Admin.NewResource(&QorBannerEditorSetting{})
 		}
+
 		if config.MediaLibrary == nil {
 			panic("BannerEditor: MediaLibrary can't be blank.")
 		} else {
@@ -114,6 +122,13 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 					},
 				})
 				config.MediaLibrary.IndexAttrs(config.MediaLibrary.IndexAttrs(), "BannerEditorUrl")
+			}
+		}
+
+		if len(config.Platforms) == 0 {
+			config.Platforms = []Platform{
+				{Name: Laptop},
+				{Name: Mobile},
 			}
 		}
 
@@ -225,9 +240,9 @@ func GetContentByPlatform(value string, platform string) string {
 func GetContent(value string, r *http.Request) string {
 	detect := mobiledetect.NewMobileDetect(r, nil)
 	if detect.IsMobile() {
-		return GetContentByPlatform(value, "Mobile")
+		return GetContentByPlatform(value, Mobile)
 	}
-	return GetContentByPlatform(value, "Laptop")
+	return GetContentByPlatform(value, Laptop)
 }
 
 func formattedValue(value string) string {
