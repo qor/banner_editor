@@ -198,27 +198,45 @@ func TestMediaLibraryURL(t *testing.T) {
 	assetPageHaveText(t, string(body), "/system/media_libraries/1/file.jpg")
 }
 
-func TestGetContextByPlatform(t *testing.T) {
+func TestGetContent(t *testing.T) {
+	iphone := "UserAgent: Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Version/10.0 Mobile/14D27 Safari/602.1"
+	mac := "UserAgent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12"
 	type testCase struct {
 		Value         string
-		Platform      string
+		Detector      interface{}
 		ExpectedValue string
 	}
 	testCases := []testCase{
-		{Value: "Laptop Content", Platform: "Laptop", ExpectedValue: "Laptop Content"},
-		{Value: "Laptop Content", Platform: "", ExpectedValue: "Laptop Content"},
-		{Value: `[]`, Platform: "Laptop", ExpectedValue: ""},
-		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Platform: Laptop, ExpectedValue: "Laptop Content"},
-		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: Laptop, ExpectedValue: "Laptop Content"},
-		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: Mobile, ExpectedValue: "Mobile Content"},
-		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Platform: "Unknown", ExpectedValue: "Laptop Content"},
+		// Detect by platform string
+		{Value: "Laptop Content", Detector: "Laptop", ExpectedValue: "Laptop Content"},
+		{Value: `[]`, Detector: "Laptop", ExpectedValue: ""},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Detector: Laptop, ExpectedValue: "Laptop Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: Laptop, ExpectedValue: "Laptop Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: Mobile, ExpectedValue: "Mobile Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: "Unknown", ExpectedValue: "Laptop Content"},
+		// Detect by request
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: mac, ExpectedValue: `Laptop Content`},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: iphone, ExpectedValue: `Mobile Content`},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Detector: mac, ExpectedValue: `Laptop Content`},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Detector: iphone, ExpectedValue: `Laptop Content`},
+		// Detect by nil or empty string
+		{Value: "Laptop Content", Detector: "", ExpectedValue: "Laptop Content"},
+		{Value: "Laptop Content", Detector: nil, ExpectedValue: "Laptop Content"},
 	}
 	for i, testcase := range testCases {
-		value := GetContentByPlatform(testcase.Value, testcase.Platform)
+		detector := testcase.Detector
+		if d, ok := testcase.Detector.(string); ok {
+			if strings.HasPrefix(d, "UserAgent") {
+				req, _ := http.NewRequest("GET", "http://localhost:30000/user-agent", nil)
+				req.Header.Set("User-Agent", d)
+				detector = req
+			}
+		}
+		value := GetContent(testcase.Value, detector)
 		if value != testcase.ExpectedValue {
-			t.Error(color.RedString("TestGetContextByPlatform #%v: expect value is %v, but got %v", i+1, testcase.ExpectedValue, value))
+			t.Error(color.RedString("TestGetContent #%v: expect value is %v, but got %v", i+1, testcase.ExpectedValue, value))
 		} else {
-			color.Green("TestGetContextByPlatform #%v: Success", i+1)
+			color.Green("TestGetContent #%v: Success", i+1)
 		}
 	}
 }
@@ -239,32 +257,6 @@ func TestFormattedValue(t *testing.T) {
 			t.Error(color.RedString("TestFormattedValue #%v: expect value is %v, but got %v", i+1, testcase.ExpectedValue, value))
 		} else {
 			color.Green("TestFormattedValue #%v: Success", i+1)
-		}
-	}
-}
-
-func TestGetContent(t *testing.T) {
-	iphone := "Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Version/10.0 Mobile/14D27 Safari/602.1"
-	mac := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12"
-	type testCase struct {
-		Value         string
-		UserAgent     string
-		ExpectedValue string
-	}
-	testCases := []testCase{
-		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, UserAgent: mac, ExpectedValue: `Laptop Content`},
-		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, UserAgent: iphone, ExpectedValue: `Mobile Content`},
-		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, UserAgent: mac, ExpectedValue: `Laptop Content`},
-		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, UserAgent: iphone, ExpectedValue: `Laptop Content`},
-	}
-	for i, testcase := range testCases {
-		req, _ := http.NewRequest("GET", "http://localhost:30000/user-agent", nil)
-		req.Header.Set("User-Agent", testcase.UserAgent)
-		value := GetContent(testcase.Value, req)
-		if value != testcase.ExpectedValue {
-			t.Error(color.RedString("TestGetContent #%v: expect value is %v, but got %v", i+1, testcase.ExpectedValue, value))
-		} else {
-			color.Green("TestGetContent #%v: Success", i+1)
 		}
 	}
 }

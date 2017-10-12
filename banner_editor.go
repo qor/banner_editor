@@ -217,8 +217,21 @@ func (setting QorBannerEditorSetting) GetSerializableArgumentResource() *admin.R
 	return nil
 }
 
-// GetContentByPlatform return content by platform
-func GetContentByPlatform(value string, platform string) string {
+// GetContent return HTML string by detector, detector could be a string (Platform, Mobile or other), http request and nil
+func GetContent(value string, detector interface{}) string {
+	if platform, ok := detector.(string); ok {
+		return getContentByPlatform(value, platform)
+	} else if req, ok := detector.(*http.Request); ok {
+		detect := mobiledetect.NewMobileDetect(req, nil)
+		if detect.IsMobile() {
+			return getContentByPlatform(value, Mobile)
+		}
+		return getContentByPlatform(value, Laptop)
+	}
+	return getContentByPlatform(value, Laptop)
+}
+
+func getContentByPlatform(value string, platform string) string {
 	configurePlatforms := []configurePlatform{}
 	if err := json.Unmarshal([]byte(value), &configurePlatforms); err == nil {
 		if len(configurePlatforms) == 0 {
@@ -232,15 +245,6 @@ func GetContentByPlatform(value string, platform string) string {
 		return configurePlatforms[0].Value
 	}
 	return value
-}
-
-// GetContent detect device type and return corresponding content
-func GetContent(value string, r *http.Request) string {
-	detect := mobiledetect.NewMobileDetect(r, nil)
-	if detect.IsMobile() {
-		return GetContentByPlatform(value, Mobile)
-	}
-	return GetContentByPlatform(value, Laptop)
 }
 
 func formattedValue(value string) string {
