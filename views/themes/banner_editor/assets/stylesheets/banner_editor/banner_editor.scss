@@ -1,3 +1,18 @@
+.qor-bannereditor__container {
+    .mdl-layout__container {
+        position: static;
+        .mdl-layout__tab-bar-button {
+            display: none;
+        }
+        .mdl-layout__tab-bar {
+            width: 100%;
+            padding: 0;
+        }
+        .mdl-layout__header {
+            min-height: 0;
+        }
+    }
+}
 .qor-bannereditor {
     position: relative;
     overflow: hidden;

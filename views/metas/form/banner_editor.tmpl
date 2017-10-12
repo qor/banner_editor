@@ -1,54 +1,71 @@
-{{$prefix := .Context.Admin.GetRouter.Prefix}}
-{{$asset_manager := .Meta.Config.MediaLibrary}}
+{{$prefix := .Context.Admin.GetRouter.Prefix}} {{$asset_manager := .Meta.Config.MediaLibrary}}
 
 <link rel="stylesheet" href="{{$prefix}}/assets/stylesheets/banner_editor.css?theme=banner_editor" />
 
-<div class="qor-field">
-  <div class="qor-field__show"></div>
-
-  {{range .Meta.Config.Platforms }}
-    <div class="qor-field__edit qor-bannereditor" data-platform-name="{{.Name}}" data-toggle="qor.bannereditor" data-stylesheet="{{$prefix}}/assets/stylesheets/banner_editor_iframe.css?theme=banner_editor">
-      <ul class="qor-bannereditor__toolbar clearfix">
-        <li class="qor-bannereditor__toolbar-btns"></li>
-        {{if $asset_manager}}
-          <li class="qor-bannereditor__toolbar--ml">
-            {{$asset_router := printf "%v/%v" $asset_manager.GetAdmin.GetRouter.Prefix $asset_manager.ToParam}}
-            <button class="mdl-button mdl-button--colored č qor-bannereditor__toolbar-image" data-select-Modal="selectone" data-banner-media-url="{{$asset_router}}" type="button">
-              <i class="material-icons">photo_library</i>
-            </button>
-            <span class="mdl-tooltip">
-                {{t "qor_admin.banner_editor.add_image_from_media_libraries" "Add Image From Media Libraries"}}
-            </span>
-          </li>
+<div class="qor-field qor-bannereditor__container">
+  <div class="mdl-layout mdl-js-layout">
+    <header class="mdl-layout__header">
+      <!-- Tabs -->
+      <div class="mdl-layout__tab-bar">
+        {{range $index, $plateform := .Meta.Config.Platforms }}
+        <a href="#scroll-tab-{{.Name}}" class="mdl-layout__tab {{if eq $index 0}}is-active{{end}}">{{.Name}}</a>
         {{end}}
-        <li class="qor-bannereditor__toolbar--rdm">
-          <button class="mdl-button mdl-js-button qor-bannereditor__device-trigger" type="button"><i class="material-icons">devices</i></button>
-          <span class="mdl-tooltip">
-              {{t "qor_admin.banner_editor.toggle_device_hint" "Responsive Design Mode"}}
-          </span>
-        </li>
-        <li class="qor-bannereditor__toolbar--size" style="display: none;">
-          {{t "qor_admin.banner_editor.size" "Banner Size:"}} <span></span>
-        </li>
-      </ul>
-
-      <div class="qor-bannereditor__device-toolbar" style="display: none;">
-        <p class="resolution">{{t "qor_admin.banner_editor.toggle_device_hint" "Responsive Design mode"}}</p>
-        <select data-toggle="qor.chooser" class="ignore-dirtyform qor-bannereditor__device">
-          <option value="320x528">iPhone 5 (320 x 528)</option>
-          <option value="375x667">iPhone 6 (375 x 667)</option>
-          <option value="414x736">iPhone 6 Plus (414 x 736)</option>
-          <option value="360x640">Google Nexus 5 (360 x 640)</option>
-          <option value="412x732">Google Nexus 6 (412 x 732)</option>
-          <option value="360x640">Samsung Galaxy S5 (360 x 640)</option>
-          <option value="1024x768">iPad (1024 x 768)</option>
-        </select>
       </div>
+    </header>
 
-      <div class="qor-bannereditor__canvas qor-bannereditor__contents"></div>
-    </div>
-  {{end}}
+    <main class="mdl-layout__content">
+      {{range $index, $plateform := .Meta.Config.Platforms }}
+      <section class="mdl-layout__tab-panel {{if eq $index 0}}is-active{{end}}" id="scroll-tab-{{.Name}}">
+        <div class="qor-field__edit qor-bannereditor" data-platform-name="{{.Name}}" data-toggle="qor.bannereditor" data-stylesheet="{{$prefix}}/assets/stylesheets/banner_editor_iframe.css?theme=banner_editor">
+          <ul class="qor-bannereditor__toolbar clearfix">
+            <li class="qor-bannereditor__toolbar-btns"></li>
+            {{if $asset_manager}}
+            <li class="qor-bannereditor__toolbar--ml">
+              {{$asset_router := printf "%v/%v" $asset_manager.GetAdmin.GetRouter.Prefix $asset_manager.ToParam}}
+              <button class="mdl-button mdl-button--colored č qor-bannereditor__toolbar-image" data-select-Modal="selectone" data-banner-media-url="{{$asset_router}}"
+                type="button">
+                <i class="material-icons">photo_library</i>
+              </button>
+              <span class="mdl-tooltip">
+                {{t "qor_admin.banner_editor.add_image_from_media_libraries" "Add Image From Media Libraries"}}
+              </span>
+            </li>
+            {{end}}
 
-  <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure .Meta.Config}}" style="display: none;">{{unsafe_raw (formatted_banner_edit_value .Value)}}</textarea>
+            <li class="qor-bannereditor__toolbar--size" style="display: none;">
+              {{t "qor_admin.banner_editor.size" "Banner Size:"}}
+              <span></span>
+            </li>
+          </ul>
+
+          {{if eq .Name "Mobile"}}
+          <div class="qor-bannereditor__device-toolbar">
+            <p class="resolution">{{t "qor_admin.banner_editor.toggle_device_hint" "Responsive Design mode"}}</p>
+            <select data-toggle="qor.chooser" class="ignore-dirtyform qor-bannereditor__device">
+              <option value="320x528">iPhone 5 (320 x 528)</option>
+              <option value="375x667">iPhone 6 (375 x 667)</option>
+              <option value="414x736" selected>iPhone 6 Plus (414 x 736)</option>
+              <option value="360x640">Google Nexus 5 (360 x 640)</option>
+              <option value="412x732">Google Nexus 6 (412 x 732)</option>
+              <option value="360x640">Samsung Galaxy S5 (360 x 640)</option>
+              <option value="1024x768">iPad (1024 x 768)</option>
+              <option value="1024x1366">iPad Pro(1024 x 1366)</option>
+            </select>
+          </div>
+          {{end}}
+
+          <div class="qor-bannereditor__canvas qor-bannereditor__contents"></div>
+        </div>
+      </section>
+      {{end}}
+
+    </main>
+  </div>
+
+
+  <textarea class="banner-editor qor-bannereditor__value" name="{{.InputName}}" data-configure="{{banner_editor_configure .Meta.Config}}"
+    style="display: none;">{{unsafe_raw (formatted_banner_edit_value .Value)}}</textarea>
+
   <script type="text/javascript" src="{{$prefix}}/assets/javascripts/banner_editor.js?theme=banner_editor"></script>
+
 </div>

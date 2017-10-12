@@ -12,7 +12,8 @@
 })(function($) {
     'use strict';
 
-    let NAMESPACE = 'qor.bannereditor',
+    let _ = window._,
+        NAMESPACE = 'qor.bannereditor',
         EVENT_ENABLE = 'enable.' + NAMESPACE,
         EVENT_DISABLE = 'disable.' + NAMESPACE,
         EVENT_CLICK = 'click.' + NAMESPACE,
@@ -31,6 +32,7 @@
         CLASS_BANNEREDITOR_DRAGGING = 'qor-bannereditor__dragging',
         CLASS_BANNEREDITOR_CONTENT = '.qor-bannereditor__contents',
         CLASS_CANVAS = '.qor-bannereditor__canvas',
+        CLASS_CONTAINER = '.qor-bannereditor__container',
         CLASS_DEVICE_TRIGGER = '.qor-bannereditor__device-trigger',
         CLASS_DEVICE_SELECTOR = '.qor-bannereditor__device',
         CLASS_DEVICE_TOOLBAR = '.qor-bannereditor__device-toolbar',
@@ -69,48 +71,54 @@
 
         init: function() {
             let $element = this.$element,
-                $textarea = $element.find(CLASS_BANNEREDITOR_VALUE),
+                $container = $element.closest(CLASS_CONTAINER),
+                $textarea = $container.find(CLASS_BANNEREDITOR_VALUE),
                 config = {},
                 _this = this,
                 $canvas = $element.find(CLASS_CANVAS),
+                platformName = $element.data('platform-name'),
                 html = $(`<div class="qor-bannereditor__canvas">${$textarea.val()}</div>`),
                 $iframe = $('<iframe id="qor-bannereditor__iframe" width="100%" height="300px" />'),
                 configure = $textarea.data('configure'),
-                bannerSizes = configure.BannerSizes;
+                bannerSizes = _.where(configure.Platforms, {Name: platformName})[0];
 
             config.toolbar = configure.Elements;
             config.editURL = configure.EditURL;
             config.externalStylePath = configure.ExternalStylePath;
+            config.Platforms = configure.Platforms;
 
             $canvas.hide();
 
             this.config = config;
             this.$textarea = $textarea;
 
-            if (bannerSizes && bannerSizes.Laptop) {
-                this.initWidth = bannerSizes.Laptop.Width;
-                this.initHeight = bannerSizes.Laptop.Height;
+            this.initWidth = bannerSizes.Width || '100%';
+            this.initHeight = bannerSizes.Height || '100%';
 
-                $element
-                    .find('.qor-bannereditor__toolbar--size')
-                    .show()
-                    .find('span')
-                    .html(`${this.initWidth}px X ${this.initHeight}px`);
-            }
+            $element
+                .find('.qor-bannereditor__toolbar--size')
+                .show()
+                .find('span')
+                .html(`${this.initWidth} X ${this.initHeight}`);
 
             $canvas.html($iframe).removeClass('qor-bannereditor__canvas');
 
             this.$iframe = $iframe;
+            this.platformName = platformName;
 
             if ($('.qor-slideout').is(':visible')) {
                 // for sliderout
                 $iframe.ready(function() {
-                    _this.initIframe(html);
+                    setTimeout(function() {
+                        _this.initIframe(html);
+                    }, 500);
                 });
             } else {
                 // for single page
                 $iframe.on('load', function() {
-                    _this.initIframe(html);
+                    setTimeout(function() {
+                        _this.initIframe(html);
+                    }, 500);
                 });
             }
         },
@@ -138,6 +146,10 @@
             this.$canvas = $ele.find(CLASS_CANVAS);
             this.initBannerEditor();
             this.bind();
+            if (this.platformName === 'Mobile') {
+                this.$element.find(CLASS_DEVICE_SELECTOR).trigger('change');
+                this.$canvas.addClass(CLASS_DEVICE_MODE);
+            }
         },
 
         bind: function() {
@@ -146,7 +158,6 @@
             this.$element
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
                 .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
-                .on(EVENT_CLICK, CLASS_DEVICE_TRIGGER, this.toggleDevice.bind(this))
                 .on(EVENT_CHANGE, CLASS_DEVICE_SELECTOR, this.switchDevice.bind(this));
 
             $canvas
@@ -183,22 +194,6 @@
             $(document).off(EVENT_CLICK);
         },
 
-        toggleDevice: function() {
-            let $element = this.$element,
-                defaultValue = $element.find(CLASS_DEVICE_SELECTOR).val();
-
-            if ($element.hasClass(CLASS_DEVICE_MODE)) {
-                this.resetDevice();
-            }
-
-            this.$canvas.toggleClass(CLASS_DEVICE_MODE);
-            $element
-                .toggleClass(CLASS_DEVICE_MODE)
-                .find(CLASS_DEVICE_TOOLBAR)
-                .toggle();
-            this.resetBannerEditorSize(defaultValue);
-        },
-
         resetDevice: function() {
             let initWidth = this.initWidth || this.bannerWidth || 'auto',
                 initHeight = this.initHeight || this.bannerHeight || 300;
@@ -224,17 +219,13 @@
                 deviceWidth = deviceSize.width,
                 deviceHeight = deviceSize.height;
 
-            if (!$element.hasClass(CLASS_DEVICE_MODE)) {
-                return;
-            }
-
             this.$iframe.css({
                 width: deviceWidth,
                 height: deviceHeight
             });
             this.$canvas.css({
                 width: deviceWidth,
-                height: deviceHeight
+                height: this.initHeight || deviceHeight
             });
 
             $element.find(CLASS_BANNEREDITOR_CONTENT).width(deviceWidth);
@@ -398,10 +389,7 @@
             this.resetBoxSize(imgUrl, $bg);
             $bg.css({
                 'background-image': `url(${imgUrl})`,
-                'background-repeat': 'no-repeat',
-                'background-position': 'center center',
-                width: '100%',
-                height: '100%'
+                'background-repeat': 'no-repeat'
             });
 
             this.$bottomsheets.remove();
@@ -753,10 +741,40 @@
         },
 
         setValue: function() {
-            let $html = this.$canvas.clone();
+            let $html = this.$canvas.clone(),
+                $textarea = this.$textarea,
+                newValue,
+                oldValue = $textarea.val(),
+                platformName = this.platformName,
+                saveValue = {};
+
             $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging qor-bannereditor__dragging');
             $html.find(CLASS_NEED_REMOVE).remove();
-            this.$textarea.val($html.html().replace(/&quot;/g, ''));
+            newValue = $html.html().replace(/&quot;/g, '');
+
+            // this.config.Platforms.forEach(function(obj){
+
+            // });
+
+            console.log(JSON.stringify(oldValue));
+
+            console.log(oldValue);
+
+            saveValue.Name = platformName;
+            saveValue.Value = newValue;
+
+            console.log(saveValue);
+
+            try {
+                oldValue = JSON.parse(oldValue);
+            } catch (error) {
+                oldValue = JSON.parse(oldValue);
+                throw error;
+            }
+
+            console.log(oldValue);
+
+            // $textarea.val();
         },
 
         destroy: function() {
