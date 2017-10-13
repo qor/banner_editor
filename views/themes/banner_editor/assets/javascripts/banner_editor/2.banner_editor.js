@@ -183,7 +183,9 @@
                 .draggable(this.options.draggable)
                 .resizable(this.options.resizable);
 
-            $(document).on(EVENT_CLICK, this.hideElement.bind(this));
+            $(document)
+                .on(EVENT_CLICK, this.hideElement.bind(this))
+                .on(EVENT_CLICK, '.qor-bannereditor__container .mdl-layout__tab', this.enableElements);
         },
 
         unbind: function() {
@@ -199,7 +201,19 @@
                 .find(CLASS_DRAGGABLE)
                 .draggable('destroy')
                 .resizable('destroy');
-            $(document).off(EVENT_CLICK);
+            $(document)
+                .off(EVENT_CLICK, this.hideElement)
+                .off(EVENT_CLICK, this.enableElements);
+        },
+
+        enableElements: function(e) {
+            let id = $(e.target).attr('href'),
+                $element = $(id).find('.qor-bannereditor');
+
+            if ($element.data(NAMESPACE)) {
+                return;
+            }
+            $('.qor-bannereditor__container').trigger('enable');
         },
 
         resetDevice: function() {
