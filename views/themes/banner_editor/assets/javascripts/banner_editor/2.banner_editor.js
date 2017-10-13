@@ -32,13 +32,16 @@
         CLASS_BANNEREDITOR_DRAGGING = 'qor-bannereditor__dragging',
         CLASS_BANNEREDITOR_CONTENT = '.qor-bannereditor__contents',
         CLASS_CANVAS = '.qor-bannereditor__canvas',
+        CLASS_PLATFORM_TRIGGER = '.qor-bannereditor__platform-trigger',
+        CLASS_PLATFORM_PANEL = '.qor-bannereditor__platform-panel',
         CLASS_CONTAINER = '.qor-bannereditor__container',
         CLASS_DEVICE_SELECTOR = '.qor-bannereditor__device',
         CLASS_DEVICE_TOOLBAR = '.qor-bannereditor__device-toolbar',
         CLASS_DEVICE_MODE = 'qor-bannereditor__device-mode',
         CLASS_TOP = 'qor-bannereditor__draggable-top',
         CLASS_LEFT = 'qor-bannereditor__draggable-left',
-        CLASS_NEED_REMOVE = '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable';
+        CLASS_NEED_REMOVE = '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable',
+        CLASS_ACTIVE = 'is-active';
 
     function getImgSize(url, callback) {
         let img = new Image();
@@ -99,6 +102,7 @@
 
             this.config = config;
             this.$textarea = $textarea;
+            this.$container = $container;
 
             this.initWidth = bannerSizes.Width || '100%';
             this.initHeight = bannerSizes.Height || '100%';
@@ -135,7 +139,7 @@
             let $ele = this.$iframe.contents(),
                 $head = $ele.find('head'),
                 externalStylePath = this.config.externalStylePath,
-                defaultCSS = this.$element.data('stylesheet'),
+                defaultCSS = this.$element.closest(CLASS_CONTAINER).data('prefix') + '/assets/stylesheets/banner_editor_iframe.css?theme=banner_editor',
                 linkTemplate = function(url) {
                     return `<link rel="stylesheet" type="text/css" href="${url}">`;
                 };
@@ -163,6 +167,8 @@
         bind: function() {
             let $canvas = this.$canvas;
 
+            this.$container.on(EVENT_CLICK, CLASS_PLATFORM_TRIGGER, this.switchPlatform.bind(this));
+
             this.$element
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
                 .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
@@ -183,13 +189,12 @@
                 .draggable(this.options.draggable)
                 .resizable(this.options.resizable);
 
-            $(document)
-                .on(EVENT_CLICK, this.hideElement.bind(this))
-                .on(EVENT_CLICK, '.qor-bannereditor__container .mdl-layout__tab', this.enableElements);
+            $(document).on(EVENT_CLICK, this.hideElement.bind(this));
         },
 
         unbind: function() {
             let $canvas = this.$canvas;
+            this.$container.off(EVENT_CLICK);
             this.$element.off(EVENT_CLICK).off(EVENT_CHANGE);
             $canvas
                 .off(EVENT_CLICK)
@@ -201,19 +206,26 @@
                 .find(CLASS_DRAGGABLE)
                 .draggable('destroy')
                 .resizable('destroy');
-            $(document)
-                .off(EVENT_CLICK, this.hideElement)
-                .off(EVENT_CLICK, this.enableElements);
+            $(document).off(EVENT_CLICK, this.hideElement);
         },
 
-        enableElements: function(e) {
-            let id = $(e.target).attr('href'),
-                $element = $(id).find('.qor-bannereditor');
+        switchPlatform: function(e) {
+            let $container = this.$container,
+                $target = $(e.target),
+                id = $target.attr('name'),
+                $content = $container.find(id),
+                $element = $content.find('.qor-bannereditor');
 
-            if ($element.data(NAMESPACE)) {
-                return;
+            $container.find(CLASS_PLATFORM_TRIGGER).removeClass(CLASS_ACTIVE);
+            $container.find(CLASS_PLATFORM_PANEL).hide();
+            $content.show();
+            $target.addClass(CLASS_ACTIVE);
+
+            if (!$element.data(NAMESPACE)) {
+                $content.trigger('enable');
             }
-            $('.qor-bannereditor__container').trigger('enable');
+
+            return false;
         },
 
         resetDevice: function() {
