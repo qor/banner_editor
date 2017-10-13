@@ -33,7 +33,6 @@
         CLASS_BANNEREDITOR_CONTENT = '.qor-bannereditor__contents',
         CLASS_CANVAS = '.qor-bannereditor__canvas',
         CLASS_CONTAINER = '.qor-bannereditor__container',
-        CLASS_DEVICE_TRIGGER = '.qor-bannereditor__device-trigger',
         CLASS_DEVICE_SELECTOR = '.qor-bannereditor__device',
         CLASS_DEVICE_TOOLBAR = '.qor-bannereditor__device-toolbar',
         CLASS_DEVICE_MODE = 'qor-bannereditor__device-mode',
@@ -60,6 +59,10 @@
         };
     }
 
+    function getObject(value, platformName) {
+        return _.where(value, {Name: platformName})[0];
+    }
+
     function QorBannerEditor(element, options) {
         this.$element = $(element);
         this.options = $.extend({}, QorBannerEditor.DEFAULTS, $.isPlainObject(options) && options);
@@ -77,15 +80,20 @@
                 _this = this,
                 $canvas = $element.find(CLASS_CANVAS),
                 platformName = $element.data('platform-name'),
-                html = $(`<div class="qor-bannereditor__canvas">${$textarea.val()}</div>`),
-                $iframe = $('<iframe id="qor-bannereditor__iframe" width="100%" height="300px" />'),
                 configure = $textarea.data('configure'),
-                bannerSizes = _.where(configure.Platforms, {Name: platformName})[0];
+                bannerValues = JSON.parse($textarea.val()),
+                platforms = configure.Platforms,
+                html,
+                $iframe = $('<iframe id="qor-bannereditor__iframe" width="100%" height="300px" />'),
+                bannerSizes = getObject(platforms, platformName),
+                currentBannerValue = getObject(bannerValues, platformName) || {Value: ''};
+
+            html = $(`<div class="qor-bannereditor__canvas">${unescape(currentBannerValue.Value)}</div>`);
 
             config.toolbar = configure.Elements;
             config.editURL = configure.EditURL;
             config.externalStylePath = configure.ExternalStylePath;
-            config.Platforms = configure.Platforms;
+            config.Platforms = platforms;
 
             $canvas.hide();
 
@@ -744,37 +752,28 @@
             let $html = this.$canvas.clone(),
                 $textarea = this.$textarea,
                 newValue,
-                oldValue = $textarea.val(),
-                platformName = this.platformName,
-                saveValue = {};
+                bannerValues = JSON.parse($textarea.val()),
+                platformName = this.platformName;
 
             $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging qor-bannereditor__dragging');
             $html.find(CLASS_NEED_REMOVE).remove();
-            newValue = $html.html().replace(/&quot;/g, '');
+            newValue = escape($html.html().replace(/&quot;/g, ''));
 
-            // this.config.Platforms.forEach(function(obj){
-
-            // });
-
-            console.log(JSON.stringify(oldValue));
-
-            console.log(oldValue);
-
-            saveValue.Name = platformName;
-            saveValue.Value = newValue;
-
-            console.log(saveValue);
-
-            try {
-                oldValue = JSON.parse(oldValue);
-            } catch (error) {
-                oldValue = JSON.parse(oldValue);
-                throw error;
+            if (getObject(bannerValues, platformName)) {
+                bannerValues.splice(
+                    _.findIndex(bannerValues, function(obj) {
+                        return obj.Name === platformName;
+                    }),
+                    1
+                );
             }
 
-            console.log(oldValue);
+            bannerValues.push({
+                Name: platformName,
+                Value: newValue
+            });
 
-            // $textarea.val();
+            $textarea.val(JSON.stringify(bannerValues));
         },
 
         destroy: function() {
