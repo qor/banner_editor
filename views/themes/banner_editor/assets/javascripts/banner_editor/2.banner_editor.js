@@ -423,7 +423,9 @@
             this.resetBoxSize(imgUrl, $bg);
             $bg.css({
                 'background-image': `url(${imgUrl})`,
-                'background-repeat': 'no-repeat'
+                'background-repeat': 'no-repeat',
+                width: '100%',
+                height: '100%'
             });
 
             this.$bottomsheets.remove();
