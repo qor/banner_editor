@@ -12,7 +12,8 @@
 })(function($) {
     'use strict';
 
-    let NAMESPACE = 'qor.bannereditor',
+    let _ = window._,
+        NAMESPACE = 'qor.bannereditor',
         EVENT_ENABLE = 'enable.' + NAMESPACE,
         EVENT_DISABLE = 'disable.' + NAMESPACE,
         EVENT_CLICK = 'click.' + NAMESPACE,
@@ -31,13 +32,16 @@
         CLASS_BANNEREDITOR_DRAGGING = 'qor-bannereditor__dragging',
         CLASS_BANNEREDITOR_CONTENT = '.qor-bannereditor__contents',
         CLASS_CANVAS = '.qor-bannereditor__canvas',
-        CLASS_DEVICE_TRIGGER = '.qor-bannereditor__device-trigger',
+        CLASS_PLATFORM_TRIGGER = '.qor-bannereditor__platform-trigger',
+        CLASS_PLATFORM_PANEL = '.qor-bannereditor__platform-panel',
+        CLASS_CONTAINER = '.qor-bannereditor__container',
         CLASS_DEVICE_SELECTOR = '.qor-bannereditor__device',
         CLASS_DEVICE_TOOLBAR = '.qor-bannereditor__device-toolbar',
         CLASS_DEVICE_MODE = 'qor-bannereditor__device-mode',
         CLASS_TOP = 'qor-bannereditor__draggable-top',
         CLASS_LEFT = 'qor-bannereditor__draggable-left',
-        CLASS_NEED_REMOVE = '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable';
+        CLASS_NEED_REMOVE = '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable',
+        CLASS_ACTIVE = 'is-active';
 
     function getImgSize(url, callback) {
         let img = new Image();
@@ -58,6 +62,10 @@
         };
     }
 
+    function getObject(value, platformName) {
+        return _.where(value, {Name: platformName})[0];
+    }
+
     function QorBannerEditor(element, options) {
         this.$element = $(element);
         this.options = $.extend({}, QorBannerEditor.DEFAULTS, $.isPlainObject(options) && options);
@@ -69,48 +77,60 @@
 
         init: function() {
             let $element = this.$element,
-                $textarea = $element.find(CLASS_BANNEREDITOR_VALUE),
+                $container = $element.closest(CLASS_CONTAINER),
+                $textarea = $container.find(CLASS_BANNEREDITOR_VALUE),
                 config = {},
                 _this = this,
                 $canvas = $element.find(CLASS_CANVAS),
-                html = $(`<div class="qor-bannereditor__canvas">${$textarea.val()}</div>`),
-                $iframe = $('<iframe id="qor-bannereditor__iframe" width="100%" height="300px" />'),
+                platformName = $element.data('platform-name'),
                 configure = $textarea.data('configure'),
-                bannerSizes = configure.BannerSizes;
+                bannerValues = JSON.parse($textarea.val()),
+                platforms = configure.Platforms,
+                html,
+                $iframe = $('<iframe id="qor-bannereditor__iframe" width="100%" height="300px" />'),
+                bannerSizes = getObject(platforms, platformName),
+                currentBannerValue = getObject(bannerValues, platformName) || {Value: ''};
+
+            html = $(`<div class="qor-bannereditor__canvas">${unescape(currentBannerValue.Value)}</div>`);
 
             config.toolbar = configure.Elements;
             config.editURL = configure.EditURL;
             config.externalStylePath = configure.ExternalStylePath;
+            config.Platforms = platforms;
 
             $canvas.hide();
 
             this.config = config;
             this.$textarea = $textarea;
+            this.$container = $container;
 
-            if (bannerSizes && bannerSizes.Laptop) {
-                this.initWidth = bannerSizes.Laptop.Width;
-                this.initHeight = bannerSizes.Laptop.Height;
+            this.initWidth = bannerSizes.Width || '100%';
+            this.initHeight = bannerSizes.Height || '100%';
 
-                $element
-                    .find('.qor-bannereditor__toolbar--size')
-                    .show()
-                    .find('span')
-                    .html(`${this.initWidth}px X ${this.initHeight}px`);
-            }
+            $element
+                .find('.qor-bannereditor__toolbar--size')
+                .show()
+                .find('span')
+                .html(`${this.initWidth} X ${this.initHeight}`);
 
             $canvas.html($iframe).removeClass('qor-bannereditor__canvas');
 
             this.$iframe = $iframe;
+            this.platformName = platformName;
 
             if ($('.qor-slideout').is(':visible')) {
                 // for sliderout
                 $iframe.ready(function() {
-                    _this.initIframe(html);
+                    setTimeout(function() {
+                        _this.initIframe(html);
+                    }, 500);
                 });
             } else {
                 // for single page
                 $iframe.on('load', function() {
-                    _this.initIframe(html);
+                    setTimeout(function() {
+                        _this.initIframe(html);
+                    }, 500);
                 });
             }
         },
@@ -119,7 +139,7 @@
             let $ele = this.$iframe.contents(),
                 $head = $ele.find('head'),
                 externalStylePath = this.config.externalStylePath,
-                defaultCSS = this.$element.data('stylesheet'),
+                defaultCSS = this.$element.closest(CLASS_CONTAINER).data('prefix') + '/assets/stylesheets/banner_editor_iframe.css?theme=banner_editor',
                 linkTemplate = function(url) {
                     return `<link rel="stylesheet" type="text/css" href="${url}">`;
                 };
@@ -138,15 +158,20 @@
             this.$canvas = $ele.find(CLASS_CANVAS);
             this.initBannerEditor();
             this.bind();
+            if (this.platformName === 'Mobile') {
+                this.$element.find(CLASS_DEVICE_SELECTOR).trigger('change');
+                this.$canvas.addClass(CLASS_DEVICE_MODE);
+            }
         },
 
         bind: function() {
             let $canvas = this.$canvas;
 
+            this.$container.on(EVENT_CLICK, CLASS_PLATFORM_TRIGGER, this.switchPlatform.bind(this));
+
             this.$element
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
                 .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
-                .on(EVENT_CLICK, CLASS_DEVICE_TRIGGER, this.toggleDevice.bind(this))
                 .on(EVENT_CHANGE, CLASS_DEVICE_SELECTOR, this.switchDevice.bind(this));
 
             $canvas
@@ -169,6 +194,7 @@
 
         unbind: function() {
             let $canvas = this.$canvas;
+            this.$container.off(EVENT_CLICK);
             this.$element.off(EVENT_CLICK).off(EVENT_CHANGE);
             $canvas
                 .off(EVENT_CLICK)
@@ -180,23 +206,26 @@
                 .find(CLASS_DRAGGABLE)
                 .draggable('destroy')
                 .resizable('destroy');
-            $(document).off(EVENT_CLICK);
+            $(document).off(EVENT_CLICK, this.hideElement);
         },
 
-        toggleDevice: function() {
-            let $element = this.$element,
-                defaultValue = $element.find(CLASS_DEVICE_SELECTOR).val();
+        switchPlatform: function(e) {
+            let $container = this.$container,
+                $target = $(e.target),
+                id = $target.attr('name'),
+                $content = $container.find(id),
+                $element = $content.find('.qor-bannereditor');
 
-            if ($element.hasClass(CLASS_DEVICE_MODE)) {
-                this.resetDevice();
+            $container.find(CLASS_PLATFORM_TRIGGER).removeClass(CLASS_ACTIVE);
+            $container.find(CLASS_PLATFORM_PANEL).hide();
+            $content.show();
+            $target.addClass(CLASS_ACTIVE);
+
+            if (!$element.data(NAMESPACE)) {
+                $content.trigger('enable');
             }
 
-            this.$canvas.toggleClass(CLASS_DEVICE_MODE);
-            $element
-                .toggleClass(CLASS_DEVICE_MODE)
-                .find(CLASS_DEVICE_TOOLBAR)
-                .toggle();
-            this.resetBannerEditorSize(defaultValue);
+            return false;
         },
 
         resetDevice: function() {
@@ -224,17 +253,13 @@
                 deviceWidth = deviceSize.width,
                 deviceHeight = deviceSize.height;
 
-            if (!$element.hasClass(CLASS_DEVICE_MODE)) {
-                return;
-            }
-
             this.$iframe.css({
                 width: deviceWidth,
                 height: deviceHeight
             });
             this.$canvas.css({
                 width: deviceWidth,
-                height: deviceHeight
+                height: this.initHeight || deviceHeight
             });
 
             $element.find(CLASS_BANNEREDITOR_CONTENT).width(deviceWidth);
@@ -399,7 +424,6 @@
             $bg.css({
                 'background-image': `url(${imgUrl})`,
                 'background-repeat': 'no-repeat',
-                'background-position': 'center center',
                 width: '100%',
                 height: '100%'
             });
@@ -753,10 +777,31 @@
         },
 
         setValue: function() {
-            let $html = this.$canvas.clone();
+            let $html = this.$canvas.clone(),
+                $textarea = this.$textarea,
+                newValue,
+                bannerValues = JSON.parse($textarea.val()),
+                platformName = this.platformName;
+
             $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging qor-bannereditor__dragging');
             $html.find(CLASS_NEED_REMOVE).remove();
-            this.$textarea.val($html.html().replace(/&quot;/g, ''));
+            newValue = escape($html.html().replace(/&quot;/g, ''));
+
+            if (getObject(bannerValues, platformName)) {
+                bannerValues.splice(
+                    _.findIndex(bannerValues, function(obj) {
+                        return obj.Name === platformName;
+                    }),
+                    1
+                );
+            }
+
+            bannerValues.push({
+                Name: platformName,
+                Value: newValue
+            });
+
+            $textarea.val(JSON.stringify(bannerValues));
         },
 
         destroy: function() {

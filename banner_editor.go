@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"net/http"
 	"reflect"
 
+	mobiledetect "github.com/Shaked/gomobiledetect"
 	"github.com/jinzhu/gorm"
 	"github.com/qor/admin"
 	"github.com/qor/assetfs"
@@ -21,21 +23,23 @@ var (
 	assetFileSystem              assetfs.Interface
 )
 
+const (
+	// Laptop default laptop platform name
+	Laptop = "Laptop"
+	// Mobile default mobile platform name
+	Mobile = "Mobile"
+)
+
 func init() {
 	assetFileSystem = assetfs.AssetFS().NameSpace("banner_editor")
-}
-
-type BannerSize struct {
-	Width  int
-	Height int
 }
 
 // BannerEditorConfig configure display elements and setting model
 type BannerEditorConfig struct {
 	MediaLibrary    *admin.Resource
-	BannerSizes     map[string]BannerSize
 	Elements        []string
 	SettingResource *admin.Resource
+	Platforms       []Platform
 }
 
 // QorBannerEditorSettingInterface interface to support customize setting model
@@ -57,6 +61,23 @@ type Element struct {
 	Template string
 	Resource *admin.Resource
 	Context  func(context *admin.Context, setting interface{}) interface{}
+}
+
+// Size contains width ad height
+type Size struct {
+	Width  int
+	Height int
+}
+
+// Platform used to defined how many platform a banner need to support
+type Platform struct {
+	Name     string
+	SafeArea Size
+}
+
+type configurePlatform struct {
+	Name  string
+	Value string
 }
 
 func init() {
@@ -82,6 +103,7 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 		if config.SettingResource == nil {
 			config.SettingResource = Admin.NewResource(&QorBannerEditorSetting{})
 		}
+
 		if config.MediaLibrary == nil {
 			panic("BannerEditor: MediaLibrary can't be blank.")
 		} else {
@@ -104,6 +126,13 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 			config.MediaLibrary.IndexAttrs(config.MediaLibrary.IndexAttrs(), "BannerEditorUrl")
 		}
 
+		if len(config.Platforms) == 0 {
+			config.Platforms = []Platform{
+				{Name: Laptop},
+				{Name: Mobile},
+			}
+		}
+
 		router := Admin.GetRouter()
 		res := config.SettingResource
 		router.Get(fmt.Sprintf("%v/new", res.ToParam()), New, &admin.RouteConfig{Resource: res})
@@ -111,11 +140,17 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 		router.Put(fmt.Sprintf("%v/%v", res.ToParam(), res.ParamIDName()), Update, &admin.RouteConfig{Resource: res})
 		Admin.RegisterResourceRouters(res, "read", "update")
 
+		Admin.RegisterFuncMap("formatted_banner_edit_value", formattedValue)
 		Admin.RegisterFuncMap("banner_editor_configure", func(config *BannerEditorConfig) string {
 			type element struct {
 				Name      string
 				CreateURL string
 				Icon      string
+			}
+			type platform struct {
+				Name   string
+				Width  int
+				Height int
 			}
 			var (
 				selectedElements = registeredElements
@@ -133,16 +168,21 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 			for _, e := range selectedElements {
 				elements = append(elements, element{Icon: e.Icon, Name: e.Name, CreateURL: fmt.Sprintf("%v?kind=%v", newElementURL, template.URLQueryEscaper(e.Name))})
 			}
+
+			platforms := []platform{}
+			for _, p := range config.Platforms {
+				platforms = append(platforms, platform{Name: p.Name, Width: p.SafeArea.Width, Height: p.SafeArea.Height})
+			}
 			results, err := json.Marshal(struct {
 				Elements          []element
 				ExternalStylePath []string
 				EditURL           string
-				BannerSizes       map[string]BannerSize
+				Platforms         []platform
 			}{
 				Elements:          elements,
 				ExternalStylePath: registeredExternalStylePaths,
 				EditURL:           fmt.Sprintf("%v/%v/:id/edit", router.Prefix, res.ToParam()),
-				BannerSizes:       config.BannerSizes,
+				Platforms:         platforms,
 			})
 			if err != nil {
 				return err.Error()
@@ -174,6 +214,51 @@ func (setting QorBannerEditorSetting) GetSerializableArgumentResource() *admin.R
 		return element.Resource
 	}
 	return nil
+}
+
+// GetContent return HTML string by detector, detector could be a string (Platform, Mobile or other), http request and nil
+func GetContent(value string, detector interface{}) string {
+	if platform, ok := detector.(string); ok {
+		return getContentByPlatform(value, platform)
+	} else if req, ok := detector.(*http.Request); ok {
+		detect := mobiledetect.NewMobileDetect(req, nil)
+		if detect.IsMobile() {
+			return getContentByPlatform(value, Mobile)
+		}
+		return getContentByPlatform(value, Laptop)
+	}
+	return getContentByPlatform(value, Laptop)
+}
+
+func getContentByPlatform(value string, platform string) string {
+	configurePlatforms := []configurePlatform{}
+	if err := json.Unmarshal([]byte(value), &configurePlatforms); err == nil {
+		if len(configurePlatforms) == 0 {
+			return ""
+		}
+		for _, p := range configurePlatforms {
+			if p.Name == platform {
+				return p.Value
+			}
+		}
+		return configurePlatforms[0].Value
+	}
+	return value
+}
+
+func formattedValue(value string) string {
+	if value == "" {
+		return "[]"
+	}
+	configurePlatforms := []configurePlatform{}
+	if err := json.Unmarshal([]byte(value), &configurePlatforms); err == nil {
+		return value
+	}
+	jsonValue, err := json.Marshal(&[]configurePlatform{{Name: Laptop, Value: value}})
+	if err != nil {
+		return fmt.Sprintf("BannerEditor: format value to json failure, got %v", err.Error())
+	}
+	return string(jsonValue)
 }
 
 func getMediaLibraryResourceURLMethod(i interface{}) reflect.Value {

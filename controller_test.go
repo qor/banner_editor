@@ -88,6 +88,16 @@ func init() {
 	bannerEditorResource := Admin.AddResource(&bannerEditorArgument{}, &admin.Config{Name: "Banner"})
 	bannerEditorResource.Meta(&admin.Meta{Name: "Value", Config: &BannerEditorConfig{
 		MediaLibrary: assetManagerResource,
+		Platforms: []Platform{
+			{
+				Name:     "Laptop",
+				SafeArea: Size{Width: 1000, Height: 500},
+			},
+			{
+				Name:     "Mobile",
+				SafeArea: Size{Width: 600, Height: 300},
+			},
+		},
 	}})
 
 	Admin.MountTo("/admin", mux)
@@ -125,9 +135,9 @@ func TestGetConfig(t *testing.T) {
 		MediaLibrary: assetManagerResource,
 	}})
 
-	assertConfigIncludeElements(t, "banners", []string{"Sub Header", "Button"})
-	assertConfigIncludeElements(t, "other_banner_editor_arguments", []string{"Sub Header"})
-	assertConfigIncludeElements(t, "another_banner_editor_arguments", []string{"Button"})
+	assertConfigIncludeElements(t, "banners", []string{"Sub Header", "Button"}, []string{"Laptop:1000:500", "Mobile:600:300"})
+	assertConfigIncludeElements(t, "other_banner_editor_arguments", []string{"Sub Header"}, []string{"Laptop:0:0", "Mobile:0:0"})
+	assertConfigIncludeElements(t, "another_banner_editor_arguments", []string{"Button"}, []string{"Laptop:0:0", "Mobile:0:0"})
 }
 
 func TestControllerCRUD(t *testing.T) {
@@ -188,6 +198,69 @@ func TestMediaLibraryURL(t *testing.T) {
 	assetPageHaveText(t, string(body), "/system/media_libraries/1/file.jpg")
 }
 
+func TestGetContent(t *testing.T) {
+	iphone := "UserAgent: Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Version/10.0 Mobile/14D27 Safari/602.1"
+	mac := "UserAgent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12"
+	type testCase struct {
+		Value         string
+		Detector      interface{}
+		ExpectedValue string
+	}
+	testCases := []testCase{
+		// Detect by platform string
+		{Value: "Laptop Content", Detector: "Laptop", ExpectedValue: "Laptop Content"},
+		{Value: `[]`, Detector: "Laptop", ExpectedValue: ""},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Detector: Laptop, ExpectedValue: "Laptop Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: Laptop, ExpectedValue: "Laptop Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: Mobile, ExpectedValue: "Mobile Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: "Unknown", ExpectedValue: "Laptop Content"},
+		// Detect by request
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: mac, ExpectedValue: `Laptop Content`},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: iphone, ExpectedValue: `Mobile Content`},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Detector: mac, ExpectedValue: `Laptop Content`},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Detector: iphone, ExpectedValue: `Laptop Content`},
+		// Detect by nil or empty string
+		{Value: "Laptop Content", Detector: "", ExpectedValue: "Laptop Content"},
+		{Value: "Laptop Content", Detector: nil, ExpectedValue: "Laptop Content"},
+	}
+	for i, testcase := range testCases {
+		detector := testcase.Detector
+		if d, ok := testcase.Detector.(string); ok {
+			if strings.HasPrefix(d, "UserAgent") {
+				req, _ := http.NewRequest("GET", "http://localhost:30000/user-agent", nil)
+				req.Header.Set("User-Agent", d)
+				detector = req
+			}
+		}
+		value := GetContent(testcase.Value, detector)
+		if value != testcase.ExpectedValue {
+			t.Error(color.RedString("TestGetContent #%v: expect value is %v, but got %v", i+1, testcase.ExpectedValue, value))
+		} else {
+			color.Green("TestGetContent #%v: Success", i+1)
+		}
+	}
+}
+
+func TestFormattedValue(t *testing.T) {
+	type testCase struct {
+		Value         string
+		ExpectedValue string
+	}
+	testCases := []testCase{
+		{Value: "", ExpectedValue: `[]`},
+		{Value: "Laptop Content", ExpectedValue: `[{"Name":"Laptop","Value":"Laptop Content"}]`},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, ExpectedValue: `[{"Name": "Laptop", "Value": "Laptop Content"}]`},
+	}
+	for i, testcase := range testCases {
+		value := formattedValue(testcase.Value)
+		if value != testcase.ExpectedValue {
+			t.Error(color.RedString("TestFormattedValue #%v: expect value is %v, but got %v", i+1, testcase.ExpectedValue, value))
+		} else {
+			color.Green("TestFormattedValue #%v: Success", i+1)
+		}
+	}
+}
+
 func assetPageHaveText(t *testing.T, body string, text string) {
 	if !strings.Contains(body, text) {
 		t.Error(color.RedString("PageHaveText: expect page have text %v, but got %v", text, body))
@@ -203,17 +276,24 @@ func assetPageHaveAttributes(t *testing.T, resp *http.Response, attributes ...st
 	}
 }
 
-func assertConfigIncludeElements(t *testing.T, resourceName string, elements []string) {
+func assertConfigIncludeElements(t *testing.T, resourceName string, elements []string, sizes []string) {
 	resp, _ := http.Get(fmt.Sprintf("%v/admin/%v/new", Server.URL, resourceName))
 	body, _ := ioutil.ReadAll(resp.Body)
-	results := []string{}
+	elementDatas := []string{}
 	for _, elm := range elements {
 		urlParam := strings.Replace(elm, " ", "&#43;", -1)
 		data := fmt.Sprintf("{\"Name\":\"%v\",\"CreateURL\":\"/admin/qor_banner_editor_settings/new?kind=%v\",\"Icon\":\"\"}", elm, urlParam)
-		results = append(results, data)
+		elementDatas = append(elementDatas, data)
 	}
-	resultStr := strings.Join(results, ",")
-	expectedConfig := fmt.Sprintf("data-configure='{\"Elements\":[%v],\"ExternalStylePath\":null,\"EditURL\":\"/admin/qor_banner_editor_settings/:id/edit\",\"BannerSizes\":null}'", resultStr)
+	sizeDatas := []string{}
+	for _, size := range sizes {
+		datas := strings.Split(size, ":")
+		data := fmt.Sprintf("{\"Name\":\"%v\",\"Width\":%v,\"Height\":%v}", datas[0], datas[1], datas[2])
+		sizeDatas = append(sizeDatas, data)
+	}
+	elementsStr := strings.Join(elementDatas, ",")
+	sizesStr := strings.Join(sizeDatas, ",")
+	expectedConfig := fmt.Sprintf("data-configure='{\"Elements\":[%v],\"ExternalStylePath\":null,\"EditURL\":\"/admin/qor_banner_editor_settings/:id/edit\",\"Platforms\":[%v]}'", elementsStr, sizesStr)
 	expectedConfig = strings.Replace(expectedConfig, "\"", "&#34;", -1)
 	expectedConfig = strings.Replace(expectedConfig, "'", "\"", -1)
 	assetPageHaveText(t, string(body), expectedConfig)
