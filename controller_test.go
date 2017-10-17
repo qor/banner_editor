@@ -222,6 +222,8 @@ func TestGetContent(t *testing.T) {
 		// Detect by nil or empty string
 		{Value: "Laptop Content", Detector: "", ExpectedValue: "Laptop Content"},
 		{Value: "Laptop Content", Detector: nil, ExpectedValue: "Laptop Content"},
+		// Unscape content
+		{Value: "Laptop Content: %3Cdiv%3Ehello%20%E3%83%A1%E3%83%B3%E3%82%BA%E3%82%92%E3%83%81%E3%82%A7%E3%83%83%E3%82%AF%20%3C%2Fdiv%3E", Detector: "Laptop", ExpectedValue: "Laptop Content: <div>hello メンズをチェック </div>"},
 	}
 	for i, testcase := range testCases {
 		detector := testcase.Detector

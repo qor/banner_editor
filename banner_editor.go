@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"reflect"
 
 	mobiledetect "github.com/Shaked/gomobiledetect"
@@ -238,10 +239,17 @@ func getContentByPlatform(value string, platform string) string {
 		}
 		for _, p := range configurePlatforms {
 			if p.Name == platform {
-				return p.Value
+				return unescapeValue(p.Value)
 			}
 		}
-		return configurePlatforms[0].Value
+		return unescapeValue(configurePlatforms[0].Value)
+	}
+	return unescapeValue(value)
+}
+
+func unescapeValue(value string) string {
+	if val, err := url.QueryUnescape(value); err == nil {
+		return val
 	}
 	return value
 }
