@@ -91,7 +91,7 @@
                 bannerSizes = getObject(platforms, platformName),
                 currentBannerValue = getObject(bannerValues, platformName) || {Value: ''};
 
-            html = $(`<div class="qor-bannereditor__canvas">${unescape(currentBannerValue.Value)}</div>`);
+            html = $(`<div class="qor-bannereditor__canvas">${decodeURIComponent(currentBannerValue.Value)}</div>`);
 
             config.toolbar = configure.Elements;
             config.editURL = configure.EditURL;
@@ -171,11 +171,15 @@
 
             this.$element
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
+                .on(EVENT_CLICK, '.qor-bannereditor__toolbar-clear', this.clearAllElements.bind(this))
                 .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
                 .on(EVENT_CHANGE, CLASS_DEVICE_SELECTOR, this.switchDevice.bind(this));
 
             $canvas
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
+                .on(EVENT_CLICK, '.qor-bannereditor__editimage', this.replaceBackgroundImage.bind(this))
+                .on(EVENT_CLICK, '.qor-bannereditor__deleteimage', this.deleteBackgroundImage.bind(this))
+                .on(EVENT_CLICK, CLASS_BANNEREDITOR_BG, this.editBackground.bind(this))
                 .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
                 .on(EVENT_CLICK, CLASS_DRAGGABLE, this.handleInlineEdit.bind(this))
                 .on(EVENT_DBCLICK, CLASS_DRAGGABLE, this.showInlineEdit.bind(this))
@@ -207,6 +211,21 @@
                 .draggable('destroy')
                 .resizable('destroy');
             $(document).off(EVENT_CLICK, this.hideElement);
+        },
+
+        clearAllElements: function(e) {
+            let $target = $(e.target),
+                _this = this,
+                message = {
+                    confirm: $target.data('hint-message')
+                };
+
+            window.QOR.qorConfirm(message, function(confirm) {
+                if (confirm) {
+                    _this.$canvas.html('');
+                    _this.setValue();
+                }
+            });
         },
 
         switchPlatform: function(e) {
@@ -367,13 +386,39 @@
             });
         },
 
+        replaceBackgroundImage: function() {
+            this.$element.find(CLASS_BANNEREDITOR_IMAGE).click();
+            this.clearElements();
+        },
+
+        deleteBackgroundImage: function() {
+            this.$canvas.find(CLASS_BANNEREDITOR_BG).css('background-image', 'none');
+            this.clearElements();
+            this.setValue();
+        },
+
+        editBackground: function(e) {
+            let $target = $(e.target),
+                editHTML = `<div class="qor-bannereditor__button-inline qor-bannereditor__button-bg">
+                                <button class="mdl-button mdl-button--icon qor-bannereditor__editimage" type="button"><i class="material-icons">mode_edit</i></button>
+                                <button class="mdl-button mdl-button--icon qor-bannereditor__deleteimage" type="button"><i class="material-icons">delete_forever</i></button>
+                            </div>`;
+
+            this.clearElements();
+            $target.append(editHTML);
+        },
+
         hideElement: function(e) {
+            if (!$(e.target).closest('.qor-bannereditor__contents').length) {
+                this.clearElements();
+            }
+        },
+
+        clearElements: function() {
             let $canvas = this.$canvas;
 
-            if (!$(e.target).closest('.qor-bannereditor__contents').length) {
-                $canvas.find('.qor-bannereditor__button-inline,.qor-bannereditor__draggable-coordinate').remove();
-                $canvas.find(CLASS_DRAGGABLE).removeClass('qor-bannereditor__dragging');
-            }
+            $canvas.find('.qor-bannereditor__button-inline,.qor-bannereditor__draggable-coordinate').remove();
+            $canvas.find(CLASS_DRAGGABLE).removeClass('qor-bannereditor__dragging');
         },
 
         openBottomSheets: function(e) {
@@ -778,6 +823,7 @@
 
         setValue: function() {
             let $html = this.$canvas.clone(),
+                $bg = $html.find(CLASS_BANNEREDITOR_BG),
                 $textarea = this.$textarea,
                 newValue,
                 bannerValues = JSON.parse($textarea.val()),
@@ -785,7 +831,12 @@
 
             $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging qor-bannereditor__dragging');
             $html.find(CLASS_NEED_REMOVE).remove();
-            newValue = escape($html.html().replace(/&quot;/g, ''));
+
+            if ($bg.is(':empty') && $bg.css('background-image') === 'none') {
+                newValue = '';
+            } else {
+                newValue = encodeURIComponent($html.html().replace(/&quot;/g, ''));
+            }
 
             if (getObject(bannerValues, platformName)) {
                 bannerValues.splice(

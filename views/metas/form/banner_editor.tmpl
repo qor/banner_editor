@@ -17,7 +17,7 @@
         {{if $asset_manager}}
         <li class="qor-bannereditor__toolbar--ml">
           {{$asset_router := printf "%v/%v" $asset_manager.GetAdmin.GetRouter.Prefix $asset_manager.ToParam}}
-          <button class="mdl-button mdl-button--colored č qor-bannereditor__toolbar-image" data-select-Modal="selectone" data-banner-media-url="{{$asset_router}}" type="button">
+          <button class="mdl-button mdl-button--colored qor-bannereditor__toolbar-image" data-select-Modal="selectone" data-banner-media-url="{{$asset_router}}" type="button">
             <i class="material-icons">photo_library</i>
           </button>
           <span class="mdl-tooltip">
@@ -29,6 +29,12 @@
         <li class="qor-bannereditor__toolbar--size" style="display: none;">
           {{t "qor_admin.banner_editor.size" "Banner Size:"}}
           <span></span>
+        </li>
+
+        <li class="qor-bannereditor__toolbar--clear">
+          <button class="mdl-button mdl-button--colored qor-bannereditor__toolbar-clear" type="button" data-hint-message={{t "qor_admin.banner_editor.delete_all_element_confirmation" "Are you sure you want to delete all elements?"}}>
+            {{t "qor_admin.banner_editor.delete_all_elements" "Delete All Elements"}}
+          </button>
         </li>
       </ul>
 

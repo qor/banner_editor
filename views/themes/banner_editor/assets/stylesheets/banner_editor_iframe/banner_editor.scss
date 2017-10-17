@@ -49,6 +49,11 @@ body {
         letter-spacing: normal;
     }
 
+    .qor-bannereditor__button-bg {
+        top: 4px !important;
+        min-width: auto !important;
+    }
+
     a:focus {
         outline: 0;
     }
@@ -105,7 +110,8 @@ body {
         border-radius: 2px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         cursor: auto;
-        .mdl-button--icon[data-edit-type='delete'] .material-icons {
+        .mdl-button--icon[data-edit-type='delete'] .material-icons,
+        .qor-bannereditor__deleteimage .material-icons {
             -webkit-transform: translate(-9px, -12px);
             transform: translate(-9px, -12px);
         }

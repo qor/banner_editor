@@ -88,6 +88,17 @@
         li {
             list-style: none;
             float: left;
+            &.qor-bannereditor__toolbar--clear {
+                float: right;
+                button {
+                    width: auto;
+                    border: 0;
+                    &:hover {
+                        background-color: #ff4081;
+                        color: #fff;
+                    }
+                }
+            }
             &.qor-bannereditor__toolbar--size {
                 line-height: 48px;
                 padding-left: 24px;
