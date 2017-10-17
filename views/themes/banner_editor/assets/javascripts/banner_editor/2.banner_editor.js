@@ -405,7 +405,9 @@
                             </div>`;
 
             this.clearElements();
-            $target.append(editHTML);
+            if ($target.css('background-image') != 'none') {
+                $target.append(editHTML);
+            }
         },
 
         hideElement: function(e) {
