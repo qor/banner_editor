@@ -214,11 +214,15 @@ func TestGetContent(t *testing.T) {
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: Laptop, ExpectedValue: "Laptop Content"},
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: Mobile, ExpectedValue: "Mobile Content"},
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: "Unknown", ExpectedValue: "Laptop Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": ""}]`, Detector: Mobile, ExpectedValue: "Laptop Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "      "}]`, Detector: Mobile, ExpectedValue: "Laptop Content"},
 		// Detect by request
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: mac, ExpectedValue: `Laptop Content`},
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: iphone, ExpectedValue: `Mobile Content`},
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Detector: mac, ExpectedValue: `Laptop Content`},
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Detector: iphone, ExpectedValue: `Laptop Content`},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": ""}]`, Detector: iphone, ExpectedValue: "Laptop Content"},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "      "}]`, Detector: iphone, ExpectedValue: "Laptop Content"},
 		// Detect by nil or empty string
 		{Value: "Laptop Content", Detector: "", ExpectedValue: "Laptop Content"},
 		{Value: "Laptop Content", Detector: nil, ExpectedValue: "Laptop Content"},

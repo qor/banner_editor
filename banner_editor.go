@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"strings"
 
 	mobiledetect "github.com/Shaked/gomobiledetect"
 	"github.com/jinzhu/gorm"
@@ -238,7 +239,7 @@ func getContentByPlatform(value string, platform string) string {
 			return ""
 		}
 		for _, p := range configurePlatforms {
-			if p.Name == platform {
+			if p.Name == platform && strings.TrimSpace(p.Value) != "" {
 				return unescapeValue(p.Value)
 			}
 		}
