@@ -36,7 +36,8 @@ body {
     box-sizing: border-box;
 
     &.qor-bannereditor__device-mode {
-        border: 0;
+        // border: 0;
+        border-bottom: 2px dashed rgba(94, 255, 255, 0.7);
         .qor-bannereditor__bg {
             background-size: 100% auto;
         }
