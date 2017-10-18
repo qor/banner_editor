@@ -37,6 +37,14 @@ body {
 
     &.qor-bannereditor__device-mode {
         border: 0;
+        .qor-bannereditor__draggable .qor-bannereditor__button-inline {
+            position: fixed !important;
+            top: auto !important;
+            right: auto !important;
+            left: 50% !important;
+            margin-left: -150px !important;
+            bottom: auto !important;
+        }
     }
 
     h1,
