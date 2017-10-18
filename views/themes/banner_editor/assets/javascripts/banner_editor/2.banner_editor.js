@@ -223,6 +223,7 @@
             window.QOR.qorConfirm(message, function(confirm) {
                 if (confirm) {
                     _this.$canvas.html('');
+                    _this.$bg = '';
                     _this.setValue();
                 }
             });
