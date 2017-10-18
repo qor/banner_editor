@@ -472,6 +472,7 @@
             $bg.css({
                 'background-image': `url(${imgUrl})`,
                 'background-repeat': 'no-repeat',
+                'background-size': '100% auto',
                 width: '100%',
                 height: '100%'
             });

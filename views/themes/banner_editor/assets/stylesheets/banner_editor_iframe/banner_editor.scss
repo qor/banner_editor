@@ -37,6 +37,9 @@ body {
 
     &.qor-bannereditor__device-mode {
         border: 0;
+        .qor-bannereditor__bg {
+            background-size: 100% auto;
+        }
         .qor-bannereditor__draggable .qor-bannereditor__button-inline {
             position: fixed !important;
             top: auto !important;
