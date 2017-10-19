@@ -200,6 +200,7 @@ func TestMediaLibraryURL(t *testing.T) {
 
 func TestGetContent(t *testing.T) {
 	iphone := "UserAgent: Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Version/10.0 Mobile/14D27 Safari/602.1"
+	ipad := "Mozilla/5.0 (iPad; CPU OS 9_1 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13B143 Safari/601.1"
 	mac := "UserAgent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12"
 	type testCase struct {
 		Value         string
@@ -219,6 +220,7 @@ func TestGetContent(t *testing.T) {
 		// Detect by request
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: mac, ExpectedValue: `Laptop Content`},
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: iphone, ExpectedValue: `Mobile Content`},
+		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": "Mobile Content"}]`, Detector: ipad, ExpectedValue: `Laptop Content`},
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Detector: mac, ExpectedValue: `Laptop Content`},
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}]`, Detector: iphone, ExpectedValue: `Laptop Content`},
 		{Value: `[{"Name": "Laptop", "Value": "Laptop Content"}, {"Name": "Mobile", "Value": ""}]`, Detector: iphone, ExpectedValue: "Laptop Content"},
