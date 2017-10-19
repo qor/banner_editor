@@ -224,7 +224,7 @@ func GetContent(value string, detector interface{}) string {
 		return getContentByPlatform(value, platform)
 	} else if req, ok := detector.(*http.Request); ok {
 		detect := mobiledetect.NewMobileDetect(req, nil)
-		if detect.IsMobile() {
+		if detect.IsMobile() && !detect.IsTablet() {
 			return getContentByPlatform(value, Mobile)
 		}
 		return getContentByPlatform(value, Laptop)
