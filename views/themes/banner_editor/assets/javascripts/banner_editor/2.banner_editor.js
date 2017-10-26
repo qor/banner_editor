@@ -158,7 +158,10 @@
 
             if (!$ele.find('.qor-bannereditor__html').length) {
                 $bannerHtml = $('<div class="qor-bannereditor__html" style="position: relative; height: 100%;" />').appendTo($canvas);
+            } else {
+                $bannerHtml = $ele.find('.qor-bannereditor__html');
             }
+
             this.$canvas = $canvas;
             this.$bannerHtml = $bannerHtml;
 
