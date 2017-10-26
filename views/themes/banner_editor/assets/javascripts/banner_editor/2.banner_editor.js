@@ -136,7 +136,7 @@
         initIframe: function(html) {
             let $ele = this.$iframe.contents(),
                 $head = $ele.find('head'),
-                $bannerHtml = $ele.find('.qor-bannereditor__html'),
+                $bannerHtml,
                 $canvas,
                 externalStylePath = this.config.externalStylePath,
                 defaultCSS = this.$element.closest(CLASS_CONTAINER).data('prefix') + '/assets/stylesheets/banner_editor_iframe.css?theme=banner_editor',
@@ -156,7 +156,7 @@
             html && $ele.find('body').html(html);
             $canvas = $ele.find(CLASS_CANVAS);
 
-            if (!$bannerHtml.length) {
+            if (!$ele.find('.qor-bannereditor__html').length) {
                 $bannerHtml = $('<div class="qor-bannereditor__html" style="position: relative; height: 100%;" />').appendTo($canvas);
             }
             this.$canvas = $canvas;
@@ -808,7 +808,7 @@
             if ($html.find(CLASS_BG_IMAGE).is(':empty')) {
                 newValue = '';
             } else {
-                newValue = encodeURIComponent($html.html().replace(/&quot;/g, ''));
+                newValue = encodeURIComponent($html.html());
             }
 
             if (getObject(bannerValues, platformName)) {
