@@ -148,7 +148,7 @@
 
             // load banner editor external style
             if (externalStylePath && externalStylePath.length > 0) {
-                for (let i = externalStylePath.length - 1; i >= 0; i--) {
+                for (let i = 0; i < externalStylePath.length; i++) {
                     $head.append(linkTemplate(externalStylePath[i]));
                 }
             }

@@ -33,7 +33,7 @@ body {
     width: 800px;
     max-width: 1600px;
     max-height: 1200px;
-    box-sizing: border-box;
+    box-sizing: content-box;
 
     &.qor-bannereditor__device-mode {
         // border: 0;
