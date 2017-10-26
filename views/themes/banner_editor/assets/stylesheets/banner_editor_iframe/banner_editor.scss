@@ -38,9 +38,6 @@ body {
     &.qor-bannereditor__device-mode {
         // border: 0;
         border-bottom: 2px dashed rgba(94, 255, 255, 0.7);
-        .qor-bannereditor__bg {
-            background-size: 100% auto;
-        }
         .qor-bannereditor__draggable .qor-bannereditor__button-inline {
             position: fixed !important;
             top: auto !important;
@@ -49,16 +46,6 @@ body {
             margin-left: -150px !important;
             bottom: auto !important;
         }
-    }
-
-    h1,
-    h1 small,
-    h2 small,
-    h3 small,
-    h4 small,
-    h5 small,
-    h6 small {
-        letter-spacing: normal;
     }
 
     .qor-bannereditor__button-bg {
@@ -77,13 +64,15 @@ body {
         max-width: 100%;
     }
 
-    .qor-bannereditor__bg {
-        width: 100%;
-        height: 100%;
+    .qor-bannereditor-image {
+        display: inline-block;
+        position: relative;
+        img {
+            max-width: 100%;
+        }
     }
 
-    > *:not(.qor-bannereditor__bg),
-    .qor-bannereditor__bg > * {
+    .qor-bannereditor__html > span:not(.qor-bannereditor-image) {
         border: 1px dotted transparent;
         cursor: move;
     }
@@ -175,7 +164,7 @@ body {
     }
 
     .qor-bannereditor__dragging {
-        border-color: #0277bd;
+        border-color: #0277bd !important;
         z-index: 99;
         .ui-resizable-e {
             cursor: e-resize;
