@@ -153,13 +153,13 @@
                 }
             }
 
-            html && $ele.find('body').html(html);
+            $ele.find('body').html(html);
             $canvas = $ele.find(CLASS_CANVAS);
 
-            if (!$ele.find('.qor-bannereditor__html').length) {
+            $bannerHtml = $ele.find('.qor-bannereditor__html');
+
+            if (!$bannerHtml.length) {
                 $bannerHtml = $('<div class="qor-bannereditor__html" style="position: relative; height: 100%;" />').appendTo($canvas);
-            } else {
-                $bannerHtml = $ele.find('.qor-bannereditor__html');
             }
 
             this.$canvas = $canvas;
