@@ -3,11 +3,10 @@ package banner_editor
 import (
 	"bytes"
 	"html/template"
-	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/qor/assetfs"
+	"github.com/qor/qor/utils"
 )
 
 // SetAssetFS set asset fs for render
@@ -25,7 +24,7 @@ func RegisterViewPath(p string) {
 		viewPaths = append(viewPaths, p)
 		assetFileSystem.RegisterPath(p)
 	} else {
-		for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
+		for _, gopath := range utils.GOPATH() {
 			viewPaths = append(viewPaths, filepath.Join(gopath, "src", p))
 			assetFileSystem.RegisterPath(filepath.Join(gopath, "src", p))
 		}
