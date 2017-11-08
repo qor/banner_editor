@@ -102,14 +102,14 @@
             this.$textarea = $textarea;
             this.$container = $container;
 
-            this.initWidth = bannerSizes.Width || '100%';
-            this.initHeight = bannerSizes.Height || '100%';
+            this.initWidth = bannerSizes.Width || '';
+            this.initHeight = bannerSizes.Height || '';
 
             $element
                 .find('.qor-bannereditor__toolbar--size')
                 .show()
                 .find('span')
-                .html(`${this.initWidth} X ${this.initHeight}`);
+                .html(`${this.initWidth || '100%'} X ${this.initHeight || '100%'}`);
 
             $canvas.html($iframe).removeClass('qor-bannereditor__canvas');
 
@@ -171,6 +171,54 @@
                 this.$element.find(CLASS_DEVICE_SELECTOR).trigger('change');
                 this.$canvas.addClass(CLASS_DEVICE_MODE);
             }
+        },
+
+        initBannerEditor: function() {
+            let $toolbar,
+                $element = this.$element,
+                $canvas = this.$canvas,
+                $iframe = this.$iframe,
+                canvasWidth = this.initWidth || this.$bannerHtml.data('image-width'),
+                canvasHeight = this.initHeight || this.$bannerHtml.data('image-height'),
+                $buttons = $element.find('.qor-bannereditor__toolbar--ml, .qor-bannereditor__toolbar--rdm'),
+                isInBottomsheet = $element.closest('.qor-bottomsheets').length,
+                isInSlideout = $('.qor-slideout').is(':visible'),
+                hasFullClass = $('.qor-slideout').hasClass('qor-slideout__fullscreen'),
+                randomString = (Math.random() + 1).toString(36).substring(7);
+
+            this.config.toolbar.forEach(function(obj) {
+                obj.id = `${obj.Name.toLowerCase().replace(/\s/g, '-')}-${randomString}`;
+            });
+            $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config));
+            $toolbar.appendTo($element.find('.qor-bannereditor__toolbar-btns'));
+            this.$popover = $(QorBannerEditor.popover).appendTo('body');
+
+            $element.closest('.qor-fieldset').addClass('qor-fieldset-bannereditor');
+
+            $buttons.each(function(index) {
+                let $innerButtons = $(this).find(' > button'),
+                    $innerTip = $(this).find('.mdl-tooltip'),
+                    $all = $(this).find(' > button, .mdl-tooltip');
+
+                $all.removeAttr('data-upgraded');
+                $innerButtons.attr('id', `add-${index}-${randomString}`);
+                $innerTip.attr('data-mdl-for', `add-${index}-${randomString}`);
+            });
+
+            $element.find('.qor-bannereditor__toolbar').trigger('enable');
+
+            if (isInSlideout && !isInBottomsheet && !hasFullClass) {
+                $('.qor-slideout__fullscreen').click();
+            }
+
+            if (isInBottomsheet) {
+                $element.closest('.qor-bottomsheets').addClass('qor-bottomsheets__fullscreen');
+            }
+
+            $canvas.width(canvasWidth).height(canvasHeight);
+            $iframe.height(canvasHeight);
+
+            $element.find('.qor-bannereditor__contents').show();
         },
 
         bind: function() {
@@ -257,8 +305,8 @@
         },
 
         resetDevice: function() {
-            let initWidth = this.initWidth || this.bannerWidth || 'auto',
-                initHeight = this.initHeight || this.bannerHeight || 300;
+            let initWidth = this.initWidth || 'auto',
+                initHeight = this.initHeight || 300;
 
             this.$element.find(CLASS_BANNEREDITOR_CONTENT).css('width', 'auto');
             this.$iframe.css({
@@ -304,63 +352,6 @@
             $target.append(window.Mustache.render(QorBannerEditor.dragCoordinate, position));
             $target.find('.qor-bannereditor__button-inline').hide();
             this.setValue();
-        },
-
-        initBannerEditor: function() {
-            let $toolbar,
-                $element = this.$element,
-                $canvas = this.$canvas,
-                $iframe = this.$iframe,
-                initWidth = this.initWidth,
-                initHeight = this.initHeight,
-                $buttons = $element.find('.qor-bannereditor__toolbar--ml, .qor-bannereditor__toolbar--rdm'),
-                isInBottomsheet = $element.closest('.qor-bottomsheets').length,
-                isInSlideout = $('.qor-slideout').is(':visible'),
-                hasFullClass = $('.qor-slideout').hasClass('qor-slideout__fullscreen'),
-                randomString = (Math.random() + 1).toString(36).substring(7);
-
-            this.config.toolbar.forEach(function(obj) {
-                obj.id = `${obj.Name.toLowerCase().replace(/\s/g, '-')}-${randomString}`;
-            });
-            $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config));
-            $toolbar.appendTo($element.find('.qor-bannereditor__toolbar-btns'));
-            this.$popover = $(QorBannerEditor.popover).appendTo('body');
-
-            $element.closest('.qor-fieldset').addClass('qor-fieldset-bannereditor');
-
-            $buttons.each(function(index) {
-                let $innerButtons = $(this).find(' > button'),
-                    $innerTip = $(this).find('.mdl-tooltip'),
-                    $all = $(this).find(' > button, .mdl-tooltip');
-
-                $all.removeAttr('data-upgraded');
-                $innerButtons.attr('id', `add-${index}-${randomString}`);
-                $innerTip.attr('data-mdl-for', `add-${index}-${randomString}`);
-            });
-
-            $element.find('.qor-bannereditor__toolbar').trigger('enable');
-
-            if (isInSlideout && !isInBottomsheet && !hasFullClass) {
-                $('.qor-slideout__fullscreen').click();
-            }
-
-            if (isInBottomsheet) {
-                $element.closest('.qor-bottomsheets').addClass('qor-bottomsheets__fullscreen');
-            }
-
-            if (initWidth && initHeight) {
-                $canvas.width(initWidth).height(initHeight);
-                $iframe.height(initHeight);
-            }
-
-            $element.find('.qor-bannereditor__contents').show();
-        },
-
-        getContentSize: function(w, h) {
-            return {
-                width: 1200,
-                height: 1200 * h / w
-            };
         },
 
         initMedia: function() {
@@ -475,26 +466,21 @@
                 $iframe = this.$iframe,
                 initWidth = this.initWidth,
                 initHeight = this.initHeight,
-                cSize,
-                _this = this;
+                $bannerHtml = this.$bannerHtml;
 
-            getImgSize(url, function(width, height) {
-                if (width > 1200) {
-                    cSize = _this.getContentSize(width, height);
-                    width = cSize.width;
-                    height = cSize.height;
-                }
+            getImgSize(
+                url,
+                function(width, height) {
+                    width = initWidth || width;
+                    height = initHeight || height;
 
-                width = initWidth || width;
-                height = initHeight || height;
+                    $canvas.width(width).height(height);
+                    $iframe.height(height);
 
-                $canvas.width(width).height(height);
-                $iframe.height(height);
-
-                _this.bannerWidth = width;
-                _this.bannerHeight = height;
-                _this.setValue();
-            });
+                    $bannerHtml.attr({'data-image-width': width, 'data-image-height': height});
+                    this.setValue();
+                }.bind(this)
+            );
         },
 
         handleInlineEdit: function(e) {
@@ -808,7 +794,7 @@
             $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging qor-bannereditor__dragging');
             $html.find(CLASS_NEED_REMOVE).remove();
 
-            if ($html.find(CLASS_BG_IMAGE).is(':empty')) {
+            if (this.$bannerHtml.is(':empty')) {
                 newValue = '';
             } else {
                 newValue = encodeURIComponent($html.html());

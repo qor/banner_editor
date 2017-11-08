@@ -26,13 +26,11 @@ body {
 .qor-bannereditor__canvas {
     border-left: 2px dashed rgba(94, 255, 255, 0.7);
     border-right: 2px dashed rgba(94, 255, 255, 0.7);
-    height: 100%;
     position: relative;
     margin: 0 auto;
     overflow: hidden;
     width: 800px;
-    max-width: 1600px;
-    max-height: 1200px;
+    height: 400px;
     box-sizing: content-box;
 
     &.qor-bannereditor__device-mode {
