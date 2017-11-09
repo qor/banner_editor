@@ -63,6 +63,15 @@ body {
         * {
             pointer-events: none;
         }
+        .ui-resizable-handle:after {
+            pointer-events: all;
+        }
+        .qor-bannereditor__button-inline,
+        .ui-resizable-handle {
+            * {
+                pointer-events: all;
+            }
+        }
     }
 
     .qor-bannereditor-image {
