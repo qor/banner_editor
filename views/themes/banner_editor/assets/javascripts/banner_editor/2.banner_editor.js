@@ -66,6 +66,10 @@
         return _.where(value, {Name: platformName})[0];
     }
 
+    function generateRandomString() {
+        return (Math.random() + 1).toString(36).substring(7);
+    }
+
     function QorBannerEditor(element, options) {
         this.$element = $(element);
         this.options = $.extend({}, QorBannerEditor.DEFAULTS, $.isPlainObject(options) && options);
@@ -180,31 +184,19 @@
                 $iframe = this.$iframe,
                 canvasWidth = this.initWidth || this.$bannerHtml.data('image-width'),
                 canvasHeight = this.initHeight || this.$bannerHtml.data('image-height'),
-                $buttons = $element.find('.qor-bannereditor__toolbar--ml, .qor-bannereditor__toolbar--rdm'),
                 isInBottomsheet = $element.closest('.qor-bottomsheets').length,
                 isInSlideout = $('.qor-slideout').is(':visible'),
-                hasFullClass = $('.qor-slideout').hasClass('qor-slideout__fullscreen'),
-                randomString = (Math.random() + 1).toString(36).substring(7);
+                hasFullClass = $('.qor-slideout').hasClass('qor-slideout__fullscreen');
 
             this.config.toolbar.forEach(function(obj) {
-                obj.id = `${obj.Name.toLowerCase().replace(/\s/g, '-')}-${randomString}`;
+                obj.id = generateRandomString();
             });
             $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config));
             $toolbar.appendTo($element.find('.qor-bannereditor__toolbar-btns'));
             this.$popover = $(QorBannerEditor.popover).appendTo('body');
 
             $element.closest('.qor-fieldset').addClass('qor-fieldset-bannereditor');
-
-            $buttons.each(function(index) {
-                let $innerButtons = $(this).find(' > button'),
-                    $innerTip = $(this).find('.mdl-tooltip'),
-                    $all = $(this).find(' > button, .mdl-tooltip');
-
-                $all.removeAttr('data-upgraded');
-                $innerButtons.attr('id', `add-${index}-${randomString}`);
-                $innerTip.attr('data-mdl-for', `add-${index}-${randomString}`);
-            });
-
+            this.resetToolbarTooltips();
             $element.find('.qor-bannereditor__toolbar').trigger('enable');
 
             if (isInSlideout && !isInBottomsheet && !hasFullClass) {
@@ -219,6 +211,18 @@
             $iframe.height(canvasHeight);
 
             $element.find('.qor-bannereditor__contents').show();
+        },
+
+        resetToolbarTooltips: function() {
+            let $button = this.$element.find('.qor-bannereditor__toolbar--ml'),
+                $innerButtons = $button.find(' > button'),
+                $innerTip = $button.find('.mdl-tooltip'),
+                $all = $button.find(' > button, .mdl-tooltip'),
+                randomString = generateRandomString();
+
+            $all.removeAttr('data-upgraded');
+            $innerButtons.attr('id', randomString);
+            $innerTip.attr('data-mdl-for', randomString);
         },
 
         bind: function() {
@@ -870,15 +874,15 @@
     };
 
     QorBannerEditor.toolbar = `[[#toolbar]]
-                                    <button class="mdl-button mdl-button--colored qor-bannereditor__button" data-banner-url="[[CreateURL]]" id="[[id]]" data-title="[[Name]]" type="button">
+                                    <button class="mdl-button mdl-button--colored qor-bannereditor__button" data-banner-url="[[CreateURL]]" id="[[id]]" data-title="[[Label]]" type="button">
                                         [[#Icon]][[& Icon]][[/Icon]]
                                         [[^Icon]]
-                                            [[Name]]
+                                            [[Label]]
                                         [[/Icon]]
                                     </button>
                                     [[#Icon]]
                                         <span class="mdl-tooltip" data-mdl-for="[[id]]">
-                                            [[Name]]
+                                            [[Label]]
                                         </span>
                                     [[/Icon]]
                                 [[/toolbar]]`;
