@@ -60,6 +60,7 @@ type QorBannerEditorSetting struct {
 type Element struct {
 	Icon     string
 	Name     string
+	Label    string
 	Template string
 	Resource *admin.Resource
 	Context  func(context *admin.Context, setting interface{}) interface{}
@@ -145,7 +146,7 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 		Admin.RegisterFuncMap("formatted_banner_edit_value", formattedValue)
 		Admin.RegisterFuncMap("banner_editor_configure", func(config *BannerEditorConfig) string {
 			type element struct {
-				Name      string
+				Label     string
 				CreateURL string
 				Icon      string
 			}
@@ -168,7 +169,11 @@ func (config *BannerEditorConfig) ConfigureQorMeta(metaor resource.Metaor) {
 				}
 			}
 			for _, e := range selectedElements {
-				elements = append(elements, element{Icon: e.Icon, Name: e.Name, CreateURL: fmt.Sprintf("%v?kind=%v", newElementURL, template.URLQueryEscaper(e.Name))})
+				element := element{Icon: e.Icon, Label: e.Label, CreateURL: fmt.Sprintf("%v?kind=%v", newElementURL, template.URLQueryEscaper(e.Name))}
+				if element.Label == "" {
+					element.Label = e.Name
+				}
+				elements = append(elements, element)
 			}
 
 			platforms := []platform{}

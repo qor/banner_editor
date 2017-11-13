@@ -72,6 +72,7 @@ func init() {
 	})
 	RegisterElement(&Element{
 		Name:     "Button",
+		Label:    "Add Button",
 		Template: "button",
 		Resource: buttonRes,
 		Context: func(c *admin.Context, r interface{}) interface{} {
@@ -135,9 +136,18 @@ func TestGetConfig(t *testing.T) {
 		MediaLibrary: assetManagerResource,
 	}})
 
-	assertConfigIncludeElements(t, "banners", []string{"Sub Header", "Button"}, []string{"Laptop:1000:500", "Mobile:600:300"})
-	assertConfigIncludeElements(t, "other_banner_editor_arguments", []string{"Sub Header"}, []string{"Laptop:0:0", "Mobile:0:0"})
-	assertConfigIncludeElements(t, "another_banner_editor_arguments", []string{"Button"}, []string{"Laptop:0:0", "Mobile:0:0"})
+	testCases := []struct {
+		ConfigureName        string
+		ElementNameAndLabels [][]string
+		Platforms            []string
+	}{
+		{ConfigureName: "banners", ElementNameAndLabels: [][]string{{"Sub Header", "Sub Header"}, {"Button", "Add Button"}}, Platforms: []string{"Laptop:1000:500", "Mobile:600:300"}},
+		{ConfigureName: "other_banner_editor_arguments", ElementNameAndLabels: [][]string{{"Sub Header", "Sub Header"}}, Platforms: []string{"Laptop:0:0", "Mobile:0:0"}},
+		{ConfigureName: "another_banner_editor_arguments", ElementNameAndLabels: [][]string{{"Button", "Add Button"}}, Platforms: []string{"Laptop:0:0", "Mobile:0:0"}},
+	}
+	for _, testCase := range testCases {
+		assertConfigIncludeElements(t, testCase.ConfigureName, testCase.ElementNameAndLabels, testCase.Platforms)
+	}
 }
 
 func TestControllerCRUD(t *testing.T) {
@@ -284,13 +294,13 @@ func assetPageHaveAttributes(t *testing.T, resp *http.Response, attributes ...st
 	}
 }
 
-func assertConfigIncludeElements(t *testing.T, resourceName string, elements []string, sizes []string) {
+func assertConfigIncludeElements(t *testing.T, resourceName string, elements [][]string, sizes []string) {
 	resp, _ := http.Get(fmt.Sprintf("%v/admin/%v/new", Server.URL, resourceName))
 	body, _ := ioutil.ReadAll(resp.Body)
 	elementDatas := []string{}
 	for _, elm := range elements {
-		urlParam := strings.Replace(elm, " ", "&#43;", -1)
-		data := fmt.Sprintf("{\"Name\":\"%v\",\"CreateURL\":\"/admin/qor_banner_editor_settings/new?kind=%v\",\"Icon\":\"\"}", elm, urlParam)
+		urlParam := strings.Replace(elm[0], " ", "&#43;", -1)
+		data := fmt.Sprintf("{\"Label\":\"%v\",\"CreateURL\":\"/admin/qor_banner_editor_settings/new?kind=%v\",\"Icon\":\"\"}", elm[1], urlParam)
 		elementDatas = append(elementDatas, data)
 	}
 	sizeDatas := []string{}
