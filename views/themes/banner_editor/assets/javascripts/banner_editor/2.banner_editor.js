@@ -27,7 +27,6 @@
         CLASS_MEDIABOX = 'qor-bottomsheets__mediabox',
         CLASS_TOOLBAR_BUTTON = '.qor-bannereditor__button',
         CLASS_BANNEREDITOR_VALUE = '.qor-bannereditor__value',
-        CLASS_BANNEREDITOR_BG = '.qor-bannereditor__bg',
         CLASS_BANNEREDITOR_IMAGE = '.qor-bannereditor__toolbar-image',
         CLASS_BANNEREDITOR_DRAGGING = 'qor-bannereditor__dragging',
         CLASS_BANNEREDITOR_CONTENT = '.qor-bannereditor__contents',
@@ -40,6 +39,7 @@
         CLASS_DEVICE_MODE = 'qor-bannereditor__device-mode',
         CLASS_TOP = 'qor-bannereditor__draggable-top',
         CLASS_LEFT = 'qor-bannereditor__draggable-left',
+        CLASS_BG_IMAGE = '.qor-bannereditor-image',
         CLASS_NEED_REMOVE = '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable',
         CLASS_ACTIVE = 'is-active';
 
@@ -87,7 +87,7 @@
                 bannerValues = JSON.parse($textarea.val()),
                 platforms = configure.Platforms,
                 html,
-                $iframe = $('<iframe id="qor-bannereditor__iframe" width="100%" height="300px" />'),
+                $iframe = $('<iframe width="100%" height="300px" />'),
                 bannerSizes = getObject(platforms, platformName),
                 currentBannerValue = getObject(bannerValues, platformName) || {Value: ''};
 
@@ -98,20 +98,18 @@
             config.externalStylePath = configure.ExternalStylePath;
             config.Platforms = platforms;
 
-            $canvas.hide();
-
             this.config = config;
             this.$textarea = $textarea;
             this.$container = $container;
 
-            this.initWidth = bannerSizes.Width || '100%';
-            this.initHeight = bannerSizes.Height || '100%';
+            this.initWidth = bannerSizes.Width || '';
+            this.initHeight = bannerSizes.Height || '';
 
             $element
                 .find('.qor-bannereditor__toolbar--size')
                 .show()
                 .find('span')
-                .html(`${this.initWidth} X ${this.initHeight}`);
+                .html(`${this.initWidth || '100%'} X ${this.initHeight || '100%'}`);
 
             $canvas.html($iframe).removeClass('qor-bannereditor__canvas');
 
@@ -138,6 +136,8 @@
         initIframe: function(html) {
             let $ele = this.$iframe.contents(),
                 $head = $ele.find('head'),
+                $bannerHtml,
+                $canvas,
                 externalStylePath = this.config.externalStylePath,
                 defaultCSS = this.$element.closest(CLASS_CONTAINER).data('prefix') + '/assets/stylesheets/banner_editor_iframe.css?theme=banner_editor',
                 linkTemplate = function(url) {
@@ -148,20 +148,77 @@
 
             // load banner editor external style
             if (externalStylePath && externalStylePath.length > 0) {
-                for (let i = externalStylePath.length - 1; i >= 0; i--) {
+                for (let i = 0; i < externalStylePath.length; i++) {
                     $head.append(linkTemplate(externalStylePath[i]));
                 }
             }
 
             $ele.find('body').html(html);
-            this.$bg = $ele.find(CLASS_BANNEREDITOR_BG);
-            this.$canvas = $ele.find(CLASS_CANVAS);
+            $canvas = $ele.find(CLASS_CANVAS);
+
+            $bannerHtml = $ele.find('.qor-bannereditor__html');
+
+            if (!$bannerHtml.length) {
+                $bannerHtml = $('<div class="qor-bannereditor__html" style="position: relative; height: 100%;" />').appendTo($canvas);
+            }
+
+            this.$canvas = $canvas;
+            this.$bannerHtml = $bannerHtml;
+
             this.initBannerEditor();
             this.bind();
             if (this.platformName === 'Mobile') {
                 this.$element.find(CLASS_DEVICE_SELECTOR).trigger('change');
                 this.$canvas.addClass(CLASS_DEVICE_MODE);
             }
+        },
+
+        initBannerEditor: function() {
+            let $toolbar,
+                $element = this.$element,
+                $canvas = this.$canvas,
+                $iframe = this.$iframe,
+                canvasWidth = this.initWidth || this.$bannerHtml.data('image-width'),
+                canvasHeight = this.initHeight || this.$bannerHtml.data('image-height'),
+                $buttons = $element.find('.qor-bannereditor__toolbar--ml, .qor-bannereditor__toolbar--rdm'),
+                isInBottomsheet = $element.closest('.qor-bottomsheets').length,
+                isInSlideout = $('.qor-slideout').is(':visible'),
+                hasFullClass = $('.qor-slideout').hasClass('qor-slideout__fullscreen'),
+                randomString = (Math.random() + 1).toString(36).substring(7);
+
+            this.config.toolbar.forEach(function(obj) {
+                obj.id = `${obj.Name.toLowerCase().replace(/\s/g, '-')}-${randomString}`;
+            });
+            $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config));
+            $toolbar.appendTo($element.find('.qor-bannereditor__toolbar-btns'));
+            this.$popover = $(QorBannerEditor.popover).appendTo('body');
+
+            $element.closest('.qor-fieldset').addClass('qor-fieldset-bannereditor');
+
+            $buttons.each(function(index) {
+                let $innerButtons = $(this).find(' > button'),
+                    $innerTip = $(this).find('.mdl-tooltip'),
+                    $all = $(this).find(' > button, .mdl-tooltip');
+
+                $all.removeAttr('data-upgraded');
+                $innerButtons.attr('id', `add-${index}-${randomString}`);
+                $innerTip.attr('data-mdl-for', `add-${index}-${randomString}`);
+            });
+
+            $element.find('.qor-bannereditor__toolbar').trigger('enable');
+
+            if (isInSlideout && !isInBottomsheet && !hasFullClass) {
+                $('.qor-slideout__fullscreen').click();
+            }
+
+            if (isInBottomsheet) {
+                $element.closest('.qor-bottomsheets').addClass('qor-bottomsheets__fullscreen');
+            }
+
+            $canvas.width(canvasWidth).height(canvasHeight);
+            $iframe.height(canvasHeight);
+
+            $element.find('.qor-bannereditor__contents').show();
         },
 
         bind: function() {
@@ -179,7 +236,7 @@
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
                 .on(EVENT_CLICK, '.qor-bannereditor__editimage', this.replaceBackgroundImage.bind(this))
                 .on(EVENT_CLICK, '.qor-bannereditor__deleteimage', this.deleteBackgroundImage.bind(this))
-                .on(EVENT_CLICK, CLASS_BANNEREDITOR_BG, this.editBackground.bind(this))
+                .on(EVENT_CLICK, CLASS_BG_IMAGE, this.editBackground.bind(this))
                 .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
                 .on(EVENT_CLICK, CLASS_DRAGGABLE, this.handleInlineEdit.bind(this))
                 .on(EVENT_DBCLICK, CLASS_DRAGGABLE, this.showInlineEdit.bind(this))
@@ -222,8 +279,7 @@
 
             window.QOR.qorConfirm(message, function(confirm) {
                 if (confirm) {
-                    _this.$canvas.html('');
-                    _this.$bg = '';
+                    _this.$bannerHtml.html('');
                     _this.setValue();
                 }
             });
@@ -249,8 +305,8 @@
         },
 
         resetDevice: function() {
-            let initWidth = this.initWidth || this.bannerWidth || 'auto',
-                initHeight = this.initHeight || this.bannerHeight || 300;
+            let initWidth = this.initWidth || 'auto',
+                initHeight = this.initHeight || 300;
 
             this.$element.find(CLASS_BANNEREDITOR_CONTENT).css('width', 'auto');
             this.$iframe.css({
@@ -298,78 +354,6 @@
             this.setValue();
         },
 
-        initBannerEditor: function() {
-            let $toolbar,
-                $bg = this.$bg,
-                $element = this.$element,
-                $canvas = this.$canvas,
-                $iframe = this.$iframe,
-                initWidth = this.initWidth,
-                initHeight = this.initHeight,
-                $buttons = $element.find('.qor-bannereditor__toolbar--ml, .qor-bannereditor__toolbar--rdm'),
-                isInBottomsheet = $element.closest('.qor-bottomsheets').length,
-                isInSlideout = $('.qor-slideout').is(':visible'),
-                hasFullClass = $('.qor-slideout').hasClass('qor-slideout__fullscreen'),
-                randomString = (Math.random() + 1).toString(36).substring(7);
-
-            this.config.toolbar.forEach(function(obj) {
-                obj.id = `${obj.Name.toLowerCase().replace(/\s/g, '-')}-${randomString}`;
-            });
-            $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config));
-            $toolbar.appendTo($element.find('.qor-bannereditor__toolbar-btns'));
-            this.$popover = $(QorBannerEditor.popover).appendTo('body');
-
-            $element.closest('.qor-fieldset').addClass('qor-fieldset-bannereditor');
-
-            $buttons.each(function(index) {
-                let $innerButtons = $(this).find(' > button'),
-                    $innerTip = $(this).find('.mdl-tooltip'),
-                    $all = $(this).find(' > button, .mdl-tooltip');
-
-                $all.removeAttr('data-upgraded');
-                $innerButtons.attr('id', `add-${index}-${randomString}`);
-                $innerTip.attr('data-mdl-for', `add-${index}-${randomString}`);
-            });
-
-            $element.find('.qor-bannereditor__toolbar').trigger('enable');
-
-            if (isInSlideout && !isInBottomsheet && !hasFullClass) {
-                $('.qor-slideout__fullscreen').click();
-            }
-
-            if (isInBottomsheet) {
-                $element.closest('.qor-bottomsheets').addClass('qor-bottomsheets__fullscreen');
-            }
-
-            if (initWidth && initHeight) {
-                $canvas.width(initWidth).height(initHeight);
-                $iframe.height(initHeight);
-
-                $bg.attr({
-                    'data-bannereditor-width': initWidth,
-                    'data-bannereditor-height': initHeight
-                });
-            } else if ($bg.length) {
-                let bWidth = initWidth || $bg.data('bannereditor-width'),
-                    bHeight = initHeight || $bg.data('bannereditor-height');
-
-                $canvas.width(bWidth).height(bHeight);
-                $iframe.height(bHeight);
-
-                this.bannerWidth = bWidth;
-                this.bannerHeight = bHeight;
-            }
-
-            $element.find('.qor-bannereditor__contents').show();
-        },
-
-        getContentSize: function(w, h) {
-            return {
-                width: 1200,
-                height: 1200 * h / w
-            };
-        },
-
         initMedia: function() {
             let $trs = $(CLASS_BOTTOMSHEETS).find('tbody tr'),
                 $tr,
@@ -393,22 +377,20 @@
         },
 
         deleteBackgroundImage: function() {
-            this.$canvas.find(CLASS_BANNEREDITOR_BG).css('background-image', 'none');
+            this.$canvas.find(CLASS_BG_IMAGE).remove();
             this.clearElements();
             this.setValue();
         },
 
         editBackground: function(e) {
-            let $target = $(e.target),
+            let $target = $(e.target).closest(CLASS_BG_IMAGE),
                 editHTML = `<div class="qor-bannereditor__button-inline qor-bannereditor__button-bg">
                                 <button class="mdl-button mdl-button--icon qor-bannereditor__editimage" type="button"><i class="material-icons">mode_edit</i></button>
                                 <button class="mdl-button mdl-button--icon qor-bannereditor__deleteimage" type="button"><i class="material-icons">delete_forever</i></button>
                             </div>`;
 
             this.clearElements();
-            if ($target.css('background-image') != 'none') {
-                $target.append(editHTML);
-            }
+            $target.append(editHTML);
         },
 
         hideElement: function(e) {
@@ -451,8 +433,7 @@
             let MediaOption = data.MediaOption,
                 $ele = data.$clickElement,
                 imgUrl,
-                bg = `<div class="${CLASS_BANNEREDITOR_BG.slice(1)}" />`,
-                $bg = this.$bg;
+                $bannerHtml = this.$bannerHtml;
 
             if (MediaOption) {
                 MediaOption = data.MediaOption.URL ? data.MediaOption : JSON.parse(data.MediaOption);
@@ -463,19 +444,12 @@
                 imgUrl = JSON.parse(data.File).Url;
             }
 
-            if (!$bg.length) {
-                this.$canvas.wrapInner(bg);
-                this.$bg = $bg = this.$canvas.find(CLASS_BANNEREDITOR_BG);
-            }
+            $bannerHtml.find(CLASS_BG_IMAGE).remove();
+            $bannerHtml.prepend(`<span class="qor-bannereditor-image"><img src="${imgUrl}" /></span>`);
 
-            this.resetBoxSize(imgUrl, $bg);
-            $bg.css({
-                'background-image': `url(${imgUrl})`,
-                'background-repeat': 'no-repeat',
-                'background-size': '100% auto',
-                width: '100%',
-                height: '100%'
-            });
+            if (!(this.initWidth && this.initHeight)) {
+                this.resetBoxSize(imgUrl);
+            }
 
             this.$bottomsheets.remove();
 
@@ -487,38 +461,26 @@
             return false;
         },
 
-        resetBoxSize: function(url, $bg) {
+        resetBoxSize: function(url) {
             let $canvas = this.$canvas,
                 $iframe = this.$iframe,
                 initWidth = this.initWidth,
                 initHeight = this.initHeight,
-                cSize,
-                _this = this;
+                $bannerHtml = this.$bannerHtml;
 
-            if (!(initWidth && initHeight)) {
-                getImgSize(url, function(width, height) {
-                    if (width > 1200) {
-                        cSize = _this.getContentSize(width, height);
-                        width = cSize.width;
-                        height = cSize.height;
-                    }
-
+            getImgSize(
+                url,
+                function(width, height) {
                     width = initWidth || width;
                     height = initHeight || height;
 
                     $canvas.width(width).height(height);
                     $iframe.height(height);
 
-                    $bg.attr({
-                        'data-bannereditor-width': width,
-                        'data-bannereditor-height': height
-                    });
-
-                    _this.bannerWidth = width;
-                    _this.bannerHeight = height;
-                    _this.setValue();
-                });
-            }
+                    $bannerHtml.attr({'data-image-width': width, 'data-image-height': height});
+                    this.setValue();
+                }.bind(this)
+            );
         },
 
         handleInlineEdit: function(e) {
@@ -729,13 +691,10 @@
                 method = $form.prop('method'),
                 _this = this,
                 formData = new FormData($form[0]),
-                $canvas = this.$canvas,
-                $bg = this.$bg,
-                $body = $bg.length ? $bg : $canvas,
+                $bannerHtml = this.$bannerHtml,
                 $popover = this.$popover,
                 $editElement = this.$editElement,
-                options = this.options,
-                eleID = `qor-bannereditor__${(Math.random() + 1).toString(36).substring(7)}`;
+                options = this.options;
 
             if (!$form.length) {
                 return;
@@ -752,7 +711,7 @@
                         return;
                     }
 
-                    let $ele = $(`<span id="${eleID}" class="${CLASS_DRAGGABLE.slice(1)}">${data.Template}</span>`);
+                    let $ele = $(`<span class="${CLASS_DRAGGABLE.slice(1)}">${data.Template}</span>`);
 
                     if ($editElement && $editElement.length) {
                         let left = $editElement[0].style.left,
@@ -780,7 +739,7 @@
                         });
 
                         $ele
-                            .appendTo($body)
+                            .appendTo($bannerHtml)
                             .draggable(options.draggable)
                             .resizable(options.resizable);
 
@@ -796,7 +755,7 @@
                                 top: '10%'
                             })
                             .attr('data-edit-id', data.ID)
-                            .appendTo($body)
+                            .appendTo($bannerHtml)
                             .draggable(options.draggable)
                             .resizable(options.resizable);
 
@@ -827,7 +786,6 @@
 
         setValue: function() {
             let $html = this.$canvas.clone(),
-                $bg = $html.find(CLASS_BANNEREDITOR_BG),
                 $textarea = this.$textarea,
                 newValue,
                 bannerValues = JSON.parse($textarea.val()),
@@ -836,10 +794,10 @@
             $html.find(CLASS_DRAGGABLE).removeClass('ui-draggable-handle ui-resizable ui-draggable-dragging qor-bannereditor__dragging');
             $html.find(CLASS_NEED_REMOVE).remove();
 
-            if ($bg.is(':empty') && $bg.css('background-image') === 'none') {
+            if (this.$bannerHtml.is(':empty')) {
                 newValue = '';
             } else {
-                newValue = encodeURIComponent($html.html().replace(/&quot;/g, ''));
+                newValue = encodeURIComponent($html.html());
             }
 
             if (getObject(bannerValues, platformName)) {
