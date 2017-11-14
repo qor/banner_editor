@@ -698,6 +698,11 @@
                 $bannerHtml = this.$bannerHtml,
                 $popover = this.$popover,
                 $editElement = this.$editElement,
+                defaultCSS = {
+                    position: 'absolute',
+                    left: '10%',
+                    top: '10%'
+                },
                 options = this.options;
 
             if (!$form.length) {
@@ -715,56 +720,18 @@
                         return;
                     }
 
-                    let $ele = $(`<span class="${CLASS_DRAGGABLE.slice(1)}">${data.Template}</span>`);
-
-                    if ($editElement && $editElement.length) {
-                        let left = $editElement[0].style.left,
-                            top = $editElement[0].style.top,
-                            width = $editElement[0].style.width,
-                            attrs = $editElement.prop('attributes');
-
-                        $ele
-                            .css({
-                                position: 'absolute',
-                                left: left,
-                                top: top,
-                                width: width
-                            })
-                            .attr('data-edit-id', data.ID);
-
-                        $.each(attrs, function() {
-                            let name = this.name;
-
-                            if (name == 'style' || name == 'class' || name == 'data-edit-id') {
-                                return;
-                            }
-
-                            $ele.attr(this.name, this.value);
-                        });
-
-                        $ele
-                            .appendTo($bannerHtml)
-                            .draggable(options.draggable)
-                            .resizable(options.resizable);
-
-                        $popover.qorModal('hide');
-
-                        $editElement.remove();
+                    if ($editElement) {
+                        $editElement.html(data.Template).resizable(options.resizable);
                         _this.$editElement = null;
                     } else {
-                        $ele
-                            .css({
-                                position: 'absolute',
-                                left: '10%',
-                                top: '10%'
-                            })
+                        $(`<span class="${CLASS_DRAGGABLE.slice(1)}">${data.Template}</span>`)
+                            .css(defaultCSS)
                             .attr('data-edit-id', data.ID)
                             .appendTo($bannerHtml)
                             .draggable(options.draggable)
                             .resizable(options.resizable);
-
-                        $popover.qorModal('hide');
                     }
+                    $popover.qorModal('hide');
                     _this.setValue();
                     _this.$popover.off(EVENT_CLICK);
                 },
