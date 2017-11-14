@@ -23,7 +23,6 @@
         EVENT_RESIZESTOP = 'resizestop.' + NAMESPACE,
         EVENT_DRAG = 'drag.' + NAMESPACE,
         CLASS_DRAGGABLE = '.qor-bannereditor__draggable',
-        CLASS_BOTTOMSHEETS = '.qor-bottomsheets',
         CLASS_MEDIABOX = 'qor-bottomsheets__mediabox',
         CLASS_TOOLBAR_BUTTON = '.qor-bannereditor__button',
         CLASS_BANNEREDITOR_VALUE = '.qor-bannereditor__value',
@@ -358,8 +357,8 @@
             this.setValue();
         },
 
-        initMedia: function() {
-            let $trs = $(CLASS_BOTTOMSHEETS).find('tbody tr'),
+        initMedia: function($bottomsheets) {
+            let $trs = $bottomsheets.find('tbody tr'),
                 $tr,
                 $img;
 
@@ -430,7 +429,7 @@
 
             $bottomsheets.qorSelectCore(options).addClass(CLASS_MEDIABOX);
             this.$bottomsheets = $bottomsheets;
-            this.initMedia();
+            this.initMedia($bottomsheets);
         },
 
         addBannerImage: function(data) {
