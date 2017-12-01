@@ -626,6 +626,8 @@
             ui.position.left = parseInt(ui.position.left, 10);
             ui.position.top = parseInt(ui.position.top, 10);
 
+            $target.css({right: 'auto', bottom: 'auto'});
+
             if ($target.css('transform')) {
                 $target.css('transform', '');
             }
@@ -658,13 +660,23 @@
         handleDragStop: function(event, ui) {
             let cWidth = this.$canvas.width(),
                 cHeight = this.$canvas.height(),
-                helperLeft = ui.position.left / cWidth * 100 + '%',
-                helperTop = ui.position.top / cHeight * 100 + '%',
                 helper = ui.helper,
+                helperLeft = ui.position.left / cWidth * 100,
+                helperTop = ui.position.top / cHeight * 100,
                 css = {
-                    left: helperLeft,
-                    top: helperTop
+                    left: helperLeft + '%',
+                    top: helperTop + '%'
                 };
+
+            if (helperLeft > 55) {
+                css.right = (cWidth - ui.position.left - helper.outerWidth()) / cWidth * 100 + '%';
+                css.left = 'auto';
+            }
+
+            if (helperTop > 55) {
+                css.bottom = (cHeight - ui.position.top - helper.outerHeight()) / cHeight * 100 + '%';
+                css.top = 'auto';
+            }
 
             helper.css(css).attr({
                 'data-position-left': ui.position.left,
