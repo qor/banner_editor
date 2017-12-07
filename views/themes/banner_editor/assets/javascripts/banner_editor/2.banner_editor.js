@@ -62,7 +62,8 @@
     }
 
     function getObject(value, platformName) {
-        return _.where(value, {Name: platformName})[0];
+        let bannerValue = _.where(value, {Name: platformName})[0];
+        return bannerValue ? bannerValue : false;
     }
 
     function generateRandomString() {
@@ -236,11 +237,9 @@
                 .on(EVENT_CHANGE, CLASS_DEVICE_SELECTOR, this.switchDevice.bind(this));
 
             $canvas
-                .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
                 .on(EVENT_CLICK, '.qor-bannereditor__editimage', this.replaceBackgroundImage.bind(this))
                 .on(EVENT_CLICK, '.qor-bannereditor__deleteimage', this.deleteBackgroundImage.bind(this))
                 .on(EVENT_CLICK, CLASS_BG_IMAGE, this.editBackground.bind(this))
-                .on(EVENT_CLICK, CLASS_BANNEREDITOR_IMAGE, this.openBottomSheets.bind(this))
                 .on(EVENT_CLICK, CLASS_DRAGGABLE, this.handleInlineEdit.bind(this))
                 .on(EVENT_DBCLICK, CLASS_DRAGGABLE, this.showInlineEdit.bind(this))
                 .on(EVENT_CLICK, '.qor-bannereditor__button-inline button', this.showEdit.bind(this))
@@ -416,6 +415,7 @@
             this.BottomSheets = $('body').data('qor.bottomsheets');
 
             data.url = data.bannerMediaUrl;
+            this.bannerMediaUrl = data.bannerMediaUrl;
             this.BottomSheets.open(data, this.handleBannerImage.bind(this));
 
             return false;
@@ -435,23 +435,69 @@
         addBannerImage: function(data) {
             let MediaOption = data.MediaOption,
                 $ele = data.$clickElement,
+                initWidth = this.initWidth,
+                initHeight = this.initHeight,
+                _this = this,
                 imgUrl,
-                $bannerHtml = this.$bannerHtml;
+                mediaLibraryUrl = data.mediaLibraryUrl,
+                randomString = `bannereditor_${(Math.random() + 1).toString(36).substring(7)}`,
+                syncData = {
+                    MediaOption: {
+                        Sizes: {},
+                        Crop: true
+                    }
+                };
 
-            if (MediaOption) {
-                MediaOption = data.MediaOption.URL ? data.MediaOption : JSON.parse(data.MediaOption);
-                imgUrl = MediaOption.URL;
-            } else if ($ele && $ele.find('[data-heading="BannerEditorUrl"]').length) {
-                imgUrl = data.$clickElement.find('[data-heading="BannerEditorUrl"]').text();
-            } else {
-                imgUrl = JSON.parse(data.File).Url;
+            if (!mediaLibraryUrl) {
+                mediaLibraryUrl = `${this.bannerMediaUrl}/${data.primaryKey}`;
             }
 
-            $bannerHtml.find(CLASS_BG_IMAGE).remove();
-            $bannerHtml.prepend(`<span class="qor-bannereditor-image"><img src="${imgUrl}" /></span>`);
+            if (initWidth || initHeight) {
+                let croppedSizeName = this.hasCroppedSize(data);
+
+                if (croppedSizeName) {
+                    this.insertImage(MediaOption.OriginalURL.replace(/\.original/, `.${croppedSizeName}`));
+                    return false;
+                }
+
+                let item = syncData.MediaOption.Sizes;
+
+                item[randomString] = {};
+                item[randomString]['Width'] = initWidth;
+                item[randomString]['Height'] = initHeight;
+
+                syncData.MediaOption = JSON.stringify(syncData.MediaOption);
+
+                $.ajax({
+                    type: 'PUT',
+                    url: mediaLibraryUrl,
+                    data: JSON.stringify(syncData),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        _this.insertImage(JSON.parse(data.MediaOption).OriginalURL.replace(/\.original/, `.${randomString}`));
+                    }
+                });
+            } else {
+                if (MediaOption.URL) {
+                    imgUrl = MediaOption.URL;
+                } else if ($ele && $ele.find('[data-heading="BannerEditorUrl"]').length) {
+                    imgUrl = data.$clickElement.find('[data-heading="BannerEditorUrl"]').text();
+                } else {
+                    imgUrl = JSON.parse(data.File).Url;
+                }
+                this.insertImage(imgUrl);
+            }
+
+            return false;
+        },
+
+        insertImage: function(url) {
+            this.$bannerHtml.find(CLASS_BG_IMAGE).remove();
+            this.$bannerHtml.prepend(`<span class="qor-bannereditor-image"><img src="${url}" /></span>`);
 
             if (!(this.initWidth && this.initHeight)) {
-                this.resetBoxSize(imgUrl);
+                this.resetBoxSize(url);
             }
 
             this.$bottomsheets.remove();
@@ -461,6 +507,28 @@
             }
 
             this.setValue();
+        },
+
+        hasCroppedSize: function(data) {
+            let sizes = data.MediaOption.Sizes,
+                keys = sizes ? Object.keys(sizes) : [],
+                initWidth = this.initWidth,
+                initHeight = this.initHeight;
+
+            if (!sizes || !keys.length) {
+                return false;
+            }
+
+            for (let i = 0; i < keys.length; i++) {
+                let key = keys[i];
+                if (/^bannereditor_/.test(key)) {
+                    let obj = sizes[key];
+                    if (initWidth === obj.Width && initHeight === obj.Height) {
+                        return key;
+                    }
+                }
+            }
+
             return false;
         },
 
@@ -719,6 +787,8 @@
             if (!$form.length) {
                 return;
             }
+
+            $popover.find('.qor-fieldset-container .qor-fieldset--new').remove();
 
             $.ajax(url, {
                 method: method,
