@@ -773,7 +773,6 @@
                 url = $form.prop('action'),
                 method = $form.prop('method'),
                 _this = this,
-                formData = new FormData($form[0]),
                 $bannerHtml = this.$bannerHtml,
                 $popover = this.$popover,
                 $editElement = this.$editElement,
@@ -788,12 +787,13 @@
                 return;
             }
 
+            // remove replicator template data
             $form.find('.qor-fieldset--new').remove();
 
             $.ajax(url, {
                 method: method,
                 dataType: 'json',
-                data: formData,
+                data: new FormData($form[0]),
                 processData: false,
                 contentType: false,
                 success: function(data) {
