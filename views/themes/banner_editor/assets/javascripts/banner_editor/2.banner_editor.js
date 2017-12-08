@@ -788,7 +788,7 @@
                 return;
             }
 
-            $popover.find('.qor-fieldset-container .qor-fieldset--new').remove();
+            $form.find('.qor-fieldset--new').remove();
 
             $.ajax(url, {
                 method: method,
