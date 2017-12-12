@@ -119,6 +119,7 @@
             this.config = config;
             this.$textarea = $textarea;
             this.$container = $container;
+            this.$content = $element.find(CLASS_BANNEREDITOR_CONTENT);
 
             this.initWidth = bannerSizes.Width || '';
             this.initHeight = bannerSizes.Height || '';
@@ -337,7 +338,7 @@
             let initWidth = this.initWidth || 'auto',
                 initHeight = this.initHeight || 300;
 
-            this.$element.find(CLASS_BANNEREDITOR_CONTENT).css('width', 'auto');
+            this.$content.css('width', 'auto');
             this.$iframe.css({
                 width: '100%',
                 height: initHeight
@@ -367,7 +368,7 @@
                 height: this.initHeight || deviceHeight
             });
 
-            $element.find(CLASS_BANNEREDITOR_CONTENT).width(deviceWidth);
+            this.$content.width(deviceWidth);
             $element.find(CLASS_DEVICE_TOOLBAR).width(deviceWidth);
         },
 
@@ -538,6 +539,7 @@
 
         handleBannerImage: function($bottomsheets) {
             let options = {
+                loading: this.addMediaLoading,
                 onSelect: this.addBannerImage.bind(this),
                 onSubmit: this.addBannerImage.bind(this)
             };
@@ -550,6 +552,7 @@
         addBannerImage: function(data) {
             let MediaOption = data.MediaOption,
                 $ele = data.$clickElement,
+                $urlEle = $ele && $ele.find('[data-heading="BannerEditorUrl"]'),
                 initWidth = this.initWidth,
                 initHeight = this.initHeight,
                 _this = this,
@@ -575,13 +578,16 @@
                     return false;
                 }
 
-                let item = syncData.MediaOption.Sizes;
+                let item = syncData.MediaOption.Sizes,
+                    $content = this.$content,
+                    $bannerHtml = this.$bannerHtml;
 
                 item[sizeName] = {};
                 item[sizeName]['Width'] = initWidth;
                 item[sizeName]['Height'] = initHeight;
 
                 syncData.MediaOption = JSON.stringify(syncData.MediaOption);
+                this.$bottomsheets.remove();
 
                 $.ajax({
                     type: 'PUT',
@@ -589,16 +595,23 @@
                     data: JSON.stringify(syncData),
                     contentType: 'application/json',
                     dataType: 'json',
+                    beforeSend: function() {
+                        $bannerHtml.find(CLASS_BG_IMAGE).remove();
+                        $content
+                            .prepend('<div class="qor-bannereditor-laoding"><div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active"></div></div>')
+                            .trigger('enable.qor.material');
+                    },
                     success: function(data) {
                         imgUrl = JSON.parse(data.MediaOption).OriginalURL.replace(/file\.original\./, `file.${sizeName}.`);
-                        _this.insertImage(imgUrl, mediaLibraryUrl, sizeName);
+                        $content.find('.qor-bannereditor-laoding').remove();
+                        _this.insertImage(imgUrl, mediaLibraryUrl, sizeName, false);
                     }
                 });
             } else {
                 if (MediaOption.URL) {
                     imgUrl = MediaOption.URL;
-                } else if ($ele && $ele.find('[data-heading="BannerEditorUrl"]').length) {
-                    imgUrl = data.$clickElement.find('[data-heading="BannerEditorUrl"]').text();
+                } else if ($urlEle) {
+                    imgUrl = $urlEle.text();
                 } else {
                     imgUrl = JSON.parse(data.File).Url;
                 }
@@ -608,17 +621,19 @@
             return false;
         },
 
-        insertImage: function(url, mediaLibraryUrl, sizeName) {
+        insertImage: function(url, mediaLibraryUrl, sizeName, removed) {
             let $img = $(`<span class="qor-bannereditor-image" data-size-name="${sizeName}" data-medialibrary-url="${mediaLibraryUrl}"><img src="${url}" /></span>`);
 
-            this.$bannerHtml.find(CLASS_BG_IMAGE).remove();
+            if (!removed) {
+                this.$bannerHtml.find(CLASS_BG_IMAGE).remove();
+                this.$bottomsheets.remove();
+            }
+
             $img.prependTo(this.$bannerHtml);
 
             if (!(this.initWidth && this.initHeight)) {
                 this.resetBoxSize(url);
             }
-
-            this.$bottomsheets.remove();
 
             if (!$('.qor-bottomsheets').is(':visible')) {
                 $('body').removeClass('qor-bottomsheets-open');
@@ -648,6 +663,12 @@
             }
 
             return false;
+        },
+
+        addMediaLoading: function($ele) {
+            $('<div class="qor-media-loading"><div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active"></div></div>')
+                .appendTo($ele)
+                .trigger('enable.qor.material');
         },
 
         resetBoxSize: function(url) {
