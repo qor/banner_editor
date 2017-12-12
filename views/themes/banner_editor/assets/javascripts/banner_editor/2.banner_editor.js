@@ -40,6 +40,7 @@
         CLASS_TOP = 'qor-bannereditor__draggable-top',
         CLASS_LEFT = 'qor-bannereditor__draggable-left',
         CLASS_BG_IMAGE = '.qor-bannereditor-image',
+        CLASS_CROP_WRAP = '.qor-cropper__wrapper',
         CLASS_NEED_REMOVE = '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable',
         CLASS_ACTIVE = 'is-active';
 
@@ -424,35 +425,89 @@
         },
 
         cropBackgroundImage: function(e) {
-            let $target = $(e.target).closest(CLASS_BG_IMAGE);
+            let $target = $(e.target).closest(CLASS_BG_IMAGE),
+                src = $target.find('img').attr('src');
 
-            this.cropData = {
-                src: $target
-                    .find('img')
-                    .attr('src')
-                    .replace(/file.bannereditor\_\w+/, 'file.original'),
+            this.cropImageData = {
+                $target: $target,
+                url: src,
+                originalUrl: src.replace(/file.bannereditor\_\w+/, 'file.original'),
                 sizeName: $target.data('size-name'),
                 medialibraryUrl: $target.data('medialibrary-url')
             };
+
             this.$cropModal.qorModal('show');
         },
 
         initCrop: function() {
-            let src = this.cropData.src;
+            let src = this.cropImageData.originalUrl,
+                $img = $(`<img src="${src}">`);
 
-            this.$cropModal.find('.qor-cropper__wrapper').html(`<img src="${src}">`);
-            getImgSize(src, this.startCrop);
+            this.$cropModal.find(CLASS_CROP_WRAP).html($img);
+            this.$cropImage = $img;
+            getImgSize(src, this.startCrop.bind(this));
         },
 
         startCrop: function(naturalWidth, naturalHeight) {
             let initWidth = this.initWidth || 0,
                 initHeight = this.initHeight || 0,
-                emulateCropData = {
-                    x: Math.round((naturalWidth - initWidth) / 2),
-                    y: Math.round((naturalHeight - initHeight) / 2),
-                    width: Math.round(initWidth),
-                    height: Math.round(initHeight)
-                };
+                sizeAspectRatio = initHeight ? initWidth / initHeight : NaN,
+                $cropModal = this.$cropModal,
+                $cropImage = this.$cropImage,
+                cropImageData = this.cropImageData,
+                initCropOption = cropImageData.$target.data('crop-options'),
+                _this = this,
+                cropData = {},
+                emulateCropData = initCropOption
+                    ? initCropOption
+                    : {
+                          x: Math.round((naturalWidth - initWidth) / 2),
+                          y: Math.round((naturalHeight - initHeight) / 2),
+                          width: Math.round(initWidth),
+                          height: Math.round(initHeight)
+                      };
+
+            cropData.Crop = true;
+            cropData.URL = cropImageData.originalUrl.replace(/file.original./, 'file.');
+            cropData.CropOptions = {};
+
+            $cropImage.cropper({
+                aspectRatio: sizeAspectRatio,
+                background: false,
+                data: emulateCropData,
+                movable: false,
+                zoomable: false,
+                scalable: false,
+                rotatable: false,
+                autoCropArea: 1,
+
+                ready: function() {
+                    $cropModal.find('.qor-cropper__save').one(EVENT_CLICK, function() {
+                        let syncData = {},
+                            cropOption = $cropImage.cropper('getData', true);
+
+                        cropData['CropOptions'][cropImageData.sizeName] = cropOption;
+                        syncData.MediaOption = JSON.stringify(cropData);
+
+                        $('<div class="qor-modal-loading"><div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active"></div></div>')
+                            .appendTo($cropModal.find(CLASS_CROP_WRAP))
+                            .trigger('enable.qor.material');
+
+                        $.ajax(cropImageData.medialibraryUrl, {
+                            type: 'PUT',
+                            contentType: 'application/json',
+                            data: JSON.stringify(syncData),
+                            dataType: 'json',
+                            success: function() {
+                                cropImageData.$target.attr('data-crop-options', JSON.stringify(cropOption)).html(`<img src="${cropImageData.url}?${$.now()}">`);
+                                _this.setValue();
+                                $cropModal.qorModal('hide');
+                                $cropModal.find('.qor-modal-loading').remove();
+                            }
+                        });
+                    });
+                }
+            });
         },
 
         hideElement: function(e) {
@@ -1042,7 +1097,7 @@
                                         <h2 class="mdl-card__title-text">$[title]</h2>
                                     </div>
                                     <div class="mdl-card__supporting-text">
-                                        <div class="qor-cropper__wrapper"></div>
+                                        <div class="qor-cropper__wrapper"><div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active"></div></div>
                                     </div>
                                     <div class="mdl-card__actions mdl-card--border">
                                         <a class="mdl-button mdl-button--colored mdl-button--raised qor-cropper__save">$[ok]</a>
