@@ -23,6 +23,7 @@
         EVENT_RESIZESTOP = 'resizestop.' + NAMESPACE,
         EVENT_DRAG = 'drag.' + NAMESPACE,
         EVENT_SHOWN = 'shown.qor.modal',
+        EVENT_HIDDEN = 'hidden.qor.modal',
         CLASS_DRAGGABLE = '.qor-bannereditor__draggable',
         CLASS_MEDIABOX = 'qor-bottomsheets__mediabox',
         CLASS_TOOLBAR_BUTTON = '.qor-bannereditor__button',
@@ -255,7 +256,7 @@
 
             this.$container.on(EVENT_CLICK, CLASS_PLATFORM_TRIGGER, this.switchPlatform.bind(this));
 
-            this.$cropModal.on(EVENT_SHOWN, this.initCrop.bind(this));
+            this.$cropModal.on(EVENT_SHOWN, this.initCrop.bind(this)).on(EVENT_HIDDEN, this.stopCrop.bind(this));
 
             this.$element
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
@@ -427,14 +428,16 @@
 
         cropBackgroundImage: function(e) {
             let $target = $(e.target).closest(CLASS_BG_IMAGE),
-                src = $target.find('img').attr('src');
+                data = $target.data(),
+                src = $target.find('img').attr('src'),
+                originalUrl = src.replace(/file.bannereditor\_\w+/, 'file.original');
 
             this.cropImageData = {
                 $target: $target,
                 url: src,
-                originalUrl: src.replace(/file.bannereditor\_\w+/, 'file.original'),
-                sizeName: $target.data('size-name'),
-                medialibraryUrl: $target.data('medialibrary-url')
+                originalUrl: originalUrl,
+                sizeName: data.sizeName,
+                medialibraryUrl: data.medialibraryUrl
             };
 
             this.$cropModal.qorModal('show');
@@ -452,25 +455,31 @@
         startCrop: function(naturalWidth, naturalHeight) {
             let initWidth = this.initWidth || 0,
                 initHeight = this.initHeight || 0,
-                sizeAspectRatio = initHeight ? initWidth / initHeight : NaN,
+                hasSize = initWidth && initHeight, //have width and height for banner editor setting
+                sizeAspectRatio = hasSize ? initWidth / initHeight : NaN,
                 $cropModal = this.$cropModal,
                 $cropImage = this.$cropImage,
                 cropImageData = this.cropImageData,
+                $bannerHtml = this.$bannerHtml,
+                $canvas = this.$canvas,
+                $iframe = this.$iframe,
+                $loading = $('<div class="qor-modal-loading"><div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active"></div></div>'),
                 initCropOption = cropImageData.$target.data('crop-options'),
+                sizeName = cropImageData.sizeName,
                 _this = this,
-                cropData = {},
-                emulateCropData = initCropOption
-                    ? initCropOption
-                    : {
-                          x: Math.round((naturalWidth - initWidth) / 2),
-                          y: Math.round((naturalHeight - initHeight) / 2),
-                          width: Math.round(initWidth),
-                          height: Math.round(initHeight)
-                      };
-
-            cropData.Crop = true;
-            cropData.URL = cropImageData.originalUrl.replace(/file.original./, 'file.');
-            cropData.CropOptions = {};
+                cropData = {
+                    Sizes: {},
+                    CropOptions: {},
+                    URL: cropImageData.originalUrl.replace(/file\.original\./, 'file.'),
+                    Crop: true
+                },
+                newCropData = {
+                    x: Math.round((naturalWidth - initWidth) / 2),
+                    y: Math.round((naturalHeight - initHeight) / 2),
+                    width: Math.round(initWidth || naturalWidth),
+                    height: Math.round(initHeight || naturalHeight)
+                },
+                emulateCropData = initCropOption ? initCropOption : newCropData;
 
             $cropImage.cropper({
                 aspectRatio: sizeAspectRatio,
@@ -485,22 +494,45 @@
                 ready: function() {
                     $cropModal.find('.qor-cropper__save').one(EVENT_CLICK, function() {
                         let syncData = {},
-                            cropOption = $cropImage.cropper('getData', true);
+                            cropOption = $cropImage.cropper('getData', true),
+                            cropOptionWidth = cropOption.width,
+                            cropOptionHeight = cropOption.height;
 
-                        cropData['CropOptions'][cropImageData.sizeName] = cropOption;
+                        if (!hasSize) {
+                            cropData['Sizes'][sizeName] = {
+                                Width: cropOptionWidth,
+                                Height: cropOptionHeight
+                            };
+                        }
+
+                        cropData['CropOptions'][sizeName] = cropOption;
                         syncData.MediaOption = JSON.stringify(cropData);
 
-                        $('<div class="qor-modal-loading"><div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active"></div></div>')
-                            .appendTo($cropModal.find(CLASS_CROP_WRAP))
-                            .trigger('enable.qor.material');
+                        $loading.appendTo($cropModal.find(CLASS_CROP_WRAP)).trigger('enable.qor.material');
 
                         $.ajax(cropImageData.medialibraryUrl, {
                             type: 'PUT',
                             contentType: 'application/json',
                             data: JSON.stringify(syncData),
                             dataType: 'json',
-                            success: function() {
-                                cropImageData.$target.attr('data-crop-options', JSON.stringify(cropOption)).html(`<img src="${cropImageData.url}?${$.now()}">`);
+                            success: function(data) {
+                                let mediaOption = JSON.parse(data.MediaOption),
+                                    newName = `file.${sizeName}.`,
+                                    newURL = `${mediaOption.OriginalURL.replace(/file\.original\./, newName)}?${$.now()}`;
+
+                                cropImageData.$target.attr('data-crop-options', JSON.stringify(cropOption)).html(`<img src='${newURL}'>`);
+                                if (!hasSize) {
+                                    $bannerHtml.attr({
+                                        'data-image-width': cropOptionWidth,
+                                        'data-image-height': cropOptionHeight
+                                    });
+                                    $canvas.css({
+                                        width: cropOptionWidth,
+                                        height: cropOptionHeight
+                                    });
+                                    $iframe.height(cropOptionHeight);
+                                }
+
                                 _this.setValue();
                                 $cropModal.qorModal('hide');
                                 $cropModal.find('.qor-modal-loading').remove();
@@ -509,6 +541,14 @@
                     });
                 }
             });
+        },
+
+        stopCrop: function() {
+            this.$cropModal
+                .trigger('disable.qor.material')
+                .find(CLASS_CROP_WRAP + ' > img')
+                .cropper('destroy')
+                .remove();
         },
 
         hideElement: function(e) {
@@ -553,6 +593,7 @@
             let MediaOption = data.MediaOption,
                 $ele = data.$clickElement,
                 $urlEle = $ele && $ele.find('[data-heading="BannerEditorUrl"]'),
+                $loading = $('<div class="qor-bannereditor-laoding"><div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active"></div></div>'),
                 initWidth = this.initWidth,
                 initHeight = this.initHeight,
                 _this = this,
@@ -583,8 +624,8 @@
                     $bannerHtml = this.$bannerHtml;
 
                 item[sizeName] = {};
-                item[sizeName]['Width'] = initWidth;
-                item[sizeName]['Height'] = initHeight;
+                item[sizeName]['Width'] = initWidth || 0;
+                item[sizeName]['Height'] = initHeight || 0;
 
                 syncData.MediaOption = JSON.stringify(syncData.MediaOption);
                 this.$bottomsheets.remove();
@@ -597,9 +638,7 @@
                     dataType: 'json',
                     beforeSend: function() {
                         $bannerHtml.find(CLASS_BG_IMAGE).remove();
-                        $content
-                            .prepend('<div class="qor-bannereditor-laoding"><div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active"></div></div>')
-                            .trigger('enable.qor.material');
+                        $loading.prependTo($content).trigger('enable.qor.material');
                     },
                     success: function(data) {
                         imgUrl = JSON.parse(data.MediaOption).OriginalURL.replace(/file\.original\./, `file.${sizeName}.`);
@@ -615,14 +654,14 @@
                 } else {
                     imgUrl = JSON.parse(data.File).Url;
                 }
-                this.insertImage(imgUrl, mediaLibraryUrl);
+                this.insertImage(imgUrl, mediaLibraryUrl, sizeName);
             }
 
             return false;
         },
 
         insertImage: function(url, mediaLibraryUrl, sizeName, removed) {
-            let $img = $(`<span class="qor-bannereditor-image" data-size-name="${sizeName}" data-medialibrary-url="${mediaLibraryUrl}"><img src="${url}" /></span>`);
+            let $img = $(`<span class="qor-bannereditor-image" data-size-name="${sizeName || ''}" data-medialibrary-url="${mediaLibraryUrl}"><img src="${url}" /></span>`);
 
             if (!removed) {
                 this.$bannerHtml.find(CLASS_BG_IMAGE).remove();
@@ -676,21 +715,19 @@
                 $iframe = this.$iframe,
                 initWidth = this.initWidth,
                 initHeight = this.initHeight,
-                $bannerHtml = this.$bannerHtml;
+                $bannerHtml = this.$bannerHtml,
+                _this = this;
 
-            getImgSize(
-                url,
-                function(width, height) {
-                    width = initWidth || width;
-                    height = initHeight || height;
+            getImgSize(url, function(width, height) {
+                width = initWidth || width;
+                height = initHeight || height;
 
-                    $canvas.width(width).height(height);
-                    $iframe.height(height);
+                $canvas.width(width).height(height);
+                $iframe.height(height);
 
-                    $bannerHtml.attr({'data-image-width': width, 'data-image-height': height});
-                    this.setValue();
-                }.bind(this)
-            );
+                $bannerHtml.attr({'data-image-width': width, 'data-image-height': height});
+                _this.setValue();
+            });
         },
 
         handleInlineEdit: function(e) {
