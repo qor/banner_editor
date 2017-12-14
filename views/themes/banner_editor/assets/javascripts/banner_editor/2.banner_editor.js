@@ -22,6 +22,8 @@
         EVENT_DRAGSTOP = 'dragstop.' + NAMESPACE,
         EVENT_RESIZESTOP = 'resizestop.' + NAMESPACE,
         EVENT_DRAG = 'drag.' + NAMESPACE,
+        EVENT_SHOWN = 'shown.qor.modal',
+        EVENT_HIDDEN = 'hidden.qor.modal',
         CLASS_DRAGGABLE = '.qor-bannereditor__draggable',
         CLASS_MEDIABOX = 'qor-bottomsheets__mediabox',
         CLASS_TOOLBAR_BUTTON = '.qor-bannereditor__button',
@@ -39,6 +41,7 @@
         CLASS_TOP = 'qor-bannereditor__draggable-top',
         CLASS_LEFT = 'qor-bannereditor__draggable-left',
         CLASS_BG_IMAGE = '.qor-bannereditor-image',
+        CLASS_CROP_WRAP = '.qor-cropper__wrapper',
         CLASS_NEED_REMOVE = '.qor-bannereditor__button-inline,.ui-resizable-handle,.qor-bannereditor__draggable-coordinate,.ui-draggable-handle,.ui-resizable',
         CLASS_ACTIVE = 'is-active';
 
@@ -68,6 +71,18 @@
 
     function generateRandomString() {
         return (Math.random() + 1).toString(36).substring(7);
+    }
+
+    function replaceText(str, data) {
+        if (typeof str === 'string') {
+            if (typeof data === 'object') {
+                $.each(data, function(key, val) {
+                    str = str.replace('$[' + String(key).toLowerCase() + ']', val);
+                });
+            }
+        }
+
+        return str;
     }
 
     function QorBannerEditor(element, options) {
@@ -105,6 +120,7 @@
             this.config = config;
             this.$textarea = $textarea;
             this.$container = $container;
+            this.$content = $element.find(CLASS_BANNEREDITOR_CONTENT);
 
             this.initWidth = bannerSizes.Width || '';
             this.initHeight = bannerSizes.Height || '';
@@ -182,6 +198,8 @@
                 $element = this.$element,
                 $canvas = this.$canvas,
                 $iframe = this.$iframe,
+                replaceTexts = {},
+                eleData = $element.data(),
                 canvasWidth = this.initWidth || this.$bannerHtml.data('image-width'),
                 canvasHeight = this.initHeight || this.$bannerHtml.data('image-height'),
                 isInBottomsheet = $element.closest('.qor-bottomsheets').length,
@@ -194,6 +212,14 @@
             $toolbar = $(window.Mustache.render(QorBannerEditor.toolbar, this.config));
             $toolbar.appendTo($element.find('.qor-bannereditor__toolbar-btns'));
             this.$popover = $(QorBannerEditor.popover).appendTo('body');
+
+            replaceTexts = {
+                title: eleData.cropperTitle,
+                ok: eleData.cropperOk,
+                cancel: eleData.cropperCancel
+            };
+
+            this.$cropModal = $(replaceText(QorBannerEditor.modal, replaceTexts)).appendTo('body');
 
             $element.closest('.qor-fieldset').addClass('qor-fieldset-bannereditor');
             this.resetToolbarTooltips();
@@ -230,6 +256,8 @@
 
             this.$container.on(EVENT_CLICK, CLASS_PLATFORM_TRIGGER, this.switchPlatform.bind(this));
 
+            this.$cropModal.on(EVENT_SHOWN, this.initCrop.bind(this)).on(EVENT_HIDDEN, this.stopCrop.bind(this));
+
             this.$element
                 .on(EVENT_CLICK, CLASS_TOOLBAR_BUTTON, this.addElements.bind(this))
                 .on(EVENT_CLICK, '.qor-bannereditor__toolbar-clear', this.clearAllElements.bind(this))
@@ -239,6 +267,7 @@
             $canvas
                 .on(EVENT_CLICK, '.qor-bannereditor__editimage', this.replaceBackgroundImage.bind(this))
                 .on(EVENT_CLICK, '.qor-bannereditor__deleteimage', this.deleteBackgroundImage.bind(this))
+                .on(EVENT_CLICK, '.qor-bannereditor__cropimage', this.cropBackgroundImage.bind(this))
                 .on(EVENT_CLICK, CLASS_BG_IMAGE, this.editBackground.bind(this))
                 .on(EVENT_CLICK, CLASS_DRAGGABLE, this.handleInlineEdit.bind(this))
                 .on(EVENT_DBCLICK, CLASS_DRAGGABLE, this.showInlineEdit.bind(this))
@@ -310,7 +339,7 @@
             let initWidth = this.initWidth || 'auto',
                 initHeight = this.initHeight || 300;
 
-            this.$element.find(CLASS_BANNEREDITOR_CONTENT).css('width', 'auto');
+            this.$content.css('width', 'auto');
             this.$iframe.css({
                 width: '100%',
                 height: initHeight
@@ -340,7 +369,7 @@
                 height: this.initHeight || deviceHeight
             });
 
-            $element.find(CLASS_BANNEREDITOR_CONTENT).width(deviceWidth);
+            this.$content.width(deviceWidth);
             $element.find(CLASS_DEVICE_TOOLBAR).width(deviceWidth);
         },
 
@@ -386,13 +415,140 @@
 
         editBackground: function(e) {
             let $target = $(e.target).closest(CLASS_BG_IMAGE),
-                editHTML = `<div class="qor-bannereditor__button-inline qor-bannereditor__button-bg">
-                                <button class="mdl-button mdl-button--icon qor-bannereditor__editimage" type="button"><i class="material-icons">mode_edit</i></button>
-                                <button class="mdl-button mdl-button--icon qor-bannereditor__deleteimage" type="button"><i class="material-icons">delete_forever</i></button>
-                            </div>`;
+                $editHTML = $(QorBannerEditor.imageEdit);
 
             this.clearElements();
-            $target.append(editHTML);
+
+            if ($target.data('medialibrary-url')) {
+                $editHTML.prepend('<button class="mdl-button mdl-button--icon qor-bannereditor__cropimage" type="button"><i class="material-icons">crop</i></button>');
+            }
+
+            $target.append($editHTML);
+        },
+
+        cropBackgroundImage: function(e) {
+            let $target = $(e.target).closest(CLASS_BG_IMAGE),
+                data = $target.data(),
+                src = $target.find('img').attr('src'),
+                originalUrl = src.replace(/file.bannereditor\_\w+/, 'file.original');
+
+            this.cropImageData = {
+                $target: $target,
+                url: src,
+                originalUrl: originalUrl,
+                sizeName: data.sizeName,
+                medialibraryUrl: data.medialibraryUrl
+            };
+
+            this.$cropModal.qorModal('show');
+        },
+
+        initCrop: function() {
+            let src = this.cropImageData.originalUrl,
+                $img = $(`<img src="${src}">`);
+
+            this.$cropModal.find(CLASS_CROP_WRAP).html($img);
+            this.$cropImage = $img;
+            getImgSize(src, this.startCrop.bind(this));
+        },
+
+        startCrop: function(naturalWidth, naturalHeight) {
+            let initWidth = this.initWidth || 0,
+                initHeight = this.initHeight || 0,
+                hasSize = initWidth && initHeight, //have width and height for banner editor setting
+                sizeAspectRatio = hasSize ? initWidth / initHeight : NaN,
+                $cropModal = this.$cropModal,
+                $cropImage = this.$cropImage,
+                cropImageData = this.cropImageData,
+                $bannerHtml = this.$bannerHtml,
+                $canvas = this.$canvas,
+                $iframe = this.$iframe,
+                $loading = $('<div class="qor-modal-loading"><div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active"></div></div>'),
+                initCropOption = cropImageData.$target.data('crop-options'),
+                sizeName = cropImageData.sizeName,
+                _this = this,
+                cropData = {
+                    Sizes: {},
+                    CropOptions: {},
+                    URL: cropImageData.originalUrl.replace(/file\.original\./, 'file.'),
+                    Crop: true
+                },
+                newCropData = {
+                    x: Math.round((naturalWidth - initWidth) / 2),
+                    y: Math.round((naturalHeight - initHeight) / 2),
+                    width: Math.round(initWidth || naturalWidth),
+                    height: Math.round(initHeight || naturalHeight)
+                },
+                emulateCropData = initCropOption ? initCropOption : newCropData;
+
+            $cropImage.cropper({
+                aspectRatio: sizeAspectRatio,
+                background: false,
+                data: emulateCropData,
+                movable: false,
+                zoomable: false,
+                scalable: false,
+                rotatable: false,
+                autoCropArea: 1,
+
+                ready: function() {
+                    $cropModal.find('.qor-cropper__save').one(EVENT_CLICK, function() {
+                        let syncData = {},
+                            cropOption = $cropImage.cropper('getData', true),
+                            cropOptionWidth = cropOption.width,
+                            cropOptionHeight = cropOption.height;
+
+                        if (!hasSize) {
+                            cropData['Sizes'][sizeName] = {
+                                Width: cropOptionWidth,
+                                Height: cropOptionHeight
+                            };
+                        }
+
+                        cropData['CropOptions'][sizeName] = cropOption;
+                        syncData.MediaOption = JSON.stringify(cropData);
+
+                        $loading.appendTo($cropModal.find(CLASS_CROP_WRAP)).trigger('enable.qor.material');
+
+                        $.ajax(cropImageData.medialibraryUrl, {
+                            type: 'PUT',
+                            contentType: 'application/json',
+                            data: JSON.stringify(syncData),
+                            dataType: 'json',
+                            success: function(data) {
+                                let mediaOption = JSON.parse(data.MediaOption),
+                                    newName = `file.${sizeName}.`,
+                                    newURL = `${mediaOption.OriginalURL.replace(/file\.original\./, newName)}?${$.now()}`;
+
+                                cropImageData.$target.attr('data-crop-options', JSON.stringify(cropOption)).html(`<img src='${newURL}'>`);
+                                if (!hasSize) {
+                                    $bannerHtml.attr({
+                                        'data-image-width': cropOptionWidth,
+                                        'data-image-height': cropOptionHeight
+                                    });
+                                    $canvas.css({
+                                        width: cropOptionWidth,
+                                        height: cropOptionHeight
+                                    });
+                                    $iframe.height(cropOptionHeight);
+                                }
+
+                                _this.setValue();
+                                $cropModal.qorModal('hide');
+                                $cropModal.find('.qor-modal-loading').remove();
+                            }
+                        });
+                    });
+                }
+            });
+        },
+
+        stopCrop: function() {
+            this.$cropModal
+                .trigger('disable.qor.material')
+                .find(CLASS_CROP_WRAP + ' > img')
+                .cropper('destroy')
+                .remove();
         },
 
         hideElement: function(e) {
@@ -423,6 +579,7 @@
 
         handleBannerImage: function($bottomsheets) {
             let options = {
+                loading: this.addMediaLoading,
                 onSelect: this.addBannerImage.bind(this),
                 onSubmit: this.addBannerImage.bind(this)
             };
@@ -435,12 +592,14 @@
         addBannerImage: function(data) {
             let MediaOption = data.MediaOption,
                 $ele = data.$clickElement,
+                $urlEle = $ele && $ele.find('[data-heading="BannerEditorUrl"]'),
+                $loading = $('<div class="qor-bannereditor-laoding"><div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active"></div></div>'),
                 initWidth = this.initWidth,
                 initHeight = this.initHeight,
                 _this = this,
                 imgUrl,
                 mediaLibraryUrl = data.mediaLibraryUrl,
-                randomString = `bannereditor_${(Math.random() + 1).toString(36).substring(7)}`,
+                sizeName = `bannereditor_${(Math.random() + 1).toString(36).substring(7)}`,
                 syncData = {
                     MediaOption: {
                         Sizes: {},
@@ -456,17 +615,20 @@
                 let croppedSizeName = this.hasCroppedSize(data);
 
                 if (croppedSizeName) {
-                    this.insertImage(MediaOption.OriginalURL.replace(/\.original/, `.${croppedSizeName}`));
+                    this.insertImage(MediaOption.OriginalURL.replace(/\.original/, `.${croppedSizeName}`), mediaLibraryUrl, croppedSizeName);
                     return false;
                 }
 
-                let item = syncData.MediaOption.Sizes;
+                let item = syncData.MediaOption.Sizes,
+                    $content = this.$content,
+                    $bannerHtml = this.$bannerHtml;
 
-                item[randomString] = {};
-                item[randomString]['Width'] = initWidth;
-                item[randomString]['Height'] = initHeight;
+                item[sizeName] = {};
+                item[sizeName]['Width'] = initWidth || 0;
+                item[sizeName]['Height'] = initHeight || 0;
 
                 syncData.MediaOption = JSON.stringify(syncData.MediaOption);
+                this.$bottomsheets.remove();
 
                 $.ajax({
                     type: 'PUT',
@@ -474,33 +636,43 @@
                     data: JSON.stringify(syncData),
                     contentType: 'application/json',
                     dataType: 'json',
+                    beforeSend: function() {
+                        $bannerHtml.find(CLASS_BG_IMAGE).remove();
+                        $loading.prependTo($content).trigger('enable.qor.material');
+                    },
                     success: function(data) {
-                        _this.insertImage(JSON.parse(data.MediaOption).OriginalURL.replace(/\.original/, `.${randomString}`));
+                        imgUrl = JSON.parse(data.MediaOption).OriginalURL.replace(/file\.original\./, `file.${sizeName}.`);
+                        $content.find('.qor-bannereditor-laoding').remove();
+                        _this.insertImage(imgUrl, mediaLibraryUrl, sizeName, false);
                     }
                 });
             } else {
                 if (MediaOption.URL) {
                     imgUrl = MediaOption.URL;
-                } else if ($ele && $ele.find('[data-heading="BannerEditorUrl"]').length) {
-                    imgUrl = data.$clickElement.find('[data-heading="BannerEditorUrl"]').text();
+                } else if ($urlEle) {
+                    imgUrl = $urlEle.text();
                 } else {
                     imgUrl = JSON.parse(data.File).Url;
                 }
-                this.insertImage(imgUrl);
+                this.insertImage(imgUrl, mediaLibraryUrl, sizeName);
             }
 
             return false;
         },
 
-        insertImage: function(url) {
-            this.$bannerHtml.find(CLASS_BG_IMAGE).remove();
-            this.$bannerHtml.prepend(`<span class="qor-bannereditor-image"><img src="${url}" /></span>`);
+        insertImage: function(url, mediaLibraryUrl, sizeName, removed) {
+            let $img = $(`<span class="qor-bannereditor-image" data-size-name="${sizeName || ''}" data-medialibrary-url="${mediaLibraryUrl}"><img src="${url}" /></span>`);
+
+            if (!removed) {
+                this.$bannerHtml.find(CLASS_BG_IMAGE).remove();
+                this.$bottomsheets.remove();
+            }
+
+            $img.prependTo(this.$bannerHtml);
 
             if (!(this.initWidth && this.initHeight)) {
                 this.resetBoxSize(url);
             }
-
-            this.$bottomsheets.remove();
 
             if (!$('.qor-bottomsheets').is(':visible')) {
                 $('body').removeClass('qor-bottomsheets-open');
@@ -532,26 +704,30 @@
             return false;
         },
 
+        addMediaLoading: function($ele) {
+            $('<div class="qor-media-loading"><div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active"></div></div>')
+                .appendTo($ele)
+                .trigger('enable.qor.material');
+        },
+
         resetBoxSize: function(url) {
             let $canvas = this.$canvas,
                 $iframe = this.$iframe,
                 initWidth = this.initWidth,
                 initHeight = this.initHeight,
-                $bannerHtml = this.$bannerHtml;
+                $bannerHtml = this.$bannerHtml,
+                _this = this;
 
-            getImgSize(
-                url,
-                function(width, height) {
-                    width = initWidth || width;
-                    height = initHeight || height;
+            getImgSize(url, function(width, height) {
+                width = initWidth || width;
+                height = initHeight || height;
 
-                    $canvas.width(width).height(height);
-                    $iframe.height(height);
+                $canvas.width(width).height(height);
+                $iframe.height(height);
 
-                    $bannerHtml.attr({'data-image-width': width, 'data-image-height': height});
-                    this.setValue();
-                }.bind(this)
-            );
+                $bannerHtml.attr({'data-image-width': width, 'data-image-height': height});
+                _this.setValue();
+            });
         },
 
         handleInlineEdit: function(e) {
@@ -959,6 +1135,11 @@
                                     <button class="mdl-button mdl-button--icon" data-edit-type="delete" type="button"><i class="material-icons">delete_forever</i></button>
                                   </div>`;
 
+    QorBannerEditor.imageEdit = `<div class="qor-bannereditor__button-inline qor-bannereditor__button-bg">
+                                        <button class="mdl-button mdl-button--icon qor-bannereditor__editimage" type="button"><i class="material-icons">mode_edit</i></button>
+                                        <button class="mdl-button mdl-button--icon qor-bannereditor__deleteimage" type="button"><i class="material-icons">delete_forever</i></button>
+                                    </div>`;
+
     QorBannerEditor.popover = `<div class="qor-modal fade qor-bannereditor__form" tabindex="-1" role="dialog" aria-hidden="true">
                                   <div class="mdl-card mdl-shadow--2dp" role="document">
                                     <div class="mdl-card__title">
@@ -967,6 +1148,26 @@
                                     <div class="mdl-card__supporting-text qor-bannereditor__content"></div>
                                   </div>
                                 </div>`;
+
+    QorBannerEditor.modal = `<div class="qor-modal fade qor-bannereditor-modal__cropimage" tabindex="-1" role="dialog" aria-hidden="true">
+                                <div class="mdl-card mdl-shadow--2dp" role="document">
+                                    <div class="mdl-card__title">
+                                        <h2 class="mdl-card__title-text">$[title]</h2>
+                                    </div>
+                                    <div class="mdl-card__supporting-text">
+                                        <div class="qor-cropper__wrapper"><div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active"></div></div>
+                                    </div>
+                                    <div class="mdl-card__actions mdl-card--border">
+                                        <a class="mdl-button mdl-button--colored mdl-button--raised qor-cropper__save">$[ok]</a>
+                                        <a class="mdl-button mdl-button--colored" data-dismiss="modal">$[cancel]</a>
+                                    </div>
+                                    <div class="mdl-card__menu">
+                                        <button class="mdl-button mdl-button--icon" data-dismiss="modal" aria-label="close">
+                                            <i class="material-icons">close</i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>`;
 
     QorBannerEditor.plugin = function(options) {
         return this.each(function() {

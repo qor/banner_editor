@@ -10,8 +10,8 @@
   </div>
 
   {{range $index, $plateform := .Meta.Config.Platforms }}
-  <section class="qor-bannereditor__platform-panel" {{if gt $index 0}}style="display: none" {{end}} id="qor-bannereditor-{{.Name}}">
-    <div class="qor-field__edit qor-bannereditor" data-platform-name="{{.Name}}" data-toggle="qor.bannereditor">
+  <section class="qor-bannereditor__platform-panel" {{if gt $index 0}}style="display: none" {{end}} id="qor-bannereditor-{{.Name}}">  
+    <div class="qor-field__edit qor-bannereditor" data-cropper-title="{{t "qor_bannereditor.crop_image.title" "Crop the image"}}" data-cropper-cancel="{{t "qor_bannereditor.crop_image.cancel" "Cancel"}}" data-cropper-ok="{{t "qor_bannereditor.crop_image.save" "SAVE"}}" data-platform-name="{{.Name}}" data-toggle="qor.bannereditor">
       <ul class="qor-bannereditor__toolbar clearfix">
         <li class="qor-bannereditor__toolbar-btns"></li>
         {{if $asset_manager}}
