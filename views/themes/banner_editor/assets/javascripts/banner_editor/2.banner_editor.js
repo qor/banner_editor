@@ -647,7 +647,7 @@
                     }
                 });
             } else {
-                if (MediaOption.URL) {
+                if (MediaOption && MediaOption.URL) {
                     imgUrl = MediaOption.URL;
                 } else if ($urlEle) {
                     imgUrl = $urlEle.text();
